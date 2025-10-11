@@ -1,0 +1,17 @@
+# erm configuration
+# 1. Set module to your Go module path (for example "github.com/acme/app").
+module: ""
+database:
+  # 2. Update the connection string to point at your development database.
+  url: "postgres://user:pass@localhost:5432/app?sslmode=disable"
+oidc:
+  # 3. Configure the issuer and audience to match your identity provider.
+  issuer: "https://auth.example.com/realms/app"
+  audience: "web-spa"
+graphql:
+  # 4. The HTTP path your API will be served on.
+  path: "/graphql"
+extensions:
+  postgis: true
+  pgvector: true
+  timescaledb: false
