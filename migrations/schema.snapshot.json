@@ -1,0 +1,492 @@
+{
+  "tables": [
+    {
+      "name": "categories",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "slug",
+          "type": "text",
+          "nullable": false,
+          "unique": true
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "color",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default_now": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "categories_slug_unique",
+          "columns": [
+            "slug"
+          ],
+          "unique": true
+        }
+      ]
+    },
+    {
+      "name": "comments",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "post_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "author_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "parent_id",
+          "type": "uuid",
+          "nullable": true
+        },
+        {
+          "name": "body",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "is_edited",
+          "type": "boolean",
+          "nullable": false,
+          "default_expr": "false"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default_now": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false
+        },
+        {
+          "name": "parent",
+          "type": "uuid",
+          "nullable": true
+        },
+        {
+          "name": "post",
+          "type": "uuid",
+          "nullable": false
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "comments_parent_created_at",
+          "columns": [
+            "parent_id",
+            "created_at"
+          ]
+        },
+        {
+          "name": "comments_post_created_at",
+          "columns": [
+            "post_id",
+            "created_at"
+          ]
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "author_id",
+          "target_table": "users",
+          "target_column": "id",
+          "constraint": "fk_comments_author_id",
+          "on_delete": "CASCADE"
+        },
+        {
+          "column": "parent",
+          "target_table": "comments",
+          "target_column": "id",
+          "constraint": "fk_comments_parent"
+        },
+        {
+          "column": "parent_id",
+          "target_table": "comments",
+          "target_column": "id",
+          "constraint": "fk_comments_parent_id",
+          "on_delete": "SET NULL"
+        },
+        {
+          "column": "post",
+          "target_table": "posts",
+          "target_column": "id",
+          "constraint": "fk_comments_post"
+        },
+        {
+          "column": "post_id",
+          "target_table": "posts",
+          "target_column": "id",
+          "constraint": "fk_comments_post_id",
+          "on_delete": "CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "post_tags",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "post_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "tag_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "assigned_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default_now": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default_now": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false
+        },
+        {
+          "name": "post",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "tag",
+          "type": "uuid",
+          "nullable": false
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "post_tags_post_tag_unique",
+          "columns": [
+            "post_id",
+            "tag_id"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "post",
+          "target_table": "posts",
+          "target_column": "id",
+          "constraint": "fk_post_tags_post"
+        },
+        {
+          "column": "post_id",
+          "target_table": "posts",
+          "target_column": "id",
+          "constraint": "fk_post_tags_post_id",
+          "on_delete": "CASCADE"
+        },
+        {
+          "column": "tag",
+          "target_table": "tags",
+          "target_column": "id",
+          "constraint": "fk_post_tags_tag"
+        },
+        {
+          "column": "tag_id",
+          "target_table": "tags",
+          "target_column": "id",
+          "constraint": "fk_post_tags_tag_id",
+          "on_delete": "CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "posts",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "author_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "category_id",
+          "type": "uuid",
+          "nullable": true
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "slug",
+          "type": "text",
+          "nullable": false,
+          "unique": true
+        },
+        {
+          "name": "excerpt",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "body",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "published_at",
+          "type": "timestamptz",
+          "nullable": true
+        },
+        {
+          "name": "is_published",
+          "type": "boolean",
+          "nullable": false,
+          "default_expr": "false"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default_now": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "posts_author_published_at",
+          "columns": [
+            "author_id",
+            "published_at"
+          ]
+        },
+        {
+          "name": "posts_slug_unique",
+          "columns": [
+            "slug"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "author_id",
+          "target_table": "users",
+          "target_column": "id",
+          "constraint": "fk_posts_author_id",
+          "on_delete": "CASCADE"
+        },
+        {
+          "column": "category_id",
+          "target_table": "categories",
+          "target_column": "id",
+          "constraint": "fk_posts_category_id"
+        }
+      ]
+    },
+    {
+      "name": "tags",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "slug",
+          "type": "text",
+          "nullable": false,
+          "unique": true
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default_now": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "tags_name_unique",
+          "columns": [
+            "name"
+          ],
+          "unique": true
+        },
+        {
+          "name": "tags_slug_unique",
+          "columns": [
+            "slug"
+          ],
+          "unique": true
+        }
+      ]
+    },
+    {
+      "name": "users",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "username",
+          "type": "text",
+          "nullable": false,
+          "unique": true
+        },
+        {
+          "name": "email",
+          "type": "text",
+          "nullable": false,
+          "unique": true
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "bio",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "avatar_url",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "display_name",
+          "type": "text GENERATED ALWAYS AS (COALESCE(name, username)) STORED",
+          "nullable": false,
+          "generated_expr": "COALESCE(name, username)",
+          "dependencies": [
+            "name",
+            "username"
+          ],
+          "read_only": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default_now": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "users_email_unique",
+          "columns": [
+            "email"
+          ],
+          "unique": true
+        },
+        {
+          "name": "users_username_unique",
+          "columns": [
+            "username"
+          ],
+          "unique": true
+        }
+      ]
+    }
+  ],
+  "extensions": [
+    "postgis",
+    "vector"
+  ]
+}
