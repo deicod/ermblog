@@ -1,0 +1,10 @@
+{
+  "components": {
+    "graphql": {
+      "input_hash": "921a7e111a87a4190b7b9db75eaa8e0f8c30e257086588d44b9c6efb5e137538"
+    },
+    "orm": {
+      "input_hash": "d15819838fe6447f9f9d510dacbab627cbaf033f945611ca5f0b6016d24f88bb"
+    }
+  }
+}

@@ -1,0 +1,129 @@
+schema:
+  - graphql/schema.graphqls
+exec:
+  filename: graphql/generated.go
+model:
+  filename: graphql/models_gen.go
+resolver:
+  layout: follow-schema
+  dir: graphql/resolvers
+  package: resolvers
+models:
+  Boolean:
+    model:
+      - github.com/deicod/ermblog/graphql.Boolean
+  Float:
+    model:
+      - github.com/deicod/ermblog/graphql.Float
+  ID:
+    model:
+      - github.com/deicod/ermblog/graphql.ID
+  Int:
+    model:
+      - github.com/deicod/ermblog/graphql.Int
+  String:
+    model:
+      - github.com/deicod/ermblog/graphql.String
+  __Directive:
+    model:
+      - github.com/99designs/gqlgen/graphql/introspection.Directive
+  __DirectiveLocation:
+    model:
+      - github.com/deicod/ermblog/graphql.String
+  __EnumValue:
+    model:
+      - github.com/99designs/gqlgen/graphql/introspection.EnumValue
+  __Field:
+    model:
+      - github.com/99designs/gqlgen/graphql/introspection.Field
+  __InputValue:
+    model:
+      - github.com/99designs/gqlgen/graphql/introspection.InputValue
+  __Schema:
+    model:
+      - github.com/99designs/gqlgen/graphql/introspection.Schema
+  __Type:
+    model:
+      - github.com/99designs/gqlgen/graphql/introspection.Type
+  __TypeKind:
+    model:
+      - github.com/deicod/ermblog/graphql.String
+  BigInt:
+    model:
+      - int64
+  BitString:
+    model:
+      - string
+  CIDR:
+    model:
+      - string
+  Date:
+    model:
+      - time.Time
+  DateRange:
+    model:
+      - string
+  Decimal:
+    model:
+      - string
+  Inet:
+    model:
+      - string
+  Int4Range:
+    model:
+      - string
+  Int8Range:
+    model:
+      - string
+  Interval:
+    model:
+      - string
+  JSON:
+    model:
+      - encoding/json.RawMessage
+  JSONB:
+    model:
+      - encoding/json.RawMessage
+  MacAddr:
+    model:
+      - string
+  MacAddr8:
+    model:
+      - string
+  Money:
+    model:
+      - string
+  NumRange:
+    model:
+      - string
+  TSQuery:
+    model:
+      - string
+  TSRange:
+    model:
+      - string
+  TSTZRange:
+    model:
+      - string
+  TSVector:
+    model:
+      - string
+  Time:
+    model:
+      - time.Time
+  Timestamp:
+    model:
+      - time.Time
+  Timestamptz:
+    model:
+      - time.Time
+  Timetz:
+    model:
+      - time.Time
+  VarBitString:
+    model:
+      - string
+  XML:
+    model:
+      - string
+autobind: []

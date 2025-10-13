@@ -1,0 +1,437 @@
+scalar Time
+
+interface Node { id: ID! }
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+directive @auth(roles: [String!]) on FIELD_DEFINITION
+
+type Query {
+  node(id: ID!): Node
+  health: String!
+}
+
+type Mutation {
+  _noop: Boolean
+}
+
+type Subscription {
+  _noop: Boolean
+}
+
+# BEGIN GENERATED
+scalar Timestamptz
+
+enum CommentStatus {
+  VISIBLE
+  PENDING
+  HIDDEN
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum UserRole {
+  READER
+  AUTHOR
+  EDITOR
+  ADMIN
+}
+
+type Category implements Node {
+  id: ID!
+  name: String!
+  slug: String!
+  description: String
+  createdAt: Timestamptz!
+  updatedAt: Timestamptz!
+}
+
+type CategoryEdge {
+  cursor: String!
+  node: Category
+}
+
+type CategoryConnection {
+  edges: [CategoryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input CreateCategoryInput {
+  clientMutationId: String
+  id: ID
+  name: String
+  slug: String
+  description: String
+  createdAt: Timestamptz
+  updatedAt: Timestamptz
+}
+
+type CreateCategoryPayload {
+  clientMutationId: String
+  category: Category
+}
+
+input UpdateCategoryInput {
+  clientMutationId: String
+  id: ID!
+  name: String
+  slug: String
+  description: String
+  createdAt: Timestamptz
+  updatedAt: Timestamptz
+}
+
+type UpdateCategoryPayload {
+  clientMutationId: String
+  category: Category
+}
+
+input DeleteCategoryInput {
+  clientMutationId: String
+  id: ID!
+}
+
+type DeleteCategoryPayload {
+  clientMutationId: String
+  deletedCategoryID: ID!
+}
+
+type Comment implements Node {
+  id: ID!
+  postID: ID!
+  authorID: ID!
+  parentID: ID
+  body: String!
+  status: CommentStatus!
+  createdAt: Timestamptz!
+  updatedAt: Timestamptz!
+}
+
+type CommentEdge {
+  cursor: String!
+  node: Comment
+}
+
+type CommentConnection {
+  edges: [CommentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input CreateCommentInput {
+  clientMutationId: String
+  id: ID
+  postID: ID
+  authorID: ID
+  parentID: ID
+  body: String
+  status: CommentStatus
+  createdAt: Timestamptz
+  updatedAt: Timestamptz
+}
+
+type CreateCommentPayload {
+  clientMutationId: String
+  comment: Comment
+}
+
+input UpdateCommentInput {
+  clientMutationId: String
+  id: ID!
+  postID: ID
+  authorID: ID
+  parentID: ID
+  body: String
+  status: CommentStatus
+  createdAt: Timestamptz
+  updatedAt: Timestamptz
+}
+
+type UpdateCommentPayload {
+  clientMutationId: String
+  comment: Comment
+}
+
+input DeleteCommentInput {
+  clientMutationId: String
+  id: ID!
+}
+
+type DeleteCommentPayload {
+  clientMutationId: String
+  deletedCommentID: ID!
+}
+
+type Post implements Node {
+  id: ID!
+  authorID: ID!
+  categoryID: ID
+  title: String!
+  slug: String!
+  excerpt: String
+  body: String
+  status: PostStatus!
+  isFeatured: Boolean!
+  publishedAt: Timestamptz
+  createdAt: Timestamptz!
+  updatedAt: Timestamptz!
+}
+
+type PostEdge {
+  cursor: String!
+  node: Post
+}
+
+type PostConnection {
+  edges: [PostEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input CreatePostInput {
+  clientMutationId: String
+  id: ID
+  authorID: ID
+  categoryID: ID
+  title: String
+  slug: String
+  excerpt: String
+  body: String
+  status: PostStatus
+  isFeatured: Boolean
+  publishedAt: Timestamptz
+  createdAt: Timestamptz
+  updatedAt: Timestamptz
+}
+
+type CreatePostPayload {
+  clientMutationId: String
+  post: Post
+}
+
+input UpdatePostInput {
+  clientMutationId: String
+  id: ID!
+  authorID: ID
+  categoryID: ID
+  title: String
+  slug: String
+  excerpt: String
+  body: String
+  status: PostStatus
+  isFeatured: Boolean
+  publishedAt: Timestamptz
+  createdAt: Timestamptz
+  updatedAt: Timestamptz
+}
+
+type UpdatePostPayload {
+  clientMutationId: String
+  post: Post
+}
+
+input DeletePostInput {
+  clientMutationId: String
+  id: ID!
+}
+
+type DeletePostPayload {
+  clientMutationId: String
+  deletedPostID: ID!
+}
+
+type Tag implements Node {
+  id: ID!
+  name: String!
+  slug: String!
+  description: String
+  color: String
+  createdAt: Timestamptz!
+  updatedAt: Timestamptz!
+}
+
+type TagEdge {
+  cursor: String!
+  node: Tag
+}
+
+type TagConnection {
+  edges: [TagEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input CreateTagInput {
+  clientMutationId: String
+  id: ID
+  name: String
+  slug: String
+  description: String
+  color: String
+  createdAt: Timestamptz
+  updatedAt: Timestamptz
+}
+
+type CreateTagPayload {
+  clientMutationId: String
+  tag: Tag
+}
+
+input UpdateTagInput {
+  clientMutationId: String
+  id: ID!
+  name: String
+  slug: String
+  description: String
+  color: String
+  createdAt: Timestamptz
+  updatedAt: Timestamptz
+}
+
+type UpdateTagPayload {
+  clientMutationId: String
+  tag: Tag
+}
+
+input DeleteTagInput {
+  clientMutationId: String
+  id: ID!
+}
+
+type DeleteTagPayload {
+  clientMutationId: String
+  deletedTagID: ID!
+}
+
+type User implements Node {
+  id: ID!
+  username: String!
+  email: String!
+  slug: String!
+  displayName: String
+  bio: String
+  avatarURL: String
+  role: UserRole!
+  createdAt: Timestamptz!
+  updatedAt: Timestamptz!
+}
+
+type UserEdge {
+  cursor: String!
+  node: User
+}
+
+type UserConnection {
+  edges: [UserEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input CreateUserInput {
+  clientMutationId: String
+  id: ID
+  username: String
+  email: String
+  slug: String
+  displayName: String
+  bio: String
+  avatarURL: String
+  role: UserRole
+  createdAt: Timestamptz
+  updatedAt: Timestamptz
+}
+
+type CreateUserPayload {
+  clientMutationId: String
+  user: User
+}
+
+input UpdateUserInput {
+  clientMutationId: String
+  id: ID!
+  username: String
+  email: String
+  slug: String
+  displayName: String
+  bio: String
+  avatarURL: String
+  role: UserRole
+  createdAt: Timestamptz
+  updatedAt: Timestamptz
+}
+
+type UpdateUserPayload {
+  clientMutationId: String
+  user: User
+}
+
+input DeleteUserInput {
+  clientMutationId: String
+  id: ID!
+}
+
+type DeleteUserPayload {
+  clientMutationId: String
+  deletedUserID: ID!
+}
+
+extend type Query {
+  category(id: ID!): Category
+  categories(first: Int, after: String, last: Int, before: String): CategoryConnection!
+  comment(id: ID!): Comment
+  comments(first: Int, after: String, last: Int, before: String): CommentConnection!
+  post(id: ID!): Post
+  posts(first: Int, after: String, last: Int, before: String): PostConnection!
+  tag(id: ID!): Tag
+  tags(first: Int, after: String, last: Int, before: String): TagConnection!
+  user(id: ID!): User
+  users(first: Int, after: String, last: Int, before: String): UserConnection!
+}
+
+extend type Mutation {
+  createCategory(input: CreateCategoryInput!): CreateCategoryPayload!
+  updateCategory(input: UpdateCategoryInput!): UpdateCategoryPayload!
+  deleteCategory(input: DeleteCategoryInput!): DeleteCategoryPayload!
+  createComment(input: CreateCommentInput!): CreateCommentPayload!
+  updateComment(input: UpdateCommentInput!): UpdateCommentPayload!
+  deleteComment(input: DeleteCommentInput!): DeleteCommentPayload!
+  createPost(input: CreatePostInput!): CreatePostPayload!
+  updatePost(input: UpdatePostInput!): UpdatePostPayload!
+  deletePost(input: DeletePostInput!): DeletePostPayload!
+  createTag(input: CreateTagInput!): CreateTagPayload!
+  updateTag(input: UpdateTagInput!): UpdateTagPayload!
+  deleteTag(input: DeleteTagInput!): DeleteTagPayload!
+  createUser(input: CreateUserInput!): CreateUserPayload!
+  updateUser(input: UpdateUserInput!): UpdateUserPayload!
+  deleteUser(input: DeleteUserInput!): DeleteUserPayload!
+}
+
+extend type Subscription {
+  categoryCreated: Category!
+  categoryUpdated: Category!
+  categoryDeleted: ID!
+  commentCreated: Comment!
+  commentUpdated: Comment!
+  commentDeleted: ID!
+  postCreated: Post!
+  postUpdated: Post!
+  postDeleted: ID!
+  tagCreated: Tag!
+  tagUpdated: Tag!
+  tagDeleted: ID!
+  userCreated: User!
+  userUpdated: User!
+  userDeleted: ID!
+}
+
+# END GENERATED
