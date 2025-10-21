@@ -1,9 +1,9 @@
 # erm configuration
 # 1. Set module to your Go module path (for example "github.com/acme/app").
-module: ""
+module: "github.com/deicod/ermblog"
 database:
   # 2. Update the connection string to point at your development database.
-  url: "postgres://user:pass@localhost:5432/app?sslmode=disable"
+  url: "postgres://postgres:postgres@localhost:5432/ermblog?sslmode=disable"
 oidc:
   # 3. Configure the issuer and audience to match your identity provider.
   issuer: "https://auth.example.com/realms/app"

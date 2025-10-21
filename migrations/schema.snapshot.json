@@ -1,0 +1,736 @@
+{
+  "tables": [
+    {
+      "name": "categories",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "slug",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "parent_id",
+          "type": "uuid",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default_now": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "categories_slug_key",
+          "columns": [
+            "slug"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "parent_id",
+          "target_table": "categories",
+          "target_column": "id",
+          "constraint": "fk_categories_parent_id",
+          "on_delete": "SET NULL"
+        }
+      ]
+    },
+    {
+      "name": "comments",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "post_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "author_id",
+          "type": "uuid",
+          "nullable": true
+        },
+        {
+          "name": "parent_id",
+          "type": "uuid",
+          "nullable": true
+        },
+        {
+          "name": "author_name",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "author_email",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "author_url",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "content",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": false,
+          "default_expr": "'pending'",
+          "enum_values": [
+            "pending",
+            "approved",
+            "spam",
+            "trash"
+          ]
+        },
+        {
+          "name": "submitted_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default_now": true
+        },
+        {
+          "name": "published_at",
+          "type": "timestamptz",
+          "nullable": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "comments_post_submitted_at",
+          "columns": [
+            "post_id",
+            "submitted_at"
+          ]
+        },
+        {
+          "name": "comments_status_post",
+          "columns": [
+            "status",
+            "post_id"
+          ]
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "author_id",
+          "target_table": "users",
+          "target_column": "id",
+          "constraint": "fk_comments_author_id",
+          "on_delete": "SET NULL"
+        },
+        {
+          "column": "parent_id",
+          "target_table": "comments",
+          "target_column": "id",
+          "constraint": "fk_comments_parent_id",
+          "on_delete": "CASCADE"
+        },
+        {
+          "column": "post_id",
+          "target_table": "posts",
+          "target_column": "id",
+          "constraint": "fk_comments_post_id",
+          "on_delete": "CASCADE"
+        }
+      ]
+    },
+    {
+      "name": "medias",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "uploaded_by_id",
+          "type": "uuid",
+          "nullable": true
+        },
+        {
+          "name": "file_name",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "mime_type",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "storage_key",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "url",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "alt_text",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "caption",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "file_size_bytes",
+          "type": "integer",
+          "nullable": true
+        },
+        {
+          "name": "metadata",
+          "type": "jsonb",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default_now": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "media_storage_key_key",
+          "columns": [
+            "storage_key"
+          ],
+          "unique": true
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "uploaded_by_id",
+          "target_table": "users",
+          "target_column": "id",
+          "constraint": "fk_medias_uploaded_by_id",
+          "on_delete": "SET NULL"
+        }
+      ]
+    },
+    {
+      "name": "options",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "value",
+          "type": "jsonb",
+          "nullable": false
+        },
+        {
+          "name": "autoload",
+          "type": "boolean",
+          "nullable": false,
+          "default_expr": "FALSE"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default_now": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "options_name_key",
+          "columns": [
+            "name"
+          ],
+          "unique": true
+        }
+      ]
+    },
+    {
+      "name": "posts",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "author_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "featured_media_id",
+          "type": "uuid",
+          "nullable": true
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "slug",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": false,
+          "default_expr": "'draft'",
+          "enum_values": [
+            "draft",
+            "pending",
+            "private",
+            "published",
+            "archived"
+          ]
+        },
+        {
+          "name": "type",
+          "type": "text",
+          "nullable": false,
+          "default_expr": "'post'",
+          "enum_values": [
+            "post",
+            "page",
+            "custom"
+          ]
+        },
+        {
+          "name": "excerpt",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "content",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "seo",
+          "type": "jsonb",
+          "nullable": true
+        },
+        {
+          "name": "published_at",
+          "type": "timestamptz",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default_now": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "posts_author_created_at",
+          "columns": [
+            "author_id",
+            "created_at"
+          ]
+        },
+        {
+          "name": "posts_slug_key",
+          "columns": [
+            "slug"
+          ],
+          "unique": true
+        },
+        {
+          "name": "posts_status_published_at",
+          "columns": [
+            "status",
+            "published_at"
+          ]
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column": "author_id",
+          "target_table": "users",
+          "target_column": "id",
+          "constraint": "fk_posts_author_id",
+          "on_delete": "RESTRICT"
+        },
+        {
+          "column": "featured_media_id",
+          "target_table": "medias",
+          "target_column": "id",
+          "constraint": "fk_posts_featured_media_id"
+        }
+      ]
+    },
+    {
+      "name": "roles",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "slug",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "capabilities",
+          "type": "jsonb",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default_now": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "roles_slug_key",
+          "columns": [
+            "slug"
+          ],
+          "unique": true
+        }
+      ]
+    },
+    {
+      "name": "tags",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "slug",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default_now": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "tags_slug_key",
+          "columns": [
+            "slug"
+          ],
+          "unique": true
+        }
+      ]
+    },
+    {
+      "name": "users",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "username",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "email",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "password_hash",
+          "type": "text",
+          "nullable": false
+        },
+        {
+          "name": "display_name",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "bio",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "avatar_url",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "website_url",
+          "type": "text",
+          "nullable": true
+        },
+        {
+          "name": "last_login_at",
+          "type": "timestamptz",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": false,
+          "default_now": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": false
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "indexes": [
+        {
+          "name": "users_email_key",
+          "columns": [
+            "email"
+          ],
+          "unique": true
+        },
+        {
+          "name": "users_username_key",
+          "columns": [
+            "username"
+          ],
+          "unique": true
+        }
+      ]
+    },
+    {
+      "name": "post_categories",
+      "columns": [
+        {
+          "name": "category_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "post_id",
+          "type": "uuid",
+          "nullable": false
+        }
+      ],
+      "primary_key": [
+        "category_id",
+        "post_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "category_id",
+          "target_table": "categories",
+          "target_column": "id",
+          "constraint": "fk_post_categories_category_id"
+        },
+        {
+          "column": "post_id",
+          "target_table": "posts",
+          "target_column": "id",
+          "constraint": "fk_post_categories_post_id"
+        }
+      ],
+      "join_table": true
+    },
+    {
+      "name": "post_tags",
+      "columns": [
+        {
+          "name": "post_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "tag_id",
+          "type": "uuid",
+          "nullable": false
+        }
+      ],
+      "primary_key": [
+        "post_id",
+        "tag_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "post_id",
+          "target_table": "posts",
+          "target_column": "id",
+          "constraint": "fk_post_tags_post_id"
+        },
+        {
+          "column": "tag_id",
+          "target_table": "tags",
+          "target_column": "id",
+          "constraint": "fk_post_tags_tag_id"
+        }
+      ],
+      "join_table": true
+    },
+    {
+      "name": "user_roles",
+      "columns": [
+        {
+          "name": "role_id",
+          "type": "uuid",
+          "nullable": false
+        },
+        {
+          "name": "user_id",
+          "type": "uuid",
+          "nullable": false
+        }
+      ],
+      "primary_key": [
+        "role_id",
+        "user_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "role_id",
+          "target_table": "roles",
+          "target_column": "id",
+          "constraint": "fk_user_roles_role_id"
+        },
+        {
+          "column": "user_id",
+          "target_table": "users",
+          "target_column": "id",
+          "constraint": "fk_user_roles_user_id"
+        }
+      ],
+      "join_table": true
+    }
+  ]
+}
