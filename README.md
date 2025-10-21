@@ -10,8 +10,8 @@ and a repeatable workflow for regenerating code as your domain evolves.
        go mod init <module>
        go mod tidy
    Update 'module' in 'erm.yaml' to match the value passed to 'go mod init'.
-2. Sketch your first entity with 'erm new <Entity>'.
-3. Run 'erm gen' to materialize ORM, GraphQL, and migration artifacts.
+2. Sketch your first entity with 'erm new <Entity>' and keep 'docs/dsl-quick-reference.md' nearby for helper lookups.
+3. Run 'erm gen --dry-run --diff' to preview migrations, then rerun 'erm gen' to materialize ORM, GraphQL, and migration artifacts.
 4. Start the HTTP server with 'go run ./cmd/api' and iterate.
 
 ## Project layout
@@ -29,7 +29,8 @@ and a repeatable workflow for regenerating code as your domain evolves.
    - 'go test ./...'
    - 'go test -race ./...'
    - 'go vet ./...'
-4. Regenerate artifacts with 'erm gen' and review the diff before committing.
+4. Use 'erm gen --dry-run --diff' to preview schema changes, then rerun without flags to write files. Add '--force' after dependency upgrades to refresh generated packages.
 5. Use 'erm migrate' to apply database changes during development.
+6. Reference 'docs/dsl-quick-reference.md' for field, edge, and index combinations when modeling your schema.
 
 Happy hacking!
