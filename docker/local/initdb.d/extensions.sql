@@ -1,2 +1,0 @@
--- Managed by `erm docker sync`.
--- Enable extensions in erm.yaml to generate CREATE EXTENSION statements.
