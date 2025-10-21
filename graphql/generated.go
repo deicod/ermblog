@@ -2057,12 +2057,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.User.LastLoginAt(childComplexity), true
-	case "User.passwordHash":
-		if e.complexity.User.PasswordHash == nil {
-			break
-		}
-
-		return e.complexity.User.PasswordHash(childComplexity), true
 	case "User.updatedAt":
 		if e.complexity.User.UpdatedAt == nil {
 			break
@@ -4448,8 +4442,6 @@ func (ec *executionContext) fieldContext_CreateUserPayload_user(_ context.Contex
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "passwordHash":
-				return ec.fieldContext_User_passwordHash(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -9027,8 +9019,6 @@ func (ec *executionContext) fieldContext_Query_user(ctx context.Context, field g
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "passwordHash":
-				return ec.fieldContext_User_passwordHash(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -10238,8 +10228,6 @@ func (ec *executionContext) fieldContext_Subscription_userCreated(_ context.Cont
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "passwordHash":
-				return ec.fieldContext_User_passwordHash(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -10309,8 +10297,6 @@ func (ec *executionContext) fieldContext_Subscription_userUpdated(_ context.Cont
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "passwordHash":
-				return ec.fieldContext_User_passwordHash(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -11337,8 +11323,6 @@ func (ec *executionContext) fieldContext_UpdateUserPayload_user(_ context.Contex
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "passwordHash":
-				return ec.fieldContext_User_passwordHash(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -11435,35 +11419,6 @@ func (ec *executionContext) _User_email(ctx context.Context, field graphql.Colle
 }
 
 func (ec *executionContext) fieldContext_User_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _User_passwordHash(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_User_passwordHash,
-		func(ctx context.Context) (any, error) {
-			return obj.PasswordHash, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_User_passwordHash(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -11841,8 +11796,6 @@ func (ec *executionContext) fieldContext_UserEdge_node(_ context.Context, field 
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "passwordHash":
-				return ec.fieldContext_User_passwordHash(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -17959,11 +17912,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "email":
 			out.Values[i] = ec._User_email(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "passwordHash":
-			out.Values[i] = ec._User_passwordHash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

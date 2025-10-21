@@ -593,17 +593,16 @@ type UpdateUserPayload struct {
 }
 
 type User struct {
-	ID           string     `json:"id"`
-	Username     string     `json:"username"`
-	Email        string     `json:"email"`
-	PasswordHash string     `json:"passwordHash"`
-	DisplayName  *string    `json:"displayName,omitempty"`
-	Bio          *string    `json:"bio,omitempty"`
-	AvatarURL    *string    `json:"avatarURL,omitempty"`
-	WebsiteURL   *string    `json:"websiteURL,omitempty"`
-	LastLoginAt  *time.Time `json:"lastLoginAt,omitempty"`
-	CreatedAt    time.Time  `json:"createdAt"`
-	UpdatedAt    time.Time  `json:"updatedAt"`
+	ID          string     `json:"id"`
+	Username    string     `json:"username"`
+	Email       string     `json:"email"`
+	DisplayName *string    `json:"displayName,omitempty"`
+	Bio         *string    `json:"bio,omitempty"`
+	AvatarURL   *string    `json:"avatarURL,omitempty"`
+	WebsiteURL  *string    `json:"websiteURL,omitempty"`
+	LastLoginAt *time.Time `json:"lastLoginAt,omitempty"`
+	CreatedAt   time.Time  `json:"createdAt"`
+	UpdatedAt   time.Time  `json:"updatedAt"`
 }
 
 func (User) IsNode()            {}
