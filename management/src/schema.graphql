@@ -1,27 +1,121 @@
 scalar Time
 
-interface Node { id: ID! }
+interface Node {
+    id: ID!
+}
 
 type PageInfo {
-  hasNextPage: Boolean!
-  hasPreviousPage: Boolean!
-  startCursor: String
-  endCursor: String
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    startCursor: String
+    endCursor: String
 }
 
 directive @auth(roles: [String!]) on FIELD_DEFINITION
 
 type Query {
-  node(id: ID!): Node
-  health: String!
+    node(id: ID!): Node
+    health: String!
+    category(id: ID!): Category
+    categories(
+        first: Int
+        after: String
+        last: Int
+        before: String
+    ): CategoryConnection!
+    comment(id: ID!): Comment
+    comments(
+        first: Int
+        after: String
+        last: Int
+        before: String
+    ): CommentConnection!
+    media(id: ID!): Media
+    medias(
+        first: Int
+        after: String
+        last: Int
+        before: String
+    ): MediaConnection!
+    option(id: ID!): Option
+    options(
+        first: Int
+        after: String
+        last: Int
+        before: String
+    ): OptionConnection!
+    post(id: ID!): Post
+    posts(first: Int, after: String, last: Int, before: String): PostConnection!
+    role(id: ID!): Role
+    roles(first: Int, after: String, last: Int, before: String): RoleConnection!
+    tag(id: ID!): Tag
+    tags(first: Int, after: String, last: Int, before: String): TagConnection!
+    user(id: ID!): User
+    users(first: Int, after: String, last: Int, before: String): UserConnection!
 }
 
 type Mutation {
-  _noop: Boolean
+    createCategory(input: CreateCategoryInput!): CreateCategoryPayload!
+        @auth(roles: ["user"])
+    updateCategory(input: UpdateCategoryInput!): UpdateCategoryPayload!
+        @auth(roles: ["user"])
+    deleteCategory(input: DeleteCategoryInput!): DeleteCategoryPayload!
+        @auth(roles: ["user"])
+    createComment(input: CreateCommentInput!): CreateCommentPayload!
+        @auth(roles: ["user"])
+    updateComment(input: UpdateCommentInput!): UpdateCommentPayload!
+        @auth(roles: ["user"])
+    deleteComment(input: DeleteCommentInput!): DeleteCommentPayload!
+        @auth(roles: ["user"])
+    createMedia(input: CreateMediaInput!): CreateMediaPayload!
+        @auth(roles: ["user"])
+    updateMedia(input: UpdateMediaInput!): UpdateMediaPayload!
+        @auth(roles: ["user"])
+    deleteMedia(input: DeleteMediaInput!): DeleteMediaPayload!
+        @auth(roles: ["user"])
+    createOption(input: CreateOptionInput!): CreateOptionPayload!
+        @auth(roles: ["user"])
+    updateOption(input: UpdateOptionInput!): UpdateOptionPayload!
+        @auth(roles: ["user"])
+    deleteOption(input: DeleteOptionInput!): DeleteOptionPayload!
+        @auth(roles: ["user"])
+    createPost(input: CreatePostInput!): CreatePostPayload!
+        @auth(roles: ["user"])
+    updatePost(input: UpdatePostInput!): UpdatePostPayload!
+        @auth(roles: ["user"])
+    deletePost(input: DeletePostInput!): DeletePostPayload!
+        @auth(roles: ["user"])
+    createRole(input: CreateRoleInput!): CreateRolePayload!
+        @auth(roles: ["user"])
+    updateRole(input: UpdateRoleInput!): UpdateRolePayload!
+        @auth(roles: ["user"])
+    deleteRole(input: DeleteRoleInput!): DeleteRolePayload!
+        @auth(roles: ["user"])
+    createTag(input: CreateTagInput!): CreateTagPayload! @auth(roles: ["user"])
+    updateTag(input: UpdateTagInput!): UpdateTagPayload! @auth(roles: ["user"])
+    deleteTag(input: DeleteTagInput!): DeleteTagPayload! @auth(roles: ["user"])
+    createUser(input: CreateUserInput!): CreateUserPayload!
+        @auth(roles: ["user"])
+    updateUser(input: UpdateUserInput!): UpdateUserPayload!
+        @auth(roles: ["user"])
+    deleteUser(input: DeleteUserInput!): DeleteUserPayload!
+        @auth(roles: ["user"])
 }
 
 type Subscription {
-  _noop: Boolean
+    _noop: Boolean
+    commentCreated: Comment! @auth(roles: ["user"])
+    commentUpdated: Comment! @auth(roles: ["user"])
+    commentDeleted: ID! @auth(roles: ["user"])
+    postCreated: Post! @auth(roles: ["user"])
+    postUpdated: Post! @auth(roles: ["user"])
+    postDeleted: ID! @auth(roles: ["user"])
+    roleCreated: Role! @auth(roles: ["user"])
+    roleUpdated: Role! @auth(roles: ["user"])
+    roleDeleted: ID! @auth(roles: ["user"])
+    userCreated: User! @auth(roles: ["user"])
+    userUpdated: User! @auth(roles: ["user"])
+    userDeleted: ID! @auth(roles: ["user"])
 }
 
 # BEGIN GENERATED
@@ -29,648 +123,587 @@ scalar JSONB
 scalar Timestamptz
 
 enum CommentStatus {
-  pending
-  approved
-  spam
-  trash
+    pending
+    approved
+    spam
+    trash
 }
 
 enum PostStatus {
-  draft
-  pending
-  private
-  published
-  archived
+    draft
+    pending
+    private
+    published
+    archived
 }
 
 enum PostType {
-  post
-  page
-  custom
+    post
+    page
+    custom
 }
 
 type Category implements Node {
-  id: ID!
-  name: String!
-  slug: String!
-  description: String
-  parentID: ID
-  createdAt: Timestamptz!
-  updatedAt: Timestamptz!
+    id: ID!
+    name: String!
+    slug: String!
+    description: String
+    parentID: ID
+    createdAt: Timestamptz!
+    updatedAt: Timestamptz!
 }
 
 type CategoryEdge {
-  cursor: String!
-  node: Category
+    cursor: String!
+    node: Category
 }
 
 type CategoryConnection {
-  edges: [CategoryEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
+    edges: [CategoryEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
 }
 
 input CreateCategoryInput {
-  clientMutationId: String
-  id: ID
-  name: String
-  slug: String
-  description: String
-  parentID: ID
-  createdAt: Timestamptz
-  updatedAt: Timestamptz
+    clientMutationId: String
+    id: ID
+    name: String
+    slug: String
+    description: String
+    parentID: ID
+    createdAt: Timestamptz
+    updatedAt: Timestamptz
 }
 
 type CreateCategoryPayload {
-  clientMutationId: String
-  category: Category
+    clientMutationId: String
+    category: Category
 }
 
 input UpdateCategoryInput {
-  clientMutationId: String
-  id: ID!
-  name: String
-  slug: String
-  description: String
-  parentID: ID
-  createdAt: Timestamptz
-  updatedAt: Timestamptz
+    clientMutationId: String
+    id: ID!
+    name: String
+    slug: String
+    description: String
+    parentID: ID
+    createdAt: Timestamptz
+    updatedAt: Timestamptz
 }
 
 type UpdateCategoryPayload {
-  clientMutationId: String
-  category: Category
+    clientMutationId: String
+    category: Category
 }
 
 input DeleteCategoryInput {
-  clientMutationId: String
-  id: ID!
+    clientMutationId: String
+    id: ID!
 }
 
 type DeleteCategoryPayload {
-  clientMutationId: String
-  deletedCategoryID: ID!
+    clientMutationId: String
+    deletedCategoryID: ID!
 }
 
 type Comment implements Node {
-  id: ID!
-  postID: ID!
-  authorID: ID
-  parentID: ID
-  authorName: String
-  authorEmail: String
-  authorURL: String
-  content: String!
-  status: CommentStatus!
-  submittedAt: Timestamptz!
-  publishedAt: Timestamptz
-  updatedAt: Timestamptz!
+    id: ID!
+    postID: ID!
+    authorID: ID
+    parentID: ID
+    authorName: String
+    authorEmail: String
+    authorURL: String
+    content: String!
+    status: CommentStatus!
+    submittedAt: Timestamptz!
+    publishedAt: Timestamptz
+    updatedAt: Timestamptz!
 }
 
 type CommentEdge {
-  cursor: String!
-  node: Comment
+    cursor: String!
+    node: Comment
 }
 
 type CommentConnection {
-  edges: [CommentEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
+    edges: [CommentEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
 }
 
 input CreateCommentInput {
-  clientMutationId: String
-  id: ID
-  postID: ID
-  authorID: ID
-  parentID: ID
-  authorName: String
-  authorEmail: String
-  authorURL: String
-  content: String
-  status: CommentStatus
-  submittedAt: Timestamptz
-  publishedAt: Timestamptz
-  updatedAt: Timestamptz
+    clientMutationId: String
+    id: ID
+    postID: ID
+    authorID: ID
+    parentID: ID
+    authorName: String
+    authorEmail: String
+    authorURL: String
+    content: String
+    status: CommentStatus
+    submittedAt: Timestamptz
+    publishedAt: Timestamptz
+    updatedAt: Timestamptz
 }
 
 type CreateCommentPayload {
-  clientMutationId: String
-  comment: Comment
+    clientMutationId: String
+    comment: Comment
 }
 
 input UpdateCommentInput {
-  clientMutationId: String
-  id: ID!
-  postID: ID
-  authorID: ID
-  parentID: ID
-  authorName: String
-  authorEmail: String
-  authorURL: String
-  content: String
-  status: CommentStatus
-  submittedAt: Timestamptz
-  publishedAt: Timestamptz
-  updatedAt: Timestamptz
+    clientMutationId: String
+    id: ID!
+    postID: ID
+    authorID: ID
+    parentID: ID
+    authorName: String
+    authorEmail: String
+    authorURL: String
+    content: String
+    status: CommentStatus
+    submittedAt: Timestamptz
+    publishedAt: Timestamptz
+    updatedAt: Timestamptz
 }
 
 type UpdateCommentPayload {
-  clientMutationId: String
-  comment: Comment
+    clientMutationId: String
+    comment: Comment
 }
 
 input DeleteCommentInput {
-  clientMutationId: String
-  id: ID!
+    clientMutationId: String
+    id: ID!
 }
 
 type DeleteCommentPayload {
-  clientMutationId: String
-  deletedCommentID: ID!
+    clientMutationId: String
+    deletedCommentID: ID!
 }
 
 type Media implements Node {
-  id: ID!
-  uploadedByID: ID
-  fileName: String!
-  mimeType: String!
-  storageKey: String!
-  url: String!
-  title: String
-  altText: String
-  caption: String
-  description: String
-  fileSizeBytes: Int
-  metadata: JSONB
-  createdAt: Timestamptz!
-  updatedAt: Timestamptz!
+    id: ID!
+    uploadedByID: ID
+    fileName: String!
+    mimeType: String!
+    storageKey: String!
+    url: String!
+    title: String
+    altText: String
+    caption: String
+    description: String
+    fileSizeBytes: Int
+    metadata: JSONB
+    createdAt: Timestamptz!
+    updatedAt: Timestamptz!
 }
 
 type MediaEdge {
-  cursor: String!
-  node: Media
+    cursor: String!
+    node: Media
 }
 
 type MediaConnection {
-  edges: [MediaEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
+    edges: [MediaEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
 }
 
 input CreateMediaInput {
-  clientMutationId: String
-  id: ID
-  uploadedByID: ID
-  fileName: String
-  mimeType: String
-  storageKey: String
-  url: String
-  title: String
-  altText: String
-  caption: String
-  description: String
-  fileSizeBytes: Int
-  metadata: JSONB
-  createdAt: Timestamptz
-  updatedAt: Timestamptz
+    clientMutationId: String
+    id: ID
+    uploadedByID: ID
+    fileName: String
+    mimeType: String
+    storageKey: String
+    url: String
+    title: String
+    altText: String
+    caption: String
+    description: String
+    fileSizeBytes: Int
+    metadata: JSONB
+    createdAt: Timestamptz
+    updatedAt: Timestamptz
 }
 
 type CreateMediaPayload {
-  clientMutationId: String
-  media: Media
+    clientMutationId: String
+    media: Media
 }
 
 input UpdateMediaInput {
-  clientMutationId: String
-  id: ID!
-  uploadedByID: ID
-  fileName: String
-  mimeType: String
-  storageKey: String
-  url: String
-  title: String
-  altText: String
-  caption: String
-  description: String
-  fileSizeBytes: Int
-  metadata: JSONB
-  createdAt: Timestamptz
-  updatedAt: Timestamptz
+    clientMutationId: String
+    id: ID!
+    uploadedByID: ID
+    fileName: String
+    mimeType: String
+    storageKey: String
+    url: String
+    title: String
+    altText: String
+    caption: String
+    description: String
+    fileSizeBytes: Int
+    metadata: JSONB
+    createdAt: Timestamptz
+    updatedAt: Timestamptz
 }
 
 type UpdateMediaPayload {
-  clientMutationId: String
-  media: Media
+    clientMutationId: String
+    media: Media
 }
 
 input DeleteMediaInput {
-  clientMutationId: String
-  id: ID!
+    clientMutationId: String
+    id: ID!
 }
 
 type DeleteMediaPayload {
-  clientMutationId: String
-  deletedMediaID: ID!
+    clientMutationId: String
+    deletedMediaID: ID!
 }
 
 type Option implements Node {
-  id: ID!
-  name: String!
-  value: JSONB!
-  autoload: Boolean!
-  createdAt: Timestamptz!
-  updatedAt: Timestamptz!
+    id: ID!
+    name: String!
+    value: JSONB!
+    autoload: Boolean!
+    createdAt: Timestamptz!
+    updatedAt: Timestamptz!
 }
 
 type OptionEdge {
-  cursor: String!
-  node: Option
+    cursor: String!
+    node: Option
 }
 
 type OptionConnection {
-  edges: [OptionEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
+    edges: [OptionEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
 }
 
 input CreateOptionInput {
-  clientMutationId: String
-  id: ID
-  name: String
-  value: JSONB
-  autoload: Boolean
-  createdAt: Timestamptz
-  updatedAt: Timestamptz
+    clientMutationId: String
+    id: ID
+    name: String
+    value: JSONB
+    autoload: Boolean
+    createdAt: Timestamptz
+    updatedAt: Timestamptz
 }
 
 type CreateOptionPayload {
-  clientMutationId: String
-  option: Option
+    clientMutationId: String
+    option: Option
 }
 
 input UpdateOptionInput {
-  clientMutationId: String
-  id: ID!
-  name: String
-  value: JSONB
-  autoload: Boolean
-  createdAt: Timestamptz
-  updatedAt: Timestamptz
+    clientMutationId: String
+    id: ID!
+    name: String
+    value: JSONB
+    autoload: Boolean
+    createdAt: Timestamptz
+    updatedAt: Timestamptz
 }
 
 type UpdateOptionPayload {
-  clientMutationId: String
-  option: Option
+    clientMutationId: String
+    option: Option
 }
 
 input DeleteOptionInput {
-  clientMutationId: String
-  id: ID!
+    clientMutationId: String
+    id: ID!
 }
 
 type DeleteOptionPayload {
-  clientMutationId: String
-  deletedOptionID: ID!
+    clientMutationId: String
+    deletedOptionID: ID!
 }
 
 type Post implements Node {
-  id: ID!
-  authorID: ID!
-  featuredMediaID: ID
-  title: String!
-  slug: String!
-  status: PostStatus!
-  type: PostType!
-  excerpt: String
-  content: String
-  seo: JSONB
-  publishedAt: Timestamptz
-  createdAt: Timestamptz!
-  updatedAt: Timestamptz!
+    id: ID!
+    authorID: ID!
+    featuredMediaID: ID
+    title: String!
+    slug: String!
+    status: PostStatus!
+    type: PostType!
+    excerpt: String
+    content: String
+    seo: JSONB
+    publishedAt: Timestamptz
+    createdAt: Timestamptz!
+    updatedAt: Timestamptz!
 }
 
 type PostEdge {
-  cursor: String!
-  node: Post
+    cursor: String!
+    node: Post
 }
 
 type PostConnection {
-  edges: [PostEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
+    edges: [PostEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
 }
 
 input CreatePostInput {
-  clientMutationId: String
-  id: ID
-  authorID: ID
-  featuredMediaID: ID
-  title: String
-  slug: String
-  status: PostStatus
-  type: PostType
-  excerpt: String
-  content: String
-  seo: JSONB
-  publishedAt: Timestamptz
-  createdAt: Timestamptz
-  updatedAt: Timestamptz
+    clientMutationId: String
+    id: ID
+    authorID: ID
+    featuredMediaID: ID
+    title: String
+    slug: String
+    status: PostStatus
+    type: PostType
+    excerpt: String
+    content: String
+    seo: JSONB
+    publishedAt: Timestamptz
+    createdAt: Timestamptz
+    updatedAt: Timestamptz
 }
 
 type CreatePostPayload {
-  clientMutationId: String
-  post: Post
+    clientMutationId: String
+    post: Post
 }
 
 input UpdatePostInput {
-  clientMutationId: String
-  id: ID!
-  authorID: ID
-  featuredMediaID: ID
-  title: String
-  slug: String
-  status: PostStatus
-  type: PostType
-  excerpt: String
-  content: String
-  seo: JSONB
-  publishedAt: Timestamptz
-  createdAt: Timestamptz
-  updatedAt: Timestamptz
+    clientMutationId: String
+    id: ID!
+    authorID: ID
+    featuredMediaID: ID
+    title: String
+    slug: String
+    status: PostStatus
+    type: PostType
+    excerpt: String
+    content: String
+    seo: JSONB
+    publishedAt: Timestamptz
+    createdAt: Timestamptz
+    updatedAt: Timestamptz
 }
 
 type UpdatePostPayload {
-  clientMutationId: String
-  post: Post
+    clientMutationId: String
+    post: Post
 }
 
 input DeletePostInput {
-  clientMutationId: String
-  id: ID!
+    clientMutationId: String
+    id: ID!
 }
 
 type DeletePostPayload {
-  clientMutationId: String
-  deletedPostID: ID!
+    clientMutationId: String
+    deletedPostID: ID!
 }
 
 type Role implements Node {
-  id: ID!
-  name: String!
-  slug: String!
-  description: String
-  capabilities: JSONB
-  createdAt: Timestamptz!
-  updatedAt: Timestamptz!
+    id: ID!
+    name: String!
+    slug: String!
+    description: String
+    capabilities: JSONB
+    createdAt: Timestamptz!
+    updatedAt: Timestamptz!
 }
 
 type RoleEdge {
-  cursor: String!
-  node: Role
+    cursor: String!
+    node: Role
 }
 
 type RoleConnection {
-  edges: [RoleEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
+    edges: [RoleEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
 }
 
 input CreateRoleInput {
-  clientMutationId: String
-  id: ID
-  name: String
-  slug: String
-  description: String
-  capabilities: JSONB
-  createdAt: Timestamptz
-  updatedAt: Timestamptz
+    clientMutationId: String
+    id: ID
+    name: String
+    slug: String
+    description: String
+    capabilities: JSONB
+    createdAt: Timestamptz
+    updatedAt: Timestamptz
 }
 
 type CreateRolePayload {
-  clientMutationId: String
-  role: Role
+    clientMutationId: String
+    role: Role
 }
 
 input UpdateRoleInput {
-  clientMutationId: String
-  id: ID!
-  name: String
-  slug: String
-  description: String
-  capabilities: JSONB
-  createdAt: Timestamptz
-  updatedAt: Timestamptz
+    clientMutationId: String
+    id: ID!
+    name: String
+    slug: String
+    description: String
+    capabilities: JSONB
+    createdAt: Timestamptz
+    updatedAt: Timestamptz
 }
 
 type UpdateRolePayload {
-  clientMutationId: String
-  role: Role
+    clientMutationId: String
+    role: Role
 }
 
 input DeleteRoleInput {
-  clientMutationId: String
-  id: ID!
+    clientMutationId: String
+    id: ID!
 }
 
 type DeleteRolePayload {
-  clientMutationId: String
-  deletedRoleID: ID!
+    clientMutationId: String
+    deletedRoleID: ID!
 }
 
 type Tag implements Node {
-  id: ID!
-  name: String!
-  slug: String!
-  description: String
-  createdAt: Timestamptz!
-  updatedAt: Timestamptz!
+    id: ID!
+    name: String!
+    slug: String!
+    description: String
+    createdAt: Timestamptz!
+    updatedAt: Timestamptz!
 }
 
 type TagEdge {
-  cursor: String!
-  node: Tag
+    cursor: String!
+    node: Tag
 }
 
 type TagConnection {
-  edges: [TagEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
+    edges: [TagEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
 }
 
 input CreateTagInput {
-  clientMutationId: String
-  id: ID
-  name: String
-  slug: String
-  description: String
-  createdAt: Timestamptz
-  updatedAt: Timestamptz
+    clientMutationId: String
+    id: ID
+    name: String
+    slug: String
+    description: String
+    createdAt: Timestamptz
+    updatedAt: Timestamptz
 }
 
 type CreateTagPayload {
-  clientMutationId: String
-  tag: Tag
+    clientMutationId: String
+    tag: Tag
 }
 
 input UpdateTagInput {
-  clientMutationId: String
-  id: ID!
-  name: String
-  slug: String
-  description: String
-  createdAt: Timestamptz
-  updatedAt: Timestamptz
+    clientMutationId: String
+    id: ID!
+    name: String
+    slug: String
+    description: String
+    createdAt: Timestamptz
+    updatedAt: Timestamptz
 }
 
 type UpdateTagPayload {
-  clientMutationId: String
-  tag: Tag
+    clientMutationId: String
+    tag: Tag
 }
 
 input DeleteTagInput {
-  clientMutationId: String
-  id: ID!
+    clientMutationId: String
+    id: ID!
 }
 
 type DeleteTagPayload {
-  clientMutationId: String
-  deletedTagID: ID!
+    clientMutationId: String
+    deletedTagID: ID!
 }
 
 type User implements Node {
-  id: ID!
-  username: String!
-  email: String!
-  displayName: String
-  bio: String
-  avatarURL: String
-  websiteURL: String
-  lastLoginAt: Timestamptz
-  createdAt: Timestamptz!
-  updatedAt: Timestamptz!
+    id: ID!
+    username: String!
+    email: String!
+    displayName: String
+    bio: String
+    avatarURL: String
+    websiteURL: String
+    lastLoginAt: Timestamptz
+    createdAt: Timestamptz!
+    updatedAt: Timestamptz!
 }
 
 type UserEdge {
-  cursor: String!
-  node: User
+    cursor: String!
+    node: User
 }
 
 type UserConnection {
-  edges: [UserEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
+    edges: [UserEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
 }
 
 input CreateUserInput {
-  clientMutationId: String
-  id: ID
-  username: String
-  email: String
-  passwordHash: String
-  displayName: String
-  bio: String
-  avatarURL: String
-  websiteURL: String
-  lastLoginAt: Timestamptz
-  createdAt: Timestamptz
-  updatedAt: Timestamptz
+    clientMutationId: String
+    id: ID
+    username: String
+    email: String
+    passwordHash: String
+    displayName: String
+    bio: String
+    avatarURL: String
+    websiteURL: String
+    lastLoginAt: Timestamptz
+    createdAt: Timestamptz
+    updatedAt: Timestamptz
 }
 
 type CreateUserPayload {
-  clientMutationId: String
-  user: User
+    clientMutationId: String
+    user: User
 }
 
 input UpdateUserInput {
-  clientMutationId: String
-  id: ID!
-  username: String
-  email: String
-  passwordHash: String
-  displayName: String
-  bio: String
-  avatarURL: String
-  websiteURL: String
-  lastLoginAt: Timestamptz
-  createdAt: Timestamptz
-  updatedAt: Timestamptz
+    clientMutationId: String
+    id: ID!
+    username: String
+    email: String
+    passwordHash: String
+    displayName: String
+    bio: String
+    avatarURL: String
+    websiteURL: String
+    lastLoginAt: Timestamptz
+    createdAt: Timestamptz
+    updatedAt: Timestamptz
 }
 
 type UpdateUserPayload {
-  clientMutationId: String
-  user: User
+    clientMutationId: String
+    user: User
 }
 
 input DeleteUserInput {
-  clientMutationId: String
-  id: ID!
+    clientMutationId: String
+    id: ID!
 }
 
 type DeleteUserPayload {
-  clientMutationId: String
-  deletedUserID: ID!
-}
-
-extend type Query {
-  category(id: ID!): Category
-  categories(first: Int, after: String, last: Int, before: String): CategoryConnection!
-  comment(id: ID!): Comment
-  comments(first: Int, after: String, last: Int, before: String): CommentConnection!
-  media(id: ID!): Media
-  medias(first: Int, after: String, last: Int, before: String): MediaConnection!
-  option(id: ID!): Option
-  options(first: Int, after: String, last: Int, before: String): OptionConnection!
-  post(id: ID!): Post
-  posts(first: Int, after: String, last: Int, before: String): PostConnection!
-  role(id: ID!): Role
-  roles(first: Int, after: String, last: Int, before: String): RoleConnection!
-  tag(id: ID!): Tag
-  tags(first: Int, after: String, last: Int, before: String): TagConnection!
-  user(id: ID!): User
-  users(first: Int, after: String, last: Int, before: String): UserConnection!
-}
-
-extend type Mutation {
-  createCategory(input: CreateCategoryInput!): CreateCategoryPayload! @auth(roles: ["user"])
-  updateCategory(input: UpdateCategoryInput!): UpdateCategoryPayload! @auth(roles: ["user"])
-  deleteCategory(input: DeleteCategoryInput!): DeleteCategoryPayload! @auth(roles: ["user"])
-  createComment(input: CreateCommentInput!): CreateCommentPayload! @auth(roles: ["user"])
-  updateComment(input: UpdateCommentInput!): UpdateCommentPayload! @auth(roles: ["user"])
-  deleteComment(input: DeleteCommentInput!): DeleteCommentPayload! @auth(roles: ["user"])
-  createMedia(input: CreateMediaInput!): CreateMediaPayload! @auth(roles: ["user"])
-  updateMedia(input: UpdateMediaInput!): UpdateMediaPayload! @auth(roles: ["user"])
-  deleteMedia(input: DeleteMediaInput!): DeleteMediaPayload! @auth(roles: ["user"])
-  createOption(input: CreateOptionInput!): CreateOptionPayload! @auth(roles: ["user"])
-  updateOption(input: UpdateOptionInput!): UpdateOptionPayload! @auth(roles: ["user"])
-  deleteOption(input: DeleteOptionInput!): DeleteOptionPayload! @auth(roles: ["user"])
-  createPost(input: CreatePostInput!): CreatePostPayload! @auth(roles: ["user"])
-  updatePost(input: UpdatePostInput!): UpdatePostPayload! @auth(roles: ["user"])
-  deletePost(input: DeletePostInput!): DeletePostPayload! @auth(roles: ["user"])
-  createRole(input: CreateRoleInput!): CreateRolePayload! @auth(roles: ["user"])
-  updateRole(input: UpdateRoleInput!): UpdateRolePayload! @auth(roles: ["user"])
-  deleteRole(input: DeleteRoleInput!): DeleteRolePayload! @auth(roles: ["user"])
-  createTag(input: CreateTagInput!): CreateTagPayload! @auth(roles: ["user"])
-  updateTag(input: UpdateTagInput!): UpdateTagPayload! @auth(roles: ["user"])
-  deleteTag(input: DeleteTagInput!): DeleteTagPayload! @auth(roles: ["user"])
-  createUser(input: CreateUserInput!): CreateUserPayload! @auth(roles: ["user"])
-  updateUser(input: UpdateUserInput!): UpdateUserPayload! @auth(roles: ["user"])
-  deleteUser(input: DeleteUserInput!): DeleteUserPayload! @auth(roles: ["user"])
-}
-
-extend type Subscription {
-  commentCreated: Comment! @auth(roles: ["user"])
-  commentUpdated: Comment! @auth(roles: ["user"])
-  commentDeleted: ID! @auth(roles: ["user"])
-  postCreated: Post! @auth(roles: ["user"])
-  postUpdated: Post! @auth(roles: ["user"])
-  postDeleted: ID! @auth(roles: ["user"])
-  roleCreated: Role! @auth(roles: ["user"])
-  roleUpdated: Role! @auth(roles: ["user"])
-  roleDeleted: ID! @auth(roles: ["user"])
-  userCreated: User! @auth(roles: ["user"])
-  userUpdated: User! @auth(roles: ["user"])
-  userDeleted: ID! @auth(roles: ["user"])
+    clientMutationId: String
+    deletedUserID: ID!
 }
 
 # END GENERATED

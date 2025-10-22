@@ -542,6 +542,7 @@ type User implements Node {
   id: ID!
   username: String!
   email: String!
+  passwordHash: String!
   displayName: String
   bio: String
   avatarURL: String

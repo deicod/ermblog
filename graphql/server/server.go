@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 )
 
@@ -11,6 +12,7 @@ import (
 func NewServer(opts Options) *handler.Server {
 	opts = normaliseOptions(opts)
 	srv := handler.New(NewExecutableSchema(opts))
+	srv.Use(extension.Introspection{})
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})
 	srv.AddTransport(transport.POST{})
