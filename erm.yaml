@@ -3,10 +3,10 @@
 module: "github.com/deicod/ermblog"
 database:
   # 2. Update the connection string to point at your development database.
-  url: "postgres://postgres:postgres@localhost:5432/ermblog?sslmode=disable"
+  url: "postgres://dev:dev@localhost:5432/ermblog?sslmode=disable"
 oidc:
   # 3. Configure the issuer and audience to match your identity provider.
-  issuer: "https://auth.example.com/realms/app"
+  issuer: "https://auth.icod.de/realms/dev"
   audience: "web-spa"
 graphql:
   # 4. The HTTP path your API will be served on.
