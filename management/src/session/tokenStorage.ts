@@ -7,6 +7,7 @@ export interface SessionToken {
 
 export interface SessionTokenStorage {
   getSessionToken(): SessionToken | null;
+  setSessionToken(token: SessionToken | null): void;
 }
 
 function parseStoredToken(serialized: string | null): SessionToken | null {
@@ -29,17 +30,48 @@ function parseStoredToken(serialized: string | null): SessionToken | null {
   }
 }
 
+function getSessionStorage(): Storage | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return window.sessionStorage ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export const browserSessionTokenStorage: SessionTokenStorage = {
   getSessionToken(): SessionToken | null {
-    if (typeof window === "undefined" || !window.sessionStorage) {
+    const storage = getSessionStorage();
+    if (!storage) {
       return null;
     }
 
     try {
-      const stored = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
+      const stored = storage.getItem(SESSION_STORAGE_KEY);
       return parseStoredToken(stored);
     } catch {
       return null;
+    }
+  },
+  setSessionToken(token: SessionToken | null): void {
+    const storage = getSessionStorage();
+    if (!storage) {
+      return;
+    }
+
+    try {
+      if (!token) {
+        storage.removeItem(SESSION_STORAGE_KEY);
+        return;
+      }
+
+      const serialized = JSON.stringify(token);
+      storage.setItem(SESSION_STORAGE_KEY, serialized);
+    } catch {
+      // Ignore storage persistence failures to avoid breaking the login flow.
     }
   },
 };

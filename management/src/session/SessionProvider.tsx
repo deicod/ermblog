@@ -63,32 +63,15 @@ export function SessionProvider({ children }: PropsWithChildren) {
   const persistSessionToken = useCallback((token: SessionToken) => {
     setSessionToken(token);
 
-    if (typeof window === "undefined" || !window.sessionStorage) {
-      return;
-    }
-
-    try {
-      const serialized = JSON.stringify(token);
-      window.sessionStorage.setItem(SESSION_STORAGE_KEY, serialized);
-      notifyCrossTabChange("persist");
-    } catch {
-      // Ignore persistence errors to avoid breaking the app flow.
-    }
+    browserSessionTokenStorage.setSessionToken(token);
+    notifyCrossTabChange("persist");
   }, []);
 
   const clearSessionToken = useCallback(() => {
     setSessionToken(null);
 
-    if (typeof window === "undefined" || !window.sessionStorage) {
-      return;
-    }
-
-    try {
-      window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
-      notifyCrossTabChange("clear");
-    } catch {
-      // Ignore persistence errors to avoid breaking the app flow.
-    }
+    browserSessionTokenStorage.setSessionToken(null);
+    notifyCrossTabChange("clear");
   }, []);
 
   useEffect(() => {

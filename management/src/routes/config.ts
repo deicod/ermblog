@@ -1,6 +1,7 @@
 import type { RouteObject } from "react-router-dom";
 
 export const ROUTE_IDS = {
+  login: "login",
   dashboard: "dashboard",
   posts: "posts",
 } as const;
@@ -15,15 +16,28 @@ export type RouteDefinition = {
   title: string;
   description: string;
   lazy: RouteObject["lazy"];
+  requiresAuth?: boolean;
 };
 
 export const ROUTE_CONFIG: RouteDefinition[] = [
+  {
+    id: ROUTE_IDS.login,
+    path: "login",
+    href: "/login",
+    title: "Sign in",
+    description: "Authenticate with your account",
+    requiresAuth: false,
+    lazy: async () => ({
+      Component: (await import("./login")).LoginRoute,
+    }),
+  },
   {
     id: ROUTE_IDS.dashboard,
     index: true,
     href: "/",
     title: "Dashboard",
     description: "Summary insights and system status",
+    requiresAuth: true,
     lazy: async () => ({
       Component: (await import("./dashboard")).DashboardRoute,
     }),
@@ -34,6 +48,7 @@ export const ROUTE_CONFIG: RouteDefinition[] = [
     href: "/posts",
     title: "Posts",
     description: "Editorial queue and publishing workflow",
+    requiresAuth: true,
     lazy: async () => ({
       Component: (await import("./posts")).PostsRoute,
     }),

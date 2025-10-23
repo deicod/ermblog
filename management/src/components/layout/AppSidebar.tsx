@@ -1,9 +1,11 @@
 import { NavLink } from "react-router-dom";
 import { createNavigationItems } from "./navigation";
 import { WORKSPACE_NAME, WORKSPACE_SECTION_LABEL } from "./constants";
+import { useSession } from "../../session/SessionProvider";
 
 export function AppSidebar() {
-  const navItems = createNavigationItems();
+  const { sessionToken } = useSession();
+  const navItems = createNavigationItems({ sessionToken });
 
   return (
     <aside className="app-sidebar">
