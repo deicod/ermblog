@@ -5,6 +5,7 @@ import {
   browserSessionTokenStorage,
 } from "./tokenStorage";
 import type { SessionToken } from "./tokenStorage";
+import { subscribeToSessionUnauthorized } from "./sessionEvents";
 
 export interface SessionContextValue {
   sessionToken: SessionToken | null;
@@ -98,6 +99,39 @@ export function SessionProvider({ children }: PropsWithChildren) {
       window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToSessionUnauthorized(() => {
+      clearSessionToken();
+
+      if (typeof window === "undefined") {
+        return;
+      }
+
+      const { location, history } = window;
+
+      if (location?.pathname === "/login") {
+        return;
+      }
+
+      if (!history || typeof history.pushState !== "function") {
+        return;
+      }
+
+      try {
+        history.pushState(null, "", "/login");
+        const popStateEvent =
+          typeof PopStateEvent === "function"
+            ? new PopStateEvent("popstate")
+            : new Event("popstate");
+        window.dispatchEvent(popStateEvent);
+      } catch {
+        // Ignore navigation errors to avoid breaking the app flow.
+      }
+    });
+
+    return unsubscribe;
+  }, [clearSessionToken]);
 
   const sessionValue = useMemo<SessionContextValue>(
     () => ({ sessionToken }),

@@ -16,6 +16,7 @@ import {
 } from "../SessionProvider";
 import { SESSION_STORAGE_KEY } from "../tokenStorage";
 import { ProtectedRoute } from "../../routes/ProtectedRoute";
+import { dispatchSessionUnauthorized } from "../sessionEvents";
 
 type MockStorage = Storage & { __store: Map<string, string> };
 
@@ -54,6 +55,8 @@ beforeEach(() => {
 
   vi.spyOn(window, "sessionStorage", "get").mockReturnValue(sessionStorageMock);
   vi.spyOn(window, "localStorage", "get").mockReturnValue(localStorageMock);
+
+  window.history.replaceState(null, "", "/");
 });
 
 afterEach(() => {
@@ -186,5 +189,30 @@ describe("SessionProvider", () => {
     });
 
     expect(screen.getByTestId("token-value").textContent).toBe("from-event");
+  });
+
+  it("clears the session when an unauthorized event is dispatched", () => {
+    sessionStorageMock.setItem(
+      SESSION_STORAGE_KEY,
+      JSON.stringify({ accessToken: "existing", tokenType: "Bearer" }),
+    );
+
+    window.history.replaceState(null, "", "/protected");
+
+    render(
+      <SessionProvider>
+        <SessionStateViewer />
+      </SessionProvider>,
+    );
+
+    expect(screen.getByTestId("token-value").textContent).toBe("existing");
+
+    act(() => {
+      dispatchSessionUnauthorized({ status: 401 });
+    });
+
+    expect(screen.getByTestId("token-value").textContent).toBe("none");
+    expect(sessionStorageMock.getItem(SESSION_STORAGE_KEY)).toBeNull();
+    expect(window.location.pathname).toBe("/login");
   });
 });

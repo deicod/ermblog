@@ -6,6 +6,7 @@ import {
   createRelayEnvironment,
 } from "./RelayEnvironment";
 import type { SessionTokenStorage } from "./session/tokenStorage";
+import { SESSION_UNAUTHORIZED_EVENT } from "./session/sessionEvents";
 
 describe("createFetchFn", () => {
   const request = { text: "query Example($id: ID!) { node(id: $id) { id } }" } as const;
@@ -82,6 +83,64 @@ describe("createFetchFn", () => {
       RelayNetworkError,
     );
     expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("dispatches an unauthorized event when a 401 response is returned", async () => {
+    const fetchSpy = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: () =>
+        Promise.resolve(JSON.stringify({ errors: [{ message: "unauthorized" }] })),
+    });
+
+    const listener = vi.fn<(event: Event) => void>();
+    const eventListener = listener as unknown as EventListener;
+    window.addEventListener(SESSION_UNAUTHORIZED_EVENT, eventListener);
+
+    try {
+      const fetchFn = createFetchFn({
+        endpoint: "https://example.test/graphql",
+        fetchImplementation: fetchSpy as unknown as typeof fetch,
+        maxRetries: 0,
+      });
+
+      await expect(fetchFn(request as never, variables)).rejects.toBeInstanceOf(
+        RelayNetworkError,
+      );
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      const event = listener.mock.calls[0][0] as CustomEvent<{ status?: number }>;
+      expect(event.detail?.status).toBe(401);
+    } finally {
+      window.removeEventListener(SESSION_UNAUTHORIZED_EVENT, eventListener);
+    }
+  });
+
+  it("invokes the provided unauthorized handler when supplied", async () => {
+    const fetchSpy = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: () =>
+        Promise.resolve(JSON.stringify({ errors: [{ message: "unauthorized" }] })),
+    });
+
+    const onUnauthorized = vi.fn();
+
+    const fetchFn = createFetchFn({
+      endpoint: "https://example.test/graphql",
+      fetchImplementation: fetchSpy as unknown as typeof fetch,
+      maxRetries: 0,
+      onUnauthorized,
+    });
+
+    await expect(fetchFn(request as never, variables)).rejects.toBeInstanceOf(
+      RelayNetworkError,
+    );
+
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+    const [errorArg, statusArg] = onUnauthorized.mock.calls[0];
+    expect(errorArg).toBeInstanceOf(RelayNetworkError);
+    expect(statusArg).toBe(401);
   });
 
   it("uses runtime environment variables when no endpoint override is provided", async () => {

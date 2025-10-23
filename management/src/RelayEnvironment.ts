@@ -10,6 +10,7 @@ import {
   type SessionToken,
   type SessionTokenStorage,
 } from "./session/tokenStorage";
+import { dispatchSessionUnauthorized } from "./session/sessionEvents";
 
 export interface RelayFetchOptions {
   endpoint?: string;
@@ -18,6 +19,7 @@ export interface RelayFetchOptions {
   maxRetries?: number;
   retryDelayMs?: number;
   authorizationHeaderFormatter?: (token: SessionToken) => string;
+  onUnauthorized?: (error: unknown, status?: number) => void;
 }
 
 export interface CreateRelayEnvironmentOptions {
@@ -110,7 +112,25 @@ function resolveFetchOptions(
     retryDelayMs: options.retryDelayMs ?? runtimeConfig.retryDelayMs,
     authorizationHeaderFormatter:
       options.authorizationHeaderFormatter ?? defaultAuthorizationFormatter,
+    onUnauthorized: options.onUnauthorized,
   };
+}
+
+function extractStatus(error: unknown): number | undefined {
+  if (error instanceof RelayNetworkError) {
+    return error.status;
+  }
+
+  if (typeof Response !== "undefined" && error instanceof Response) {
+    return error.status;
+  }
+
+  if (typeof error === "object" && error !== null && "status" in error) {
+    const candidate = (error as { status?: unknown }).status;
+    return typeof candidate === "number" ? candidate : undefined;
+  }
+
+  return undefined;
 }
 
 export const createFetchFn = (
@@ -124,6 +144,7 @@ export const createFetchFn = (
     maxRetries,
     retryDelayMs,
     authorizationHeaderFormatter,
+    onUnauthorized,
   } = resolveFetchOptions(options, runtimeConfig);
 
   if (typeof endpoint !== "string" || endpoint.length === 0) {
@@ -152,6 +173,16 @@ export const createFetchFn = (
 
     let lastError: unknown;
 
+    const reportUnauthorized =
+      typeof onUnauthorized === "function"
+        ? onUnauthorized
+        : (error: unknown, status?: number) => {
+            dispatchSessionUnauthorized({
+              status: typeof status === "number" ? status : 401,
+              reason: error,
+            });
+          };
+
     for (let attempt = 0; attempt < totalAttempts; attempt += 1) {
       try {
         const headers: Record<string, string> = {
@@ -177,8 +208,12 @@ export const createFetchFn = (
         return await parseGraphQLResponse(response);
       } catch (error) {
         lastError = error;
-        const status =
-          error instanceof RelayNetworkError ? error.status : undefined;
+        const status = extractStatus(error);
+
+        if (status === 401) {
+          reportUnauthorized(error, status);
+        }
+
         const shouldRetry =
           attempt < totalAttempts - 1 &&
           (status === undefined || (status >= 500 && status < 600));
