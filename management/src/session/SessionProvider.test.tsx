@@ -1,18 +1,38 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-  SessionProvider,
-  useAuthActions,
-  useSession,
-} from "./SessionProvider";
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "vitest";
 import { SESSION_STORAGE_KEY } from "./tokenStorage";
 
 afterEach(() => {
   cleanup();
 });
 
+let SessionProvider: typeof import("./SessionProvider")["SessionProvider"];
+let useSession: typeof import("./SessionProvider")["useSession"];
+let useAuthActions: typeof import("./SessionProvider")["useAuthActions"];
+
+beforeAll(async () => {
+  ({ SessionProvider, useSession, useAuthActions } = await vi.importActual(
+    "./SessionProvider",
+  ));
+});
+
+afterAll(() => {
+  SessionProvider = undefined as unknown as typeof SessionProvider;
+  useSession = undefined as unknown as typeof useSession;
+  useAuthActions = undefined as unknown as typeof useAuthActions;
+});
+
 beforeEach(() => {
   window.sessionStorage.clear();
+  window.localStorage.clear();
 });
 
 function TestComponent() {
@@ -102,13 +122,16 @@ describe("SessionProvider", () => {
 
     const serialized = JSON.stringify({ accessToken: "from-other-tab" });
     window.sessionStorage.setItem(SESSION_STORAGE_KEY, serialized);
+    const syncPayload = JSON.stringify({ action: "persist", timestamp: Date.now() });
+    window.localStorage.setItem(`${SESSION_STORAGE_KEY}.sync`, syncPayload);
     window.dispatchEvent(
       new StorageEvent("storage", {
-        key: SESSION_STORAGE_KEY,
-        newValue: serialized,
-        storageArea: window.sessionStorage,
+        key: `${SESSION_STORAGE_KEY}.sync`,
+        newValue: syncPayload,
+        storageArea: window.localStorage,
       }),
     );
+    window.localStorage.removeItem(`${SESSION_STORAGE_KEY}.sync`);
 
     expect(screen.getByTestId("token").textContent).toBe("from-other-tab");
   });

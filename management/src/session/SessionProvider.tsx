@@ -1,6 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { PropsWithChildren } from "react";
-import { SESSION_STORAGE_KEY, browserSessionTokenStorage } from "./tokenStorage";
+import {
+  SESSION_STORAGE_KEY,
+  browserSessionTokenStorage,
+} from "./tokenStorage";
 import type { SessionToken } from "./tokenStorage";
 
 export interface SessionContextValue {
@@ -23,52 +26,36 @@ function readSessionToken(): SessionToken | null {
   return browserSessionTokenStorage.getSessionToken();
 }
 
-interface DispatchOptions {
-  key: string;
-  newValue: string | null;
-  oldValue: string | null;
-}
+const SYNC_STORAGE_KEY = `${SESSION_STORAGE_KEY}.sync`;
 
-function dispatchStorageEvent({ key, newValue, oldValue }: DispatchOptions): void {
+function getLocalStorage(): Storage | null {
   if (typeof window === "undefined") {
-    return;
+    return null;
   }
 
-  if (typeof StorageEvent === "function") {
-    window.dispatchEvent(
-      new StorageEvent("storage", {
-        key,
-        newValue,
-        oldValue,
-        storageArea: window.sessionStorage,
-      }),
-    );
-    return;
+  try {
+    return window.localStorage ?? null;
+  } catch {
+    return null;
   }
-
-  if (
-    typeof document !== "undefined" &&
-    typeof document.createEvent === "function"
-  ) {
-    const event = document.createEvent("StorageEvent");
-    event.initStorageEvent(
-      "storage",
-      false,
-      false,
-      key,
-      oldValue,
-      newValue,
-      typeof window.location !== "undefined" ? window.location.href : "",
-      window.sessionStorage,
-    );
-    window.dispatchEvent(event);
-    return;
-  }
-
-  window.dispatchEvent(new Event("storage"));
 }
 
-export const SessionProvider = ({ children }: PropsWithChildren) => {
+function notifyCrossTabChange(action: "persist" | "clear"): void {
+  const localStorage = getLocalStorage();
+  if (!localStorage) {
+    return;
+  }
+
+  try {
+    const payload = JSON.stringify({ action, timestamp: Date.now() });
+    localStorage.setItem(SYNC_STORAGE_KEY, payload);
+    localStorage.removeItem(SYNC_STORAGE_KEY);
+  } catch {
+    // Ignore sync errors to avoid breaking the app flow.
+  }
+}
+
+export function SessionProvider({ children }: PropsWithChildren) {
   const [sessionToken, setSessionToken] = useState<SessionToken | null>(() =>
     readSessionToken(),
   );
@@ -82,13 +69,8 @@ export const SessionProvider = ({ children }: PropsWithChildren) => {
 
     try {
       const serialized = JSON.stringify(token);
-      const previousValue = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
       window.sessionStorage.setItem(SESSION_STORAGE_KEY, serialized);
-      dispatchStorageEvent({
-        key: SESSION_STORAGE_KEY,
-        newValue: serialized,
-        oldValue: previousValue,
-      });
+      notifyCrossTabChange("persist");
     } catch {
       // Ignore persistence errors to avoid breaking the app flow.
     }
@@ -102,13 +84,8 @@ export const SessionProvider = ({ children }: PropsWithChildren) => {
     }
 
     try {
-      const previousValue = window.sessionStorage.getItem(SESSION_STORAGE_KEY);
       window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
-      dispatchStorageEvent({
-        key: SESSION_STORAGE_KEY,
-        newValue: null,
-        oldValue: previousValue,
-      });
+      notifyCrossTabChange("clear");
     } catch {
       // Ignore persistence errors to avoid breaking the app flow.
     }
@@ -120,12 +97,17 @@ export const SessionProvider = ({ children }: PropsWithChildren) => {
     }
 
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key !== SESSION_STORAGE_KEY) {
+      if (event.key !== SYNC_STORAGE_KEY) {
         return;
       }
 
       setSessionToken(readSessionToken());
     };
+
+    const localStorage = getLocalStorage();
+    if (!localStorage) {
+      return undefined;
+    }
 
     window.addEventListener("storage", handleStorageChange);
 
@@ -151,7 +133,8 @@ export const SessionProvider = ({ children }: PropsWithChildren) => {
       </AuthActionsContext.Provider>
     </SessionContext.Provider>
   );
-};
+}
+
 
 export function useSession(): SessionContextValue {
   const context = useContext(SessionContext);
@@ -170,3 +153,5 @@ export function useAuthActions(): AuthActionsContextValue {
 
   return context;
 }
+
+
