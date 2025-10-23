@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import type { Location } from "react-router-dom";
 
 import { resolveOidcConfig } from "../config/oidcConfig";
 import { createOidcClient } from "../session/oidcClient";
@@ -34,11 +35,20 @@ function extractErrorMessage(code: string | null, description: string | null): s
   return "Login failed. Please try again.";
 }
 
+type LoginLocationState = { from?: Location };
+
 export function LoginRoute() {
-  const location = useLocation();
+  const location = useLocation<LoginLocationState>();
   const navigate = useNavigate();
   const { sessionToken } = useSession();
   const { persistSessionToken, clearSessionToken } = useAuthActions();
+
+  const redirectPathname = useMemo(
+    () => location.state?.from?.pathname ?? "/",
+    [location.state],
+  );
+  const [shouldRedirectAfterAuth, setShouldRedirectAfterAuth] = useState(false);
+  const previousSessionTokenRef = useRef(sessionToken);
 
   const { config, configError } = useMemo(() => {
     try {
@@ -153,7 +163,7 @@ export function LoginRoute() {
       return;
     }
 
-    if (code) {
+    if (code && !sessionToken) {
       const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
       let cancelled = false;
 
@@ -173,9 +183,9 @@ export function LoginRoute() {
 
           browserSessionTokenStorage.setSessionToken(token);
           persistSessionToken(token);
+          setShouldRedirectAfterAuth(true);
           setStatus("authenticated");
           setErrorMessage(null);
-          navigate("/login", { replace: true });
         })
         .catch((error) => {
           if (cancelled) {
@@ -201,13 +211,19 @@ export function LoginRoute() {
       };
     }
 
-    if (!sessionToken) {
-      beginAuthorization();
+    if (sessionToken) {
+      setStatus("authenticated");
+      setErrorMessage(null);
+
+      if (shouldRedirectAfterAuth) {
+        navigate(redirectPathname, { replace: true, state: null });
+        setShouldRedirectAfterAuth(false);
+      }
+
       return;
     }
 
-    setStatus("authenticated");
-    setErrorMessage(null);
+    beginAuthorization();
   }, [
     beginAuthorization,
     code,
@@ -219,9 +235,19 @@ export function LoginRoute() {
     navigate,
     oidcClient,
     persistSessionToken,
+    redirectPathname,
+    shouldRedirectAfterAuth,
     sessionToken,
     state,
   ]);
+
+  useEffect(() => {
+    if (!previousSessionTokenRef.current && sessionToken) {
+      setShouldRedirectAfterAuth(true);
+    }
+
+    previousSessionTokenRef.current = sessionToken;
+  }, [sessionToken]);
 
   const handleLogout = useCallback(() => {
     browserSessionTokenStorage.setSessionToken(null);

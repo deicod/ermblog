@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 
 import { SessionProvider, useSession } from "../../session/SessionProvider";
 import { SESSION_STORAGE_KEY } from "../../session/tokenStorage";
@@ -54,10 +54,16 @@ function SessionStateViewer() {
 }
 
 function renderLogin(initialEntries: string[]) {
+  function LocationViewer() {
+    const location = useLocation();
+    return <div data-testid="location-indicator">{location.pathname}</div>;
+  }
+
   return render(
     <SessionProvider>
       <SessionStateViewer />
       <MemoryRouter initialEntries={initialEntries}>
+        <LocationViewer />
         <Routes>
           <Route path="/" element={<div>Home</div>} />
           <Route path="/login" element={<LoginRoute />} />
@@ -118,7 +124,10 @@ describe("LoginRoute", () => {
       expect(screen.getByTestId("session-indicator").textContent).toBe("access-token");
     });
 
-    await screen.findByText("You are signed in.");
+    await waitFor(() => {
+      expect(screen.getByTestId("location-indicator").textContent).toBe("/");
+    });
+    expect(screen.queryByText("You are signed in.")).not.toBeInTheDocument();
     expect(window.location.assign).not.toHaveBeenCalled();
   });
 
