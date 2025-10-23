@@ -203,8 +203,18 @@ async function exchangeAuthorizationCode(
     throw new Error("No pending authorization request was found.");
   }
 
-  if (options.state && pending.state && options.state !== pending.state) {
-    throw new Error("The authorization response state did not match the original request.");
+  if (pending.state) {
+    if (!options.state) {
+      throw new Error(
+        "The authorization response did not include the expected state parameter.",
+      );
+    }
+
+    if (options.state !== pending.state) {
+      throw new Error(
+        "The authorization response state did not match the original request.",
+      );
+    }
   }
 
   const body = new URLSearchParams({
