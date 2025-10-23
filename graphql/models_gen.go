@@ -620,6 +620,13 @@ type UserEdge struct {
 	Node   *User  `json:"node,omitempty"`
 }
 
+type Viewer struct {
+	ID          string  `json:"id"`
+	DisplayName *string `json:"displayName,omitempty"`
+	Email       *string `json:"email,omitempty"`
+	AvatarURL   *string `json:"avatarURL,omitempty"`
+}
+
 type CommentStatus string
 
 const (
