@@ -1,9 +1,11 @@
 import { act, useEffect } from "react";
 import { cleanup, render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { RouterProvider, createMemoryRouter } from "react-router-dom";
+import { Outlet, RouterProvider, createMemoryRouter } from "react-router-dom";
 
 import { SessionProvider, useAuthActions } from "../../session/SessionProvider";
+import { SessionRedirector } from "../../session/SessionRedirector";
+import { dispatchSessionUnauthorized } from "../../session/sessionEvents";
 import { ProtectedRoute } from "../ProtectedRoute";
 import { LoginRoute } from "../login";
 
@@ -45,6 +47,37 @@ vi.mock("../../config/oidcConfig", () => ({
   resolveOidcConfig: mocks.resolveOidcConfig,
 }));
 
+function createRouter(initialEntries: string[]) {
+  return createMemoryRouter(
+    [
+      {
+        path: "/",
+        element: (
+          <>
+            <SessionRedirector />
+            <Outlet />
+          </>
+        ),
+        children: [
+          {
+            path: "login",
+            element: <LoginRoute />,
+          },
+          {
+            path: "posts",
+            element: (
+              <ProtectedRoute>
+                <div>Posts content</div>
+              </ProtectedRoute>
+            ),
+          },
+        ],
+      },
+    ],
+    { initialEntries },
+  );
+}
+
 describe("protected route login flow", () => {
   let originalLocationAssign: typeof window.location.assign;
 
@@ -73,23 +106,7 @@ describe("protected route login flow", () => {
       state: "generated-state",
     });
 
-    const router = createMemoryRouter(
-      [
-        {
-          path: "/login",
-          element: <LoginRoute />,
-        },
-        {
-          path: "/posts",
-          element: (
-            <ProtectedRoute>
-              <div>Posts content</div>
-            </ProtectedRoute>
-          ),
-        },
-      ],
-      { initialEntries: ["/posts"] },
-    );
+    const router = createRouter(["/posts"]);
 
     let persistSession: ReturnType<typeof useAuthActions>["persistSessionToken"] | null =
       null;
@@ -135,5 +152,56 @@ describe("protected route login flow", () => {
     });
 
     expect(router.state.location.state).toBeNull();
+  });
+
+  it("redirects to login with the current location when a session unauthorized event is dispatched", async () => {
+    const router = createRouter(["/posts"]);
+
+    let persistSession: ReturnType<typeof useAuthActions>["persistSessionToken"] | null =
+      null;
+
+    function PersistSessionHandle() {
+      const { persistSessionToken } = useAuthActions();
+
+      useEffect(() => {
+        persistSession = persistSessionToken;
+        return () => {
+          persistSession = null;
+        };
+      }, [persistSessionToken]);
+
+      return null;
+    }
+
+    render(
+      <SessionProvider>
+        <PersistSessionHandle />
+        <RouterProvider router={router} />
+      </SessionProvider>,
+    );
+
+    await waitFor(() => {
+      expect(persistSession).toBeTypeOf("function");
+    });
+
+    act(() => {
+      persistSession!({ accessToken: "access-token", tokenType: "Bearer" });
+    });
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/posts");
+    });
+
+    act(() => {
+      dispatchSessionUnauthorized({ status: 401 });
+    });
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/login");
+    });
+
+    expect(router.state.location.state).toMatchObject({
+      from: { pathname: "/posts", search: "", hash: "" },
+    });
   });
 });

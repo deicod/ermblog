@@ -213,6 +213,6 @@ describe("SessionProvider", () => {
 
     expect(screen.getByTestId("token-value").textContent).toBe("none");
     expect(sessionStorageMock.getItem(SESSION_STORAGE_KEY)).toBeNull();
-    expect(window.location.pathname).toBe("/login");
+    expect(window.location.pathname).toBe("/protected");
   });
 });

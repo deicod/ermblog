@@ -1,7 +1,9 @@
+import { Outlet } from "react-router-dom";
+
+import { SessionRedirector } from "../../session/SessionRedirector";
 import { BREADCRUMB_ARIA_LABEL, BREADCRUMB_PLACEHOLDER_TEXT } from "./constants";
 import { AppHeader } from "./AppHeader";
 import { AppSidebar } from "./AppSidebar";
-import { Outlet } from "react-router-dom";
 
 function BreadcrumbPlaceholder() {
   return (
@@ -19,6 +21,7 @@ function BreadcrumbPlaceholder() {
 export function AppShell() {
   return (
     <div className="app-shell">
+      <SessionRedirector />
       <AppSidebar />
       <div className="app-shell__chrome">
         <AppHeader />
