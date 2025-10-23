@@ -103,31 +103,6 @@ export function SessionProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     const unsubscribe = subscribeToSessionUnauthorized(() => {
       clearSessionToken();
-
-      if (typeof window === "undefined") {
-        return;
-      }
-
-      const { location, history } = window;
-
-      if (location?.pathname === "/login") {
-        return;
-      }
-
-      if (!history || typeof history.pushState !== "function") {
-        return;
-      }
-
-      try {
-        history.pushState(null, "", "/login");
-        const popStateEvent =
-          typeof PopStateEvent === "function"
-            ? new PopStateEvent("popstate")
-            : new Event("popstate");
-        window.dispatchEvent(popStateEvent);
-      } catch {
-        // Ignore navigation errors to avoid breaking the app flow.
-      }
     });
 
     return unsubscribe;
