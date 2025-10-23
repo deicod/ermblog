@@ -1,0 +1,157 @@
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import type { PropsWithChildren } from "react";
+import {
+  SESSION_STORAGE_KEY,
+  browserSessionTokenStorage,
+} from "./tokenStorage";
+import type { SessionToken } from "./tokenStorage";
+
+export interface SessionContextValue {
+  sessionToken: SessionToken | null;
+}
+
+export interface AuthActionsContextValue {
+  persistSessionToken: (token: SessionToken) => void;
+  clearSessionToken: () => void;
+}
+
+const SessionContext = createContext<SessionContextValue | undefined>(
+  undefined,
+);
+const AuthActionsContext = createContext<AuthActionsContextValue | undefined>(
+  undefined,
+);
+
+function readSessionToken(): SessionToken | null {
+  return browserSessionTokenStorage.getSessionToken();
+}
+
+const SYNC_STORAGE_KEY = `${SESSION_STORAGE_KEY}.sync`;
+
+function getLocalStorage(): Storage | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return window.localStorage ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function notifyCrossTabChange(action: "persist" | "clear"): void {
+  const localStorage = getLocalStorage();
+  if (!localStorage) {
+    return;
+  }
+
+  try {
+    const payload = JSON.stringify({ action, timestamp: Date.now() });
+    localStorage.setItem(SYNC_STORAGE_KEY, payload);
+    localStorage.removeItem(SYNC_STORAGE_KEY);
+  } catch {
+    // Ignore sync errors to avoid breaking the app flow.
+  }
+}
+
+export function SessionProvider({ children }: PropsWithChildren) {
+  const [sessionToken, setSessionToken] = useState<SessionToken | null>(() =>
+    readSessionToken(),
+  );
+
+  const persistSessionToken = useCallback((token: SessionToken) => {
+    setSessionToken(token);
+
+    if (typeof window === "undefined" || !window.sessionStorage) {
+      return;
+    }
+
+    try {
+      const serialized = JSON.stringify(token);
+      window.sessionStorage.setItem(SESSION_STORAGE_KEY, serialized);
+      notifyCrossTabChange("persist");
+    } catch {
+      // Ignore persistence errors to avoid breaking the app flow.
+    }
+  }, []);
+
+  const clearSessionToken = useCallback(() => {
+    setSessionToken(null);
+
+    if (typeof window === "undefined" || !window.sessionStorage) {
+      return;
+    }
+
+    try {
+      window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      notifyCrossTabChange("clear");
+    } catch {
+      // Ignore persistence errors to avoid breaking the app flow.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key !== SYNC_STORAGE_KEY) {
+        return;
+      }
+
+      setSessionToken(readSessionToken());
+    };
+
+    const localStorage = getLocalStorage();
+    if (!localStorage) {
+      return undefined;
+    }
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  const sessionValue = useMemo<SessionContextValue>(
+    () => ({ sessionToken }),
+    [sessionToken],
+  );
+
+  const authActionsValue = useMemo<AuthActionsContextValue>(
+    () => ({ persistSessionToken, clearSessionToken }),
+    [persistSessionToken, clearSessionToken],
+  );
+
+  return (
+    <SessionContext.Provider value={sessionValue}>
+      <AuthActionsContext.Provider value={authActionsValue}>
+        {children}
+      </AuthActionsContext.Provider>
+    </SessionContext.Provider>
+  );
+}
+
+
+export function useSession(): SessionContextValue {
+  const context = useContext(SessionContext);
+  if (!context) {
+    throw new Error("useSession must be used within a SessionProvider");
+  }
+
+  return context;
+}
+
+export function useAuthActions(): AuthActionsContextValue {
+  const context = useContext(AuthActionsContext);
+  if (!context) {
+    throw new Error("useAuthActions must be used within a SessionProvider");
+  }
+
+  return context;
+}
+
+
