@@ -115,6 +115,80 @@ func TestValidatorMiddleware(t *testing.T) {
 	}
 }
 
+func TestValidatorFallsBackToCachedKeyWhenRefreshFails(t *testing.T) {
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("generate key: %v", err)
+	}
+	modulus := base64.RawURLEncoding.EncodeToString(key.N.Bytes())
+	exponent := base64.RawURLEncoding.EncodeToString(bigIntBytes(key.E))
+
+	mux := http.NewServeMux()
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+
+	jwks := map[string]any{
+		"keys": []map[string]any{
+			{
+				"kty": "RSA",
+				"kid": "test-key",
+				"n":   modulus,
+				"e":   exponent,
+			},
+		},
+	}
+
+	mux.HandleFunc("/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"jwks_uri": server.URL + "/jwks",
+		})
+	})
+
+	var failJWKS bool
+	mux.HandleFunc("/jwks", func(w http.ResponseWriter, r *http.Request) {
+		if failJWKS {
+			http.Error(w, "boom", http.StatusInternalServerError)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(jwks)
+	})
+
+	now := time.Now()
+	validator, err := NewValidator(context.Background(), server.URL, "ermblog", WithCacheTTL(time.Second), withNow(func() time.Time {
+		return now
+	}))
+	if err != nil {
+		t.Fatalf("create validator: %v", err)
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+		"iss": server.URL,
+		"aud": "ermblog",
+		"sub": "user-123",
+		"exp": now.Add(time.Hour).Unix(),
+	})
+	token.Header["kid"] = "test-key"
+	signed, err := token.SignedString(key)
+	if err != nil {
+		t.Fatalf("sign token: %v", err)
+	}
+
+	if _, err := validator.ValidateToken(context.Background(), signed); err != nil {
+		t.Fatalf("validate token (initial): %v", err)
+	}
+
+	failJWKS = true
+	now = now.Add(2 * time.Second)
+
+	claims, err := validator.ValidateToken(context.Background(), signed)
+	if err != nil {
+		t.Fatalf("validate token with stale keys: %v", err)
+	}
+	if claims.Subject != "user-123" {
+		t.Fatalf("unexpected subject: %s", claims.Subject)
+	}
+}
+
 func bigIntBytes(v int) []byte {
 	b := big.NewInt(int64(v)).Bytes()
 	if len(b) == 0 {

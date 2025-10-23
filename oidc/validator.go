@@ -164,6 +164,12 @@ func (v *Validator) getKey(ctx context.Context, kid string) (crypto.PublicKey, e
 	}
 
 	if err := v.refreshKeys(ctx); err != nil {
+		v.mu.RLock()
+		key, ok = v.keys[kid]
+		v.mu.RUnlock()
+		if ok {
+			return key, nil
+		}
 		return nil, err
 	}
 
