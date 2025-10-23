@@ -1,4 +1,5 @@
-import { ROUTE_CONFIG, type RouteId } from "../../routes/config";
+import { ROUTE_CONFIG, type RouteId, type RouteDefinition } from "../../routes/config";
+import type { SessionToken } from "../../session/tokenStorage";
 
 export type NavigationItem = {
   id: RouteId;
@@ -11,6 +12,7 @@ export type NavigationItem = {
 const NAVIGATION_BLUEPRINT = [
   { id: "dashboard", icon: "📊" },
   { id: "posts", icon: "📝" },
+  { id: "login", icon: "🔐" },
 ] as const satisfies ReadonlyArray<{ id: RouteId; icon: string }>;
 
 function resolveRoute(id: RouteId, routeConfig = ROUTE_CONFIG) {
@@ -21,17 +23,36 @@ function resolveRoute(id: RouteId, routeConfig = ROUTE_CONFIG) {
   return route;
 }
 
-export function createNavigationItems(routeConfig = ROUTE_CONFIG): NavigationItem[] {
-  return NAVIGATION_BLUEPRINT.map(({ id, icon }) => {
+export interface CreateNavigationItemsOptions {
+  routeConfig?: RouteDefinition[];
+  sessionToken?: SessionToken | null;
+}
+
+export function createNavigationItems(
+  options: CreateNavigationItemsOptions = {},
+): NavigationItem[] {
+  const routeConfig = options.routeConfig ?? ROUTE_CONFIG;
+  const hasSession = Boolean(options.sessionToken);
+
+  return NAVIGATION_BLUEPRINT.reduce<NavigationItem[]>((items, { id, icon }) => {
     const route = resolveRoute(id, routeConfig);
-    return {
+    const requiresAuth = route.requiresAuth !== false;
+    const shouldInclude = requiresAuth ? hasSession : !hasSession;
+
+    if (!shouldInclude) {
+      return items;
+    }
+
+    items.push({
       id,
       icon,
       label: route.title,
       description: route.description,
       to: route.href,
-    } satisfies NavigationItem;
-  });
+    });
+
+    return items;
+  }, []);
 }
 
 export const NAVIGATION_IDS_IN_ORDER: RouteId[] = NAVIGATION_BLUEPRINT.map(({ id }) => id);
