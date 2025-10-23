@@ -26,6 +26,11 @@ type Resolver struct {
 	collector     metrics.Collector
 	subscriptions subscriptions.Broker
 	hooks         entityHooks
+	users         userProvider
+}
+
+type userProvider interface {
+	ByID(ctx context.Context, id string) (*gen.User, error)
 }
 
 // New creates a resolver root bound to the provided ORM client.
@@ -41,6 +46,9 @@ func NewWithOptions(opts Options) *Resolver {
 	}
 	resolver := &Resolver{ORM: opts.ORM, collector: collector, subscriptions: opts.Subscriptions}
 	resolver.hooks = newEntityHooks()
+	if resolver.ORM != nil {
+		resolver.users = resolver.ORM.Users()
+	}
 	return resolver
 }
 
@@ -51,6 +59,19 @@ func (r *Resolver) WithLoaders(ctx context.Context) context.Context {
 	}
 	loaders := dataloaders.New(r.ORM, r.collector)
 	return dataloaders.ToContext(ctx, loaders)
+}
+
+func (r *Resolver) userClient() userProvider {
+	if r == nil {
+		return nil
+	}
+	if r.users != nil {
+		return r.users
+	}
+	if r.ORM != nil {
+		return r.ORM.Users()
+	}
+	return nil
 }
 
 func (r *Resolver) Mutation() graphql.MutationResolver { return &mutationResolver{r} }

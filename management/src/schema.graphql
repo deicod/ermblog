@@ -16,6 +16,7 @@ directive @auth(roles: [String!]) on FIELD_DEFINITION
 type Query {
     node(id: ID!): Node
     health: String!
+    viewer: Viewer
     category(id: ID!): Category
     categories(
         first: Int
@@ -52,6 +53,13 @@ type Query {
     tags(first: Int, after: String, last: Int, before: String): TagConnection!
     user(id: ID!): User
     users(first: Int, after: String, last: Int, before: String): UserConnection!
+}
+
+type Viewer {
+    id: ID!
+    displayName: String
+    email: String
+    avatarURL: String
 }
 
 type Mutation {

@@ -1,0 +1,10 @@
+extend type Query {
+  viewer: Viewer
+}
+
+type Viewer {
+  id: ID!
+  displayName: String
+  email: String
+  avatarURL: String
+}
