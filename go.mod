@@ -5,6 +5,7 @@ go 1.25.3
 require (
 	github.com/99designs/gqlgen v0.17.81
 	github.com/deicod/erm v0.0.0-20251017231145-1a5b7be4cf58
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/vektah/gqlparser/v2 v2.5.30
 	gopkg.in/yaml.v3 v3.0.1
