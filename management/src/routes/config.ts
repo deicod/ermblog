@@ -1,5 +1,7 @@
 import type { RouteObject } from "react-router-dom";
 
+import { wrapWithGuard } from "./wrapWithGuard";
+
 export const ROUTE_IDS = {
   login: "login",
   dashboard: "dashboard",
@@ -56,9 +58,9 @@ export const ROUTE_CONFIG: RouteDefinition[] = [
 ];
 
 export function buildChildRoutes(): RouteObject[] {
-  return ROUTE_CONFIG.map(({ id, lazy, path, index }) => ({
+  return ROUTE_CONFIG.map(({ id, lazy, path, index, requiresAuth }) => ({
     id,
-    lazy,
+    lazy: wrapWithGuard(lazy, requiresAuth),
     path,
     index,
   }));
