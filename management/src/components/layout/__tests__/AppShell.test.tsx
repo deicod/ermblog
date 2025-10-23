@@ -3,6 +3,8 @@ import { fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 
+import { createNavigationItems } from "../navigation";
+
 const TEST_DIR = dirname(fileURLToPath(import.meta.url));
 const SRC_ROOT = resolve(TEST_DIR, "..", "..", "..");
 
@@ -81,5 +83,17 @@ describe("navigation metadata", () => {
     expect(navigationSource).toContain("NAVIGATION_BLUEPRINT");
     expect(navigationSource).toContain("to: route.href");
     expect(navigationSource).toContain("route.requiresAuth !== false");
+  });
+
+  test("exposes login navigation entry when signed out", () => {
+    const items = createNavigationItems({ sessionToken: null });
+    expect(items.map((item) => item.id)).toContain("login");
+  });
+
+  test("hides login navigation entry once authenticated", () => {
+    const items = createNavigationItems({
+      sessionToken: { accessToken: "token", tokenType: "Bearer" },
+    });
+    expect(items.map((item) => item.id)).not.toContain("login");
   });
 });

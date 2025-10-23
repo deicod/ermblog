@@ -1,4 +1,9 @@
-import { ROUTE_CONFIG, type RouteId, type RouteDefinition } from "../../routes/config";
+import {
+  ROUTE_CONFIG,
+  getRouteDefinition,
+  type RouteId,
+  type RouteDefinition,
+} from "../../routes/config";
 import type { SessionToken } from "../../session/tokenStorage";
 
 export type NavigationItem = {
@@ -16,11 +21,7 @@ const NAVIGATION_BLUEPRINT = [
 ] as const satisfies ReadonlyArray<{ id: RouteId; icon: string }>;
 
 function resolveRoute(id: RouteId, routeConfig = ROUTE_CONFIG) {
-  const route = routeConfig.find((entry) => entry.id === id);
-  if (!route) {
-    throw new Error(`Missing route configuration for navigation id "${id}"`);
-  }
-  return route;
+  return getRouteDefinition(id, routeConfig);
 }
 
 export interface CreateNavigationItemsOptions {

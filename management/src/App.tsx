@@ -2,13 +2,23 @@ import { Suspense } from "react";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import { AppShell } from "./components/layout/AppShell";
 import { AppShellSkeleton } from "./components/layout/LayoutSkeleton";
-import { buildChildRoutes } from "./routes/config";
+import {
+  ROUTE_IDS,
+  buildChildRoutes,
+  createRouteObject,
+  getRouteDefinition,
+} from "./routes/config";
+
+const loginRoute = createRouteObject(getRouteDefinition(ROUTE_IDS.login), {
+  useHref: true,
+});
 
 const router = createBrowserRouter([
+  loginRoute,
   {
     path: "/",
-    element: <AppShell />, 
-    children: buildChildRoutes(),
+    element: <AppShell />,
+    children: buildChildRoutes({ includePublic: false }),
   },
 ]);
 
