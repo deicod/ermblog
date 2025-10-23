@@ -5,12 +5,15 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import { SessionProvider } from "./session/SessionProvider";
+import { ErrorBoundaryProvider } from "./providers/ErrorBoundaryProvider";
 
 createRoot(document.getElementById("root")!).render(
   <RelayEnvironmentProvider environment={RelayEnvironment}>
     <SessionProvider>
       <StrictMode>
-        <App />
+        <ErrorBoundaryProvider>
+          <App />
+        </ErrorBoundaryProvider>
       </StrictMode>
     </SessionProvider>
   </RelayEnvironmentProvider>
