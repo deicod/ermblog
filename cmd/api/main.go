@@ -14,6 +14,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/deicod/ermblog/graphql/server"
 	"github.com/deicod/ermblog/observability/metrics"
+	"github.com/deicod/ermblog/oidc"
 	"github.com/deicod/ermblog/orm/gen"
 
 	"github.com/deicod/erm/orm/pg"
@@ -58,15 +59,30 @@ func main() {
 
 	graphqlServer := server.NewServer(gqlOpts)
 
+	var graphqlHandler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := server.WithLoaders(r.Context(), gqlOpts)
+		graphqlServer.ServeHTTP(w, r.WithContext(ctx))
+	})
+
+	oidcIssuer, oidcAudience := resolveOIDCConfig(cfg.OIDC)
+	if oidcIssuer == "" {
+		log.Fatal("oidc issuer is empty; set oidc.issuer in erm.yaml or export ERM_OIDC_ISSUER")
+	}
+	if oidcAudience == "" {
+		log.Fatal("oidc audience is empty; set oidc.audience in erm.yaml or export ERM_OIDC_AUDIENCE")
+	}
+	validator, err := oidc.NewValidator(ctx, oidcIssuer, oidcAudience)
+	if err != nil {
+		log.Fatalf("configure oidc validator: %v", err)
+	}
+	graphqlHandler = validator.Middleware(graphqlHandler)
+
 	graphqlPath := resolveGraphQLPath(cfg.GraphQL)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", healthHandler)
 	mux.Handle("/", playground.Handler("graphql", graphqlPath))
-	mux.Handle(graphqlPath, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := server.WithLoaders(r.Context(), gqlOpts)
-		graphqlServer.ServeHTTP(w, r.WithContext(ctx))
-	}))
+	mux.Handle(graphqlPath, graphqlHandler)
 
 	addr := resolveHTTPAddr()
 	srv := &http.Server{
@@ -110,6 +126,7 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 type config struct {
 	Database databaseConfig `yaml:"database"`
 	GraphQL  graphQLConfig  `yaml:"graphql"`
+	OIDC     oidcConfig     `yaml:"oidc"`
 }
 
 type databaseConfig struct {
@@ -159,6 +176,11 @@ type graphQLConfig struct {
 			GraphQLWS bool `yaml:"graphql_ws"`
 		} `yaml:"transports"`
 	} `yaml:"subscriptions"`
+}
+
+type oidcConfig struct {
+	Issuer   string `yaml:"issuer"`
+	Audience string `yaml:"audience"`
 }
 
 func loadConfig(path string) (config, error) {
@@ -224,6 +246,18 @@ func resolveHTTPAddr() string {
 		return ":" + port
 	}
 	return ":8080"
+}
+
+func resolveOIDCConfig(cfg oidcConfig) (string, string) {
+	issuer := os.Getenv("ERM_OIDC_ISSUER")
+	if issuer == "" {
+		issuer = cfg.Issuer
+	}
+	audience := os.Getenv("ERM_OIDC_AUDIENCE")
+	if audience == "" {
+		audience = cfg.Audience
+	}
+	return issuer, audience
 }
 
 func (pc poolConfig) option() pg.Option {
