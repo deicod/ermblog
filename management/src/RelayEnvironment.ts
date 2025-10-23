@@ -130,17 +130,24 @@ export const createFetchFn = (
     throw new RelayNetworkError("A GraphQL HTTP endpoint must be provided.");
   }
 
-  if (typeof fetchImplementation !== "function") {
-    throw new RelayNetworkError(
-      "A fetch implementation must be supplied for the Relay network.",
-    );
-  }
-
   const totalAttempts = Math.max(0, maxRetries) + 1;
 
   return async (request, variables) => {
     if (!request.text) {
       throw new RelayNetworkError("The Relay request is missing a GraphQL query.");
+    }
+
+    const activeFetch =
+      typeof fetchImplementation === "function"
+        ? fetchImplementation
+        : typeof globalThis.fetch === "function"
+          ? globalThis.fetch
+          : undefined;
+
+    if (typeof activeFetch !== "function") {
+      throw new RelayNetworkError(
+        "A fetch implementation must be supplied for the Relay network.",
+      );
     }
 
     let lastError: unknown;
@@ -158,7 +165,7 @@ export const createFetchFn = (
           headers.Authorization = authorizationHeaderFormatter(sessionToken);
         }
 
-        const response = await fetchImplementation(endpoint, {
+        const response = await activeFetch(endpoint, {
           method: "POST",
           headers,
           body: JSON.stringify({

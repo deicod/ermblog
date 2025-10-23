@@ -112,6 +112,27 @@ describe("createFetchFn", () => {
       }
     }
   });
+
+  it("defers fetch availability validation until the request executes", async () => {
+    const previousFetch = globalThis.fetch;
+    // @ts-expect-error - simulate environments without fetch available at import time.
+    globalThis.fetch = undefined;
+
+    try {
+      const fetchFn = createFetchFn({
+        endpoint: "https://example.test/graphql",
+        // @ts-expect-error - ensure no fetch implementation provided.
+        fetchImplementation: undefined,
+        maxRetries: 0,
+      });
+
+      await expect(fetchFn(request as never, variables)).rejects.toThrow(
+        "A fetch implementation must be supplied for the Relay network.",
+      );
+    } finally {
+      globalThis.fetch = previousFetch;
+    }
+  });
 });
 
 describe("createRelayEnvironment", () => {
