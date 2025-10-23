@@ -57,13 +57,52 @@ export const ROUTE_CONFIG: RouteDefinition[] = [
   },
 ];
 
-export function buildChildRoutes(): RouteObject[] {
-  return ROUTE_CONFIG.map(({ id, lazy, path, index, requiresAuth }) => ({
-    id,
-    lazy: wrapWithGuard(lazy, requiresAuth),
+export interface BuildChildRoutesOptions {
+  includePublic?: boolean;
+}
+
+export function getRouteDefinition(
+  routeId: RouteId,
+  routeConfig: RouteDefinition[] = ROUTE_CONFIG,
+): RouteDefinition {
+  const definition = routeConfig.find((entry) => entry.id === routeId);
+
+  if (!definition) {
+    throw new Error(`Missing route configuration for id "${routeId}"`);
+  }
+
+  return definition;
+}
+
+export interface CreateRouteObjectOptions {
+  useHref?: boolean;
+}
+
+export function createRouteObject(
+  definition: RouteDefinition,
+  options: CreateRouteObjectOptions = {},
+): RouteObject {
+  const { useHref = false } = options;
+  const path = definition.index
+    ? undefined
+    : useHref
+    ? definition.href
+    : definition.path;
+
+  return {
+    id: definition.id,
+    lazy: wrapWithGuard(definition.lazy, definition.requiresAuth),
+    index: definition.index,
     path,
-    index,
-  }));
+  };
+}
+
+export function buildChildRoutes(options: BuildChildRoutesOptions = {}): RouteObject[] {
+  const { includePublic = true } = options;
+
+  return ROUTE_CONFIG.filter((definition) => includePublic || definition.requiresAuth !== false).map(
+    (definition) => createRouteObject(definition),
+  );
 }
 
 const ROUTE_SNAPSHOT = {
