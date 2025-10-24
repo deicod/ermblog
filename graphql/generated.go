@@ -269,6 +269,7 @@ type ComplexityRoot struct {
 	}
 
 	Post struct {
+		Author          func(childComplexity int) int
 		AuthorID        func(childComplexity int) int
 		Content         func(childComplexity int) int
 		CreatedAt       func(childComplexity int) int
@@ -1433,6 +1434,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.PageInfo.StartCursor(childComplexity), true
 
+	case "Post.author":
+		if e.complexity.Post.Author == nil {
+			break
+		}
+
+		return e.complexity.Post.Author(childComplexity), true
 	case "Post.authorID":
 		if e.complexity.Post.AuthorID == nil {
 			break
@@ -4313,6 +4320,8 @@ func (ec *executionContext) fieldContext_CreatePostPayload_post(_ context.Contex
 				return ec.fieldContext_Post_id(ctx, field)
 			case "authorID":
 				return ec.fieldContext_Post_authorID(ctx, field)
+			case "author":
+				return ec.fieldContext_Post_author(ctx, field)
 			case "featuredMediaID":
 				return ec.fieldContext_Post_featuredMediaID(ctx, field)
 			case "title":
@@ -7888,6 +7897,59 @@ func (ec *executionContext) fieldContext_Post_authorID(_ context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _Post_author(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Post_author,
+		func(ctx context.Context) (any, error) {
+			return obj.Author, nil
+		},
+		nil,
+		ec.marshalOUser2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐUser,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Post_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "passwordHash":
+				return ec.fieldContext_User_passwordHash(ctx, field)
+			case "displayName":
+				return ec.fieldContext_User_displayName(ctx, field)
+			case "bio":
+				return ec.fieldContext_User_bio(ctx, field)
+			case "avatarURL":
+				return ec.fieldContext_User_avatarURL(ctx, field)
+			case "websiteURL":
+				return ec.fieldContext_User_websiteURL(ctx, field)
+			case "lastLoginAt":
+				return ec.fieldContext_User_lastLoginAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_User_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_User_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Post_featuredMediaID(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -8367,6 +8429,8 @@ func (ec *executionContext) fieldContext_PostEdge_node(_ context.Context, field 
 				return ec.fieldContext_Post_id(ctx, field)
 			case "authorID":
 				return ec.fieldContext_Post_authorID(ctx, field)
+			case "author":
+				return ec.fieldContext_Post_author(ctx, field)
 			case "featuredMediaID":
 				return ec.fieldContext_Post_featuredMediaID(ctx, field)
 			case "title":
@@ -8941,6 +9005,8 @@ func (ec *executionContext) fieldContext_Query_post(ctx context.Context, field g
 				return ec.fieldContext_Post_id(ctx, field)
 			case "authorID":
 				return ec.fieldContext_Post_authorID(ctx, field)
+			case "author":
+				return ec.fieldContext_Post_author(ctx, field)
 			case "featuredMediaID":
 				return ec.fieldContext_Post_featuredMediaID(ctx, field)
 			case "title":
@@ -10203,6 +10269,8 @@ func (ec *executionContext) fieldContext_Subscription_postCreated(_ context.Cont
 				return ec.fieldContext_Post_id(ctx, field)
 			case "authorID":
 				return ec.fieldContext_Post_authorID(ctx, field)
+			case "author":
+				return ec.fieldContext_Post_author(ctx, field)
 			case "featuredMediaID":
 				return ec.fieldContext_Post_featuredMediaID(ctx, field)
 			case "title":
@@ -10278,6 +10346,8 @@ func (ec *executionContext) fieldContext_Subscription_postUpdated(_ context.Cont
 				return ec.fieldContext_Post_id(ctx, field)
 			case "authorID":
 				return ec.fieldContext_Post_authorID(ctx, field)
+			case "author":
+				return ec.fieldContext_Post_author(ctx, field)
 			case "featuredMediaID":
 				return ec.fieldContext_Post_featuredMediaID(ctx, field)
 			case "title":
@@ -11440,6 +11510,8 @@ func (ec *executionContext) fieldContext_UpdatePostPayload_post(_ context.Contex
 				return ec.fieldContext_Post_id(ctx, field)
 			case "authorID":
 				return ec.fieldContext_Post_authorID(ctx, field)
+			case "author":
+				return ec.fieldContext_Post_author(ctx, field)
 			case "featuredMediaID":
 				return ec.fieldContext_Post_featuredMediaID(ctx, field)
 			case "title":
@@ -17219,6 +17291,8 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "author":
+			out.Values[i] = ec._Post_author(ctx, field, obj)
 		case "authorID":
 			out.Values[i] = ec._Post_authorID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
