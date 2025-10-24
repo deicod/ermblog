@@ -85,7 +85,7 @@ describe("navigation metadata", () => {
   }
 
   test("mirrors route configuration for primary items", () => {
-    expect(navIds).toEqual(["dashboard", "posts", "comments", "login"]);
+    expect(navIds).toEqual(["dashboard", "posts", "comments", "taxonomies", "login"]);
     expect(navigationSource).toContain("NAVIGATION_BLUEPRINT");
     expect(navigationSource).toContain("to: route.href");
     expect(navigationSource).toContain("route.requiresAuth !== false");
