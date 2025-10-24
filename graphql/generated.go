@@ -269,7 +269,6 @@ type ComplexityRoot struct {
 	}
 
 	Post struct {
-		Author          func(childComplexity int) int
 		AuthorID        func(childComplexity int) int
 		Content         func(childComplexity int) int
 		CreatedAt       func(childComplexity int) int
@@ -417,17 +416,16 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		AvatarURL    func(childComplexity int) int
-		Bio          func(childComplexity int) int
-		CreatedAt    func(childComplexity int) int
-		DisplayName  func(childComplexity int) int
-		Email        func(childComplexity int) int
-		ID           func(childComplexity int) int
-		LastLoginAt  func(childComplexity int) int
-		PasswordHash func(childComplexity int) int
-		UpdatedAt    func(childComplexity int) int
-		Username     func(childComplexity int) int
-		WebsiteURL   func(childComplexity int) int
+		AvatarURL   func(childComplexity int) int
+		Bio         func(childComplexity int) int
+		CreatedAt   func(childComplexity int) int
+		DisplayName func(childComplexity int) int
+		Email       func(childComplexity int) int
+		ID          func(childComplexity int) int
+		LastLoginAt func(childComplexity int) int
+		UpdatedAt   func(childComplexity int) int
+		Username    func(childComplexity int) int
+		WebsiteURL  func(childComplexity int) int
 	}
 
 	UserConnection struct {
@@ -482,13 +480,13 @@ type QueryResolver interface {
 	Category(ctx context.Context, id string) (*Category, error)
 	Categories(ctx context.Context, first *int, after *string, last *int, before *string) (*CategoryConnection, error)
 	Comment(ctx context.Context, id string) (*Comment, error)
-	Comments(ctx context.Context, first *int, after *string, last *int, before *string, status *CommentStatus) (*CommentConnection, error)
+	Comments(ctx context.Context, first *int, after *string, last *int, before *string) (*CommentConnection, error)
 	Media(ctx context.Context, id string) (*Media, error)
 	Medias(ctx context.Context, first *int, after *string, last *int, before *string) (*MediaConnection, error)
 	Option(ctx context.Context, id string) (*Option, error)
 	Options(ctx context.Context, first *int, after *string, last *int, before *string) (*OptionConnection, error)
 	Post(ctx context.Context, id string) (*Post, error)
-	Posts(ctx context.Context, first *int, after *string, last *int, before *string, status *PostStatus) (*PostConnection, error)
+	Posts(ctx context.Context, first *int, after *string, last *int, before *string) (*PostConnection, error)
 	Role(ctx context.Context, id string) (*Role, error)
 	Roles(ctx context.Context, first *int, after *string, last *int, before *string) (*RoleConnection, error)
 	Tag(ctx context.Context, id string) (*Tag, error)
@@ -1434,12 +1432,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.PageInfo.StartCursor(childComplexity), true
 
-	case "Post.author":
-		if e.complexity.Post.Author == nil {
-			break
-		}
-
-		return e.complexity.Post.Author(childComplexity), true
 	case "Post.authorID":
 		if e.complexity.Post.AuthorID == nil {
 			break
@@ -2126,12 +2118,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.User.LastLoginAt(childComplexity), true
-	case "User.passwordHash":
-		if e.complexity.User.PasswordHash == nil {
-			break
-		}
-
-		return e.complexity.User.PasswordHash(childComplexity), true
 	case "User.updatedAt":
 		if e.complexity.User.UpdatedAt == nil {
 			break
@@ -2732,11 +2718,6 @@ func (ec *executionContext) field_Query_comments_args(ctx context.Context, rawAr
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "status", ec.unmarshalOCommentStatus2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐCommentStatus)
-	if err != nil {
-		return nil, err
-	}
-	args["status"] = arg4
 	return args, nil
 }
 
@@ -2859,11 +2840,6 @@ func (ec *executionContext) field_Query_posts_args(ctx context.Context, rawArgs 
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "status", ec.unmarshalOPostStatus2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐPostStatus)
-	if err != nil {
-		return nil, err
-	}
-	args["status"] = arg4
 	return args, nil
 }
 
@@ -4320,8 +4296,6 @@ func (ec *executionContext) fieldContext_CreatePostPayload_post(_ context.Contex
 				return ec.fieldContext_Post_id(ctx, field)
 			case "authorID":
 				return ec.fieldContext_Post_authorID(ctx, field)
-			case "author":
-				return ec.fieldContext_Post_author(ctx, field)
 			case "featuredMediaID":
 				return ec.fieldContext_Post_featuredMediaID(ctx, field)
 			case "title":
@@ -4556,8 +4530,6 @@ func (ec *executionContext) fieldContext_CreateUserPayload_user(_ context.Contex
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "passwordHash":
-				return ec.fieldContext_User_passwordHash(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -7897,59 +7869,6 @@ func (ec *executionContext) fieldContext_Post_authorID(_ context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_author(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Post_author,
-		func(ctx context.Context) (any, error) {
-			return obj.Author, nil
-		},
-		nil,
-		ec.marshalOUser2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐUser,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_Post_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Post",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "username":
-				return ec.fieldContext_User_username(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
-			case "passwordHash":
-				return ec.fieldContext_User_passwordHash(ctx, field)
-			case "displayName":
-				return ec.fieldContext_User_displayName(ctx, field)
-			case "bio":
-				return ec.fieldContext_User_bio(ctx, field)
-			case "avatarURL":
-				return ec.fieldContext_User_avatarURL(ctx, field)
-			case "websiteURL":
-				return ec.fieldContext_User_websiteURL(ctx, field)
-			case "lastLoginAt":
-				return ec.fieldContext_User_lastLoginAt(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_User_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_User_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Post_featuredMediaID(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -8429,8 +8348,6 @@ func (ec *executionContext) fieldContext_PostEdge_node(_ context.Context, field 
 				return ec.fieldContext_Post_id(ctx, field)
 			case "authorID":
 				return ec.fieldContext_Post_authorID(ctx, field)
-			case "author":
-				return ec.fieldContext_Post_author(ctx, field)
 			case "featuredMediaID":
 				return ec.fieldContext_Post_featuredMediaID(ctx, field)
 			case "title":
@@ -8711,7 +8628,7 @@ func (ec *executionContext) _Query_comments(ctx context.Context, field graphql.C
 		ec.fieldContext_Query_comments,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Comments(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["status"].(*CommentStatus))
+			return ec.resolvers.Query().Comments(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
 		},
 		nil,
 		ec.marshalNCommentConnection2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐCommentConnection,
@@ -9005,8 +8922,6 @@ func (ec *executionContext) fieldContext_Query_post(ctx context.Context, field g
 				return ec.fieldContext_Post_id(ctx, field)
 			case "authorID":
 				return ec.fieldContext_Post_authorID(ctx, field)
-			case "author":
-				return ec.fieldContext_Post_author(ctx, field)
 			case "featuredMediaID":
 				return ec.fieldContext_Post_featuredMediaID(ctx, field)
 			case "title":
@@ -9055,7 +8970,7 @@ func (ec *executionContext) _Query_posts(ctx context.Context, field graphql.Coll
 		ec.fieldContext_Query_posts,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Posts(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), fc.Args["status"].(*PostStatus))
+			return ec.resolvers.Query().Posts(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
 		},
 		nil,
 		ec.marshalNPostConnection2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐPostConnection,
@@ -9337,8 +9252,6 @@ func (ec *executionContext) fieldContext_Query_user(ctx context.Context, field g
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "passwordHash":
-				return ec.fieldContext_User_passwordHash(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -10269,8 +10182,6 @@ func (ec *executionContext) fieldContext_Subscription_postCreated(_ context.Cont
 				return ec.fieldContext_Post_id(ctx, field)
 			case "authorID":
 				return ec.fieldContext_Post_authorID(ctx, field)
-			case "author":
-				return ec.fieldContext_Post_author(ctx, field)
 			case "featuredMediaID":
 				return ec.fieldContext_Post_featuredMediaID(ctx, field)
 			case "title":
@@ -10346,8 +10257,6 @@ func (ec *executionContext) fieldContext_Subscription_postUpdated(_ context.Cont
 				return ec.fieldContext_Post_id(ctx, field)
 			case "authorID":
 				return ec.fieldContext_Post_authorID(ctx, field)
-			case "author":
-				return ec.fieldContext_Post_author(ctx, field)
 			case "featuredMediaID":
 				return ec.fieldContext_Post_featuredMediaID(ctx, field)
 			case "title":
@@ -10645,8 +10554,6 @@ func (ec *executionContext) fieldContext_Subscription_userCreated(_ context.Cont
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "passwordHash":
-				return ec.fieldContext_User_passwordHash(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -10716,8 +10623,6 @@ func (ec *executionContext) fieldContext_Subscription_userUpdated(_ context.Cont
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "passwordHash":
-				return ec.fieldContext_User_passwordHash(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -11510,8 +11415,6 @@ func (ec *executionContext) fieldContext_UpdatePostPayload_post(_ context.Contex
 				return ec.fieldContext_Post_id(ctx, field)
 			case "authorID":
 				return ec.fieldContext_Post_authorID(ctx, field)
-			case "author":
-				return ec.fieldContext_Post_author(ctx, field)
 			case "featuredMediaID":
 				return ec.fieldContext_Post_featuredMediaID(ctx, field)
 			case "title":
@@ -11746,8 +11649,6 @@ func (ec *executionContext) fieldContext_UpdateUserPayload_user(_ context.Contex
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "passwordHash":
-				return ec.fieldContext_User_passwordHash(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -11844,35 +11745,6 @@ func (ec *executionContext) _User_email(ctx context.Context, field graphql.Colle
 }
 
 func (ec *executionContext) fieldContext_User_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _User_passwordHash(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_User_passwordHash,
-		func(ctx context.Context) (any, error) {
-			return obj.PasswordHash, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_User_passwordHash(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -12250,8 +12122,6 @@ func (ec *executionContext) fieldContext_UserEdge_node(_ context.Context, field 
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "passwordHash":
-				return ec.fieldContext_User_passwordHash(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -14486,7 +14356,7 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"clientMutationId", "id", "username", "email", "passwordHash", "displayName", "bio", "avatarURL", "websiteURL", "lastLoginAt", "createdAt", "updatedAt"}
+	fieldsInOrder := [...]string{"clientMutationId", "id", "username", "email", "password", "displayName", "bio", "avatarURL", "websiteURL", "lastLoginAt", "createdAt", "updatedAt"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -14521,13 +14391,6 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 				return it, err
 			}
 			it.Email = data
-		case "passwordHash":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("passwordHash"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.PasswordHash = data
 		case "displayName":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -15506,7 +15369,7 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"clientMutationId", "id", "username", "email", "passwordHash", "displayName", "bio", "avatarURL", "websiteURL", "lastLoginAt", "createdAt", "updatedAt"}
+	fieldsInOrder := [...]string{"clientMutationId", "id", "username", "email", "password", "displayName", "bio", "avatarURL", "websiteURL", "lastLoginAt", "createdAt", "updatedAt"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -15541,13 +15404,6 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 				return it, err
 			}
 			it.Email = data
-		case "passwordHash":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("passwordHash"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.PasswordHash = data
 		case "displayName":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -17291,8 +17147,6 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "author":
-			out.Values[i] = ec._Post_author(ctx, field, obj)
 		case "authorID":
 			out.Values[i] = ec._Post_authorID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -18586,11 +18440,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "email":
 			out.Values[i] = ec._User_email(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "passwordHash":
-			out.Values[i] = ec._User_passwordHash(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

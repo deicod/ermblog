@@ -424,18 +424,18 @@ func (m *Tag) SetPosts(values []*Post) {
 }
 
 type User struct {
-	ID           string     `db:"id" json:"id"`
-	Username     string     `db:"username" json:"username"`
-	Email        string     `db:"email" json:"email"`
-	PasswordHash string     `db:"password_hash" json:"password_hash"`
-	DisplayName  *string    `db:"display_name,omitempty" json:"display_name,omitempty"`
-	Bio          *string    `db:"bio,omitempty" json:"bio,omitempty"`
-	AvatarURL    *string    `db:"avatar_url,omitempty" json:"avatar_url,omitempty"`
-	WebsiteURL   *string    `db:"website_url,omitempty" json:"website_url,omitempty"`
-	LastLoginAt  *time.Time `db:"last_login_at,omitempty" json:"last_login_at,omitempty"`
-	CreatedAt    time.Time  `db:"created_at" json:"created_at"`
-	UpdatedAt    time.Time  `db:"updated_at" json:"updated_at"`
-	Edges        *UserEdges `json:"edges,omitempty"`
+	ID          string     `db:"id" json:"id"`
+	Username    string     `db:"username" json:"username"`
+	Email       string     `db:"email" json:"email"`
+	Password    string     `db:"password_hash" json:"password"`
+	DisplayName *string    `db:"display_name,omitempty" json:"display_name,omitempty"`
+	Bio         *string    `db:"bio,omitempty" json:"bio,omitempty"`
+	AvatarURL   *string    `db:"avatar_url,omitempty" json:"avatar_url,omitempty"`
+	WebsiteURL  *string    `db:"website_url,omitempty" json:"website_url,omitempty"`
+	LastLoginAt *time.Time `db:"last_login_at,omitempty" json:"last_login_at,omitempty"`
+	CreatedAt   time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt   time.Time  `db:"updated_at" json:"updated_at"`
+	Edges       *UserEdges `json:"edges,omitempty"`
 }
 
 type UserEdges struct {

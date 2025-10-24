@@ -328,7 +328,6 @@ type DeleteOptionPayload {
 type Post implements Node {
   id: ID!
   authorID: ID!
-  author: User
   featuredMediaID: ID
   title: String!
   slug: String!
@@ -537,7 +536,6 @@ type User implements Node {
   id: ID!
   username: String!
   email: String!
-  passwordHash: String!
   displayName: String
   bio: String
   avatarURL: String
@@ -563,7 +561,7 @@ input CreateUserInput {
   id: ID
   username: String
   email: String
-  passwordHash: String
+  password: String
   displayName: String
   bio: String
   avatarURL: String
@@ -583,7 +581,7 @@ input UpdateUserInput {
   id: ID!
   username: String
   email: String
-  passwordHash: String
+  password: String
   displayName: String
   bio: String
   avatarURL: String
@@ -616,25 +614,13 @@ type Query {
   category(id: ID!): Category
   categories(first: Int, after: String, last: Int, before: String): CategoryConnection!
   comment(id: ID!): Comment
-  comments(
-    first: Int
-    after: String
-    last: Int
-    before: String
-    status: CommentStatus
-  ): CommentConnection!
+  comments(first: Int, after: String, last: Int, before: String): CommentConnection!
   media(id: ID!): Media
   medias(first: Int, after: String, last: Int, before: String): MediaConnection!
   option(id: ID!): Option
   options(first: Int, after: String, last: Int, before: String): OptionConnection!
   post(id: ID!): Post
-  posts(
-    first: Int
-    after: String
-    last: Int
-    before: String
-    status: PostStatus
-  ): PostConnection!
+  posts(first: Int, after: String, last: Int, before: String): PostConnection!
   role(id: ID!): Role
   roles(first: Int, after: String, last: Int, before: String): RoleConnection!
   tag(id: ID!): Tag

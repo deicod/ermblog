@@ -1231,7 +1231,7 @@ func (c *CommentClient) LoadAuthor(ctx context.Context, parents ...*Comment) err
 	related := make(map[keyType]*User, len(keys))
 	for rows.Next() {
 		item := new(User)
-		if err := rows.Scan(&item.ID, &item.Username, &item.Email, &item.PasswordHash, &item.DisplayName, &item.Bio, &item.AvatarURL, &item.WebsiteURL, &item.LastLoginAt, &item.CreatedAt, &item.UpdatedAt); err != nil {
+		if err := rows.Scan(&item.ID, &item.Username, &item.Email, &item.Password, &item.DisplayName, &item.Bio, &item.AvatarURL, &item.WebsiteURL, &item.LastLoginAt, &item.CreatedAt, &item.UpdatedAt); err != nil {
 			return err
 		}
 		key := item.ID
@@ -1828,7 +1828,7 @@ func (c *MediaClient) LoadUploadedBy(ctx context.Context, parents ...*Media) err
 	related := make(map[keyType]*User, len(keys))
 	for rows.Next() {
 		item := new(User)
-		if err := rows.Scan(&item.ID, &item.Username, &item.Email, &item.PasswordHash, &item.DisplayName, &item.Bio, &item.AvatarURL, &item.WebsiteURL, &item.LastLoginAt, &item.CreatedAt, &item.UpdatedAt); err != nil {
+		if err := rows.Scan(&item.ID, &item.Username, &item.Email, &item.Password, &item.DisplayName, &item.Bio, &item.AvatarURL, &item.WebsiteURL, &item.LastLoginAt, &item.CreatedAt, &item.UpdatedAt); err != nil {
 			return err
 		}
 		key := item.ID
@@ -2791,7 +2791,7 @@ func (c *PostClient) LoadAuthor(ctx context.Context, parents ...*Post) error {
 	related := make(map[keyType]*User, len(keys))
 	for rows.Next() {
 		item := new(User)
-		if err := rows.Scan(&item.ID, &item.Username, &item.Email, &item.PasswordHash, &item.DisplayName, &item.Bio, &item.AvatarURL, &item.WebsiteURL, &item.LastLoginAt, &item.CreatedAt, &item.UpdatedAt); err != nil {
+		if err := rows.Scan(&item.ID, &item.Username, &item.Email, &item.Password, &item.DisplayName, &item.Bio, &item.AvatarURL, &item.WebsiteURL, &item.LastLoginAt, &item.CreatedAt, &item.UpdatedAt); err != nil {
 			return err
 		}
 		key := item.ID
@@ -3549,7 +3549,7 @@ func (c *RoleClient) LoadUsers(ctx context.Context, parents ...*Role) error {
 	for rows.Next() {
 		item := new(User)
 		var owner keyType
-		if err := rows.Scan(&item.ID, &item.Username, &item.Email, &item.PasswordHash, &item.DisplayName, &item.Bio, &item.AvatarURL, &item.WebsiteURL, &item.LastLoginAt, &item.CreatedAt, &item.UpdatedAt, &owner); err != nil {
+		if err := rows.Scan(&item.ID, &item.Username, &item.Email, &item.Password, &item.DisplayName, &item.Bio, &item.AvatarURL, &item.WebsiteURL, &item.LastLoginAt, &item.CreatedAt, &item.UpdatedAt, &owner); err != nil {
 			return err
 		}
 		parents, ok := buckets[owner]
@@ -4125,9 +4125,9 @@ func (c *UserClient) Create(ctx context.Context, input *User) (*User, error) {
 	if err := ValidationRegistry.Validate(ctx, "User", validation.OpCreate, userValidationRecord(input), input); err != nil {
 		return nil, err
 	}
-	row := c.db.Pool.QueryRow(ctx, userInsertQuery, input.ID, input.Username, input.Email, input.PasswordHash, input.DisplayName, input.Bio, input.AvatarURL, input.WebsiteURL, input.LastLoginAt, input.CreatedAt, input.UpdatedAt)
+	row := c.db.Pool.QueryRow(ctx, userInsertQuery, input.ID, input.Username, input.Email, input.Password, input.DisplayName, input.Bio, input.AvatarURL, input.WebsiteURL, input.LastLoginAt, input.CreatedAt, input.UpdatedAt)
 	out := new(User)
-	if err := row.Scan(&out.ID, &out.Username, &out.Email, &out.PasswordHash, &out.DisplayName, &out.Bio, &out.AvatarURL, &out.WebsiteURL, &out.LastLoginAt, &out.CreatedAt, &out.UpdatedAt); err != nil {
+	if err := row.Scan(&out.ID, &out.Username, &out.Email, &out.Password, &out.DisplayName, &out.Bio, &out.AvatarURL, &out.WebsiteURL, &out.LastLoginAt, &out.CreatedAt, &out.UpdatedAt); err != nil {
 		return nil, err
 	}
 	if c.cache != nil {
@@ -4160,7 +4160,7 @@ func (c *UserClient) BulkCreate(ctx context.Context, inputs []*User) ([]*User, e
 		if err := ValidationRegistry.Validate(ctx, "User", validation.OpCreate, userValidationRecord(input), input); err != nil {
 			return nil, err
 		}
-		row := []any{input.ID, input.Username, input.Email, input.PasswordHash, input.DisplayName, input.Bio, input.AvatarURL, input.WebsiteURL, input.LastLoginAt, input.CreatedAt, input.UpdatedAt}
+		row := []any{input.ID, input.Username, input.Email, input.Password, input.DisplayName, input.Bio, input.AvatarURL, input.WebsiteURL, input.LastLoginAt, input.CreatedAt, input.UpdatedAt}
 		rowsSpec = append(rowsSpec, row)
 	}
 	spec := runtime.BulkInsertSpec{
@@ -4181,7 +4181,7 @@ func (c *UserClient) BulkCreate(ctx context.Context, inputs []*User) ([]*User, e
 	var created []*User
 	for rows.Next() {
 		item := new(User)
-		if err := rows.Scan(&item.ID, &item.Username, &item.Email, &item.PasswordHash, &item.DisplayName, &item.Bio, &item.AvatarURL, &item.WebsiteURL, &item.LastLoginAt, &item.CreatedAt, &item.UpdatedAt); err != nil {
+		if err := rows.Scan(&item.ID, &item.Username, &item.Email, &item.Password, &item.DisplayName, &item.Bio, &item.AvatarURL, &item.WebsiteURL, &item.LastLoginAt, &item.CreatedAt, &item.UpdatedAt); err != nil {
 			return nil, err
 		}
 		created = append(created, item)
@@ -4209,7 +4209,7 @@ func (c *UserClient) ByID(ctx context.Context, id string) (*User, error) {
 	}
 	row := c.db.Pool.QueryRow(ctx, userSelectQuery, id)
 	out := new(User)
-	if err := row.Scan(&out.ID, &out.Username, &out.Email, &out.PasswordHash, &out.DisplayName, &out.Bio, &out.AvatarURL, &out.WebsiteURL, &out.LastLoginAt, &out.CreatedAt, &out.UpdatedAt); err != nil {
+	if err := row.Scan(&out.ID, &out.Username, &out.Email, &out.Password, &out.DisplayName, &out.Bio, &out.AvatarURL, &out.WebsiteURL, &out.LastLoginAt, &out.CreatedAt, &out.UpdatedAt); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
@@ -4237,7 +4237,7 @@ func (c *UserClient) List(ctx context.Context, limit, offset int) ([]*User, erro
 	var result []*User
 	for rows.Next() {
 		item := new(User)
-		if err := rows.Scan(&item.ID, &item.Username, &item.Email, &item.PasswordHash, &item.DisplayName, &item.Bio, &item.AvatarURL, &item.WebsiteURL, &item.LastLoginAt, &item.CreatedAt, &item.UpdatedAt); err != nil {
+		if err := rows.Scan(&item.ID, &item.Username, &item.Email, &item.Password, &item.DisplayName, &item.Bio, &item.AvatarURL, &item.WebsiteURL, &item.LastLoginAt, &item.CreatedAt, &item.UpdatedAt); err != nil {
 			return nil, err
 		}
 		result = append(result, item)
@@ -4269,9 +4269,9 @@ func (c *UserClient) Update(ctx context.Context, input *User) (*User, error) {
 	if err := ValidationRegistry.Validate(ctx, "User", validation.OpUpdate, userValidationRecord(input), input); err != nil {
 		return nil, err
 	}
-	row := c.db.Pool.QueryRow(ctx, userUpdateQuery, input.Username, input.Email, input.PasswordHash, input.DisplayName, input.Bio, input.AvatarURL, input.WebsiteURL, input.LastLoginAt, input.UpdatedAt, input.ID)
+	row := c.db.Pool.QueryRow(ctx, userUpdateQuery, input.Username, input.Email, input.Password, input.DisplayName, input.Bio, input.AvatarURL, input.WebsiteURL, input.LastLoginAt, input.UpdatedAt, input.ID)
 	out := new(User)
-	if err := row.Scan(&out.ID, &out.Username, &out.Email, &out.PasswordHash, &out.DisplayName, &out.Bio, &out.AvatarURL, &out.WebsiteURL, &out.LastLoginAt, &out.CreatedAt, &out.UpdatedAt); err != nil {
+	if err := row.Scan(&out.ID, &out.Username, &out.Email, &out.Password, &out.DisplayName, &out.Bio, &out.AvatarURL, &out.WebsiteURL, &out.LastLoginAt, &out.CreatedAt, &out.UpdatedAt); err != nil {
 		return nil, err
 	}
 	if c.cache != nil {
@@ -4299,7 +4299,7 @@ func (c *UserClient) BulkUpdate(ctx context.Context, inputs []*User) ([]*User, e
 		}
 		row := runtime.BulkUpdateRow{
 			Primary: input.ID,
-			Values:  []any{input.Username, input.Email, input.PasswordHash, input.DisplayName, input.Bio, input.AvatarURL, input.WebsiteURL, input.LastLoginAt, input.UpdatedAt},
+			Values:  []any{input.Username, input.Email, input.Password, input.DisplayName, input.Bio, input.AvatarURL, input.WebsiteURL, input.LastLoginAt, input.UpdatedAt},
 		}
 		specs = append(specs, row)
 	}
@@ -4322,7 +4322,7 @@ func (c *UserClient) BulkUpdate(ctx context.Context, inputs []*User) ([]*User, e
 	var updated []*User
 	for rows.Next() {
 		item := new(User)
-		if err := rows.Scan(&item.ID, &item.Username, &item.Email, &item.PasswordHash, &item.DisplayName, &item.Bio, &item.AvatarURL, &item.WebsiteURL, &item.LastLoginAt, &item.CreatedAt, &item.UpdatedAt); err != nil {
+		if err := rows.Scan(&item.ID, &item.Username, &item.Email, &item.Password, &item.DisplayName, &item.Bio, &item.AvatarURL, &item.WebsiteURL, &item.LastLoginAt, &item.CreatedAt, &item.UpdatedAt); err != nil {
 			return nil, err
 		}
 		updated = append(updated, item)
@@ -4447,7 +4447,7 @@ func (q *UserQuery) All(ctx context.Context) ([]*User, error) {
 	var result []*User
 	for rows.Next() {
 		item := new(User)
-		if err := rows.Scan(&item.ID, &item.Username, &item.Email, &item.PasswordHash, &item.DisplayName, &item.Bio, &item.AvatarURL, &item.WebsiteURL, &item.LastLoginAt, &item.CreatedAt, &item.UpdatedAt); err != nil {
+		if err := rows.Scan(&item.ID, &item.Username, &item.Email, &item.Password, &item.DisplayName, &item.Bio, &item.AvatarURL, &item.WebsiteURL, &item.LastLoginAt, &item.CreatedAt, &item.UpdatedAt); err != nil {
 			return nil, err
 		}
 		result = append(result, item)
@@ -4473,7 +4473,7 @@ func (q *UserQuery) Stream(ctx context.Context) (*runtime.Stream[*User], error) 
 	}
 	stream := runtime.NewStream[*User](rows, func(rows pgx.Rows) (*User, error) {
 		item := new(User)
-		if err := rows.Scan(&item.ID, &item.Username, &item.Email, &item.PasswordHash, &item.DisplayName, &item.Bio, &item.AvatarURL, &item.WebsiteURL, &item.LastLoginAt, &item.CreatedAt, &item.UpdatedAt); err != nil {
+		if err := rows.Scan(&item.ID, &item.Username, &item.Email, &item.Password, &item.DisplayName, &item.Bio, &item.AvatarURL, &item.WebsiteURL, &item.LastLoginAt, &item.CreatedAt, &item.UpdatedAt); err != nil {
 			return nil, err
 		}
 		return item, nil
@@ -4747,17 +4747,17 @@ func userValidationRecord(input *User) validation.Record {
 		return nil
 	}
 	return validation.Record{
-		"ID":           input.ID,
-		"Username":     input.Username,
-		"Email":        input.Email,
-		"PasswordHash": input.PasswordHash,
-		"DisplayName":  input.DisplayName,
-		"Bio":          input.Bio,
-		"AvatarURL":    input.AvatarURL,
-		"WebsiteURL":   input.WebsiteURL,
-		"LastLoginAt":  input.LastLoginAt,
-		"CreatedAt":    input.CreatedAt,
-		"UpdatedAt":    input.UpdatedAt,
+		"ID":          input.ID,
+		"Username":    input.Username,
+		"Email":       input.Email,
+		"Password":    input.Password,
+		"DisplayName": input.DisplayName,
+		"Bio":         input.Bio,
+		"AvatarURL":   input.AvatarURL,
+		"WebsiteURL":  input.WebsiteURL,
+		"LastLoginAt": input.LastLoginAt,
+		"CreatedAt":   input.CreatedAt,
+		"UpdatedAt":   input.UpdatedAt,
 	}
 }
 
