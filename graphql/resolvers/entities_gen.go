@@ -884,9 +884,6 @@ func (r *queryResolver) Comment(ctx context.Context, id string) (*graphql.Commen
 }
 
 func (r *queryResolver) Comments(ctx context.Context, first *int, after *string, last *int, before *string) (*graphql.CommentConnection, error) {
-	if r.ORM == nil {
-		return nil, fmt.Errorf("orm client is not configured")
-	}
 	if last != nil || before != nil {
 		return nil, fmt.Errorf("backward pagination is not supported")
 	}
@@ -900,11 +897,23 @@ func (r *queryResolver) Comments(ctx context.Context, first *int, after *string,
 			offset = decoded + 1
 		}
 	}
-	total, err := r.ORM.Comments().Query().Count(ctx)
+	repo := r.commentRepository()
+	if repo == nil {
+		return nil, fmt.Errorf("comment repository is not configured")
+	}
+	countQuery := repo.Query()
+	if countQuery == nil {
+		return nil, fmt.Errorf("comment query is not configured")
+	}
+	total, err := countQuery.Count(ctx)
 	if err != nil {
 		return nil, err
 	}
-	records, err := r.ORM.Comments().Query().
+	listQuery := repo.Query()
+	if listQuery == nil {
+		return nil, fmt.Errorf("comment query is not configured")
+	}
+	records, err := listQuery.
 		OrderBySubmittedAtDesc().
 		Limit(limit).
 		Offset(offset).

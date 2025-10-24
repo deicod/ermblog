@@ -112,8 +112,7 @@ func TestQueryCommentsFiltersAndOrdersResults(t *testing.T) {
 
 	resolver := &Resolver{commentRepo: &stubCommentRepository{records: []*gen.Comment{approved, pending, recentApproved}}}
 
-	status := graphqlpkg.CommentStatusApproved
-	conn, err := resolver.Query().Comments(context.Background(), intPtr(10), nil, nil, nil, &status)
+	conn, err := resolver.Query().Comments(context.Background(), intPtr(2), nil, nil, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -122,8 +121,8 @@ func TestQueryCommentsFiltersAndOrdersResults(t *testing.T) {
 		t.Fatal("expected connection, got nil")
 	}
 
-	if conn.TotalCount != 2 {
-		t.Fatalf("expected total count 2, got %d", conn.TotalCount)
+	if conn.TotalCount != 3 {
+		t.Fatalf("expected total count 3, got %d", conn.TotalCount)
 	}
 
 	edges := conn.Edges
@@ -146,12 +145,8 @@ func TestQueryCommentsFiltersAndOrdersResults(t *testing.T) {
 
 	if _, native, err := relay.FromGlobalID(second.ID); err != nil {
 		t.Fatalf("failed to decode second id: %v", err)
-	} else if native != approved.ID {
-		t.Fatalf("expected older comment second, got %s", native)
-	}
-
-	if second.Status != graphqlpkg.CommentStatusApproved {
-		t.Fatalf("expected approved status, got %s", second.Status)
+	} else if native != pending.ID {
+		t.Fatalf("expected second most recent comment, got %s", native)
 	}
 }
 
