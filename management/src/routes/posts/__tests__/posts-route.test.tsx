@@ -80,7 +80,7 @@ describe("PostsRoute", () => {
     expect(within(table).getByText("Breaking news")).toBeInTheDocument();
 
     const statusSelect = screen.getByLabelText("Status");
-    await userEvent.selectOptions(statusSelect, "Draft");
+    await userEvent.selectOptions(statusSelect, "draft");
 
     const refetchOperation = environment.mock.getMostRecentOperation();
     expect(refetchOperation.fragment.node.name).toBe("PostsTablePaginationQuery");
