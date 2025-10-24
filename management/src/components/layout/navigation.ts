@@ -17,6 +17,7 @@ export type NavigationItem = {
 const NAVIGATION_BLUEPRINT = [
   { id: "dashboard", icon: "📊" },
   { id: "posts", icon: "📝" },
+  { id: "users", icon: "👥" },
   { id: "comments", icon: "💬" },
   { id: "taxonomies", icon: "🗂️" },
   { id: "media", icon: "🖼️" },

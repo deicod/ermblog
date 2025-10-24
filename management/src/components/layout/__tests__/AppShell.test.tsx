@@ -54,6 +54,7 @@ describe("route configuration", () => {
     expect(routes.size).toBeGreaterThanOrEqual(3);
     const dashboard = routes.get("dashboard");
     const posts = routes.get("posts");
+    const users = routes.get("users");
     const comments = routes.get("comments");
     expect(dashboard).toBeDefined();
     expect(dashboard?.href).toBe("/");
@@ -63,6 +64,10 @@ describe("route configuration", () => {
     expect(posts?.href).toBe("/posts");
     expect(posts?.title).toBe("Posts");
     expect(posts?.description).toMatch(/Editorial queue/i);
+    expect(users).toBeDefined();
+    expect(users?.href).toBe("/users");
+    expect(users?.title).toBe("Users");
+    expect(users?.description).toMatch(/Manage user accounts/i);
     expect(comments).toBeDefined();
     expect(comments?.href).toBe("/comments");
     expect(comments?.title).toBe("Comments");
@@ -88,6 +93,7 @@ describe("navigation metadata", () => {
     expect(navIds).toEqual([
       "dashboard",
       "posts",
+      "users",
       "comments",
       "taxonomies",
       "media",
