@@ -454,6 +454,7 @@ type DeleteOptionPayload {
 type Post implements Node {
     id: ID!
     authorID: ID!
+    author: User
     featuredMediaID: ID
     title: String!
     slug: String!

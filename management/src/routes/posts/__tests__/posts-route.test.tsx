@@ -20,7 +20,15 @@ type PostNodeInput = {
   title: string;
   status: string;
   updatedAt: string;
-  authorID: string;
+  authorID?: string | null;
+  author?:
+    | {
+        id: string;
+        displayName?: string | null;
+        email?: string | null;
+        username?: string | null;
+      }
+    | null;
 };
 
 function buildPostsPayload(posts: PostNodeInput[], pageInfo?: { hasNextPage?: boolean; endCursor?: string }) {
@@ -29,6 +37,16 @@ function buildPostsPayload(posts: PostNodeInput[], pageInfo?: { hasNextPage?: bo
     node: {
       __typename: "Post",
       ...post,
+      authorID: post.authorID ?? null,
+      author: post.author
+        ? {
+            __typename: "User",
+            id: post.author.id,
+            displayName: post.author.displayName ?? null,
+            email: post.author.email ?? null,
+            username: post.author.username ?? null,
+          }
+        : null,
     },
   }));
 
@@ -63,6 +81,12 @@ describe("PostsRoute", () => {
             status: "draft",
             updatedAt: "2024-10-10T10:00:00.000Z",
             authorID: "author-1",
+            author: {
+              id: "author-1",
+              displayName: "Editor Extraordinaire",
+              email: "editor@example.com",
+              username: "editor",
+            },
           },
           {
             id: "post-2",
@@ -70,6 +94,12 @@ describe("PostsRoute", () => {
             status: "published",
             updatedAt: "2024-10-11T09:00:00.000Z",
             authorID: "author-2",
+            author: {
+              id: "author-2",
+              displayName: null,
+              email: "reporter@example.com",
+              username: "reporter",
+            },
           },
         ]),
       });
@@ -77,7 +107,9 @@ describe("PostsRoute", () => {
 
     const table = await screen.findByRole("table");
     expect(within(table).getByText("Editorial draft")).toBeInTheDocument();
+    expect(within(table).getByText("Editor Extraordinaire")).toBeInTheDocument();
     expect(within(table).getByText("Breaking news")).toBeInTheDocument();
+    expect(within(table).getByText("reporter@example.com")).toBeInTheDocument();
 
     const statusSelect = screen.getByLabelText("Status");
     await userEvent.selectOptions(statusSelect, "draft");
@@ -96,6 +128,12 @@ describe("PostsRoute", () => {
             status: "draft",
             updatedAt: "2024-10-10T10:00:00.000Z",
             authorID: "author-1",
+            author: {
+              id: "author-1",
+              displayName: "Editor Extraordinaire",
+              email: "editor@example.com",
+              username: "editor",
+            },
           },
         ]),
       });
@@ -140,6 +178,12 @@ describe("PostsRoute", () => {
                   status: "draft",
                   updatedAt: "2024-10-10T10:00:00.000Z",
                   authorID: "author-1",
+                  author: {
+                    id: "author-1",
+                    displayName: null,
+                    email: null,
+                    username: "storysmith",
+                  },
                 },
               },
               {
@@ -151,6 +195,12 @@ describe("PostsRoute", () => {
                   status: "pending",
                   updatedAt: "2024-10-10T11:00:00.000Z",
                   authorID: "author-2",
+                  author: {
+                    id: "author-2",
+                    displayName: null,
+                    email: null,
+                    username: null,
+                  },
                 },
               },
             ],
@@ -168,6 +218,8 @@ describe("PostsRoute", () => {
 
     const loadMoreButton = await screen.findByRole("button", { name: "Load more" });
     expect(loadMoreButton).toBeEnabled();
+    expect(screen.getByText("storysmith")).toBeInTheDocument();
+    expect(screen.getByText("author-2")).toBeInTheDocument();
 
     await userEvent.click(loadMoreButton);
 
@@ -191,7 +243,8 @@ describe("PostsRoute", () => {
                   title: "Third story",
                   status: "published",
                   updatedAt: "2024-10-10T12:00:00.000Z",
-                  authorID: "author-3",
+                  authorID: null,
+                  author: null,
                 },
               },
             ],
@@ -208,6 +261,7 @@ describe("PostsRoute", () => {
     });
 
     expect(await screen.findByText("Third story")).toBeInTheDocument();
+    expect(screen.getByText("Unknown author")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Load more" })).toBeDisabled();
   });
 });

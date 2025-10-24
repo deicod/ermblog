@@ -681,3 +681,7 @@ type Subscription {
 }
 
 # END GENERATED
+
+extend type Post {
+  author: User
+}
