@@ -85,7 +85,14 @@ describe("navigation metadata", () => {
   }
 
   test("mirrors route configuration for primary items", () => {
-    expect(navIds).toEqual(["dashboard", "posts", "comments", "taxonomies", "login"]);
+    expect(navIds).toEqual([
+      "dashboard",
+      "posts",
+      "comments",
+      "taxonomies",
+      "media",
+      "login",
+    ]);
     expect(navigationSource).toContain("NAVIGATION_BLUEPRINT");
     expect(navigationSource).toContain("to: route.href");
     expect(navigationSource).toContain("route.requiresAuth !== false");
@@ -101,5 +108,12 @@ describe("navigation metadata", () => {
       sessionToken: { accessToken: "token", tokenType: "Bearer" },
     });
     expect(items.map((item) => item.id)).not.toContain("login");
+  });
+
+  test("surfaces media navigation entry once authenticated", () => {
+    const items = createNavigationItems({
+      sessionToken: { accessToken: "token", tokenType: "Bearer" },
+    });
+    expect(items.map((item) => item.id)).toContain("media");
   });
 });
