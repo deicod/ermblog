@@ -328,6 +328,7 @@ type DeleteOptionPayload {
 type Post implements Node {
   id: ID!
   authorID: ID!
+  author: User
   featuredMediaID: ID
   title: String!
   slug: String!
@@ -615,7 +616,13 @@ type Query {
   category(id: ID!): Category
   categories(first: Int, after: String, last: Int, before: String): CategoryConnection!
   comment(id: ID!): Comment
-  comments(first: Int, after: String, last: Int, before: String): CommentConnection!
+  comments(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    status: CommentStatus
+  ): CommentConnection!
   media(id: ID!): Media
   medias(first: Int, after: String, last: Int, before: String): MediaConnection!
   option(id: ID!): Option
@@ -681,7 +688,3 @@ type Subscription {
 }
 
 # END GENERATED
-
-extend type Post {
-  author: User
-}

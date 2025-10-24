@@ -17,6 +17,7 @@ export type NavigationItem = {
 const NAVIGATION_BLUEPRINT = [
   { id: "dashboard", icon: "📊" },
   { id: "posts", icon: "📝" },
+  { id: "comments", icon: "💬" },
   { id: "login", icon: "🔐" },
 ] as const satisfies ReadonlyArray<{ id: RouteId; icon: string }>;
 

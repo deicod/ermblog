@@ -6,6 +6,7 @@ export const ROUTE_IDS = {
   login: "login",
   dashboard: "dashboard",
   posts: "posts",
+  comments: "comments",
 } as const;
 
 export type RouteId = (typeof ROUTE_IDS)[keyof typeof ROUTE_IDS];
@@ -53,6 +54,17 @@ export const ROUTE_CONFIG: RouteDefinition[] = [
     requiresAuth: true,
     lazy: async () => ({
       Component: (await import("./posts")).PostsRoute,
+    }),
+  },
+  {
+    id: ROUTE_IDS.comments,
+    path: "comments",
+    href: "/comments",
+    title: "Comments",
+    description: "Moderate community feedback and discussion",
+    requiresAuth: true,
+    lazy: async () => ({
+      Component: (await import("./comments")).CommentsRoute,
     }),
   },
 ];

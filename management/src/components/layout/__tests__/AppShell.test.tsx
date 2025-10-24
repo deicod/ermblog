@@ -50,10 +50,11 @@ describe("route configuration", () => {
     ]),
   );
 
-  test("declares lazy-loaded dashboard and posts routes", () => {
-    expect(routes.size).toBeGreaterThanOrEqual(2);
+  test("declares lazy-loaded dashboard, posts, and comments routes", () => {
+    expect(routes.size).toBeGreaterThanOrEqual(3);
     const dashboard = routes.get("dashboard");
     const posts = routes.get("posts");
+    const comments = routes.get("comments");
     expect(dashboard).toBeDefined();
     expect(dashboard?.href).toBe("/");
     expect(dashboard?.title).toBe("Dashboard");
@@ -62,9 +63,14 @@ describe("route configuration", () => {
     expect(posts?.href).toBe("/posts");
     expect(posts?.title).toBe("Posts");
     expect(posts?.description).toMatch(/Editorial queue/i);
+    expect(comments).toBeDefined();
+    expect(comments?.href).toBe("/comments");
+    expect(comments?.title).toBe("Comments");
+    expect(comments?.description).toMatch(/Moderate community feedback/i);
 
     expect(routeSource).toMatch(/index:\s*true/);
     expect(routeSource).toMatch(/path:\s*"posts"/);
+    expect(routeSource).toMatch(/path:\s*"comments"/);
   });
 });
 
@@ -79,7 +85,7 @@ describe("navigation metadata", () => {
   }
 
   test("mirrors route configuration for primary items", () => {
-    expect(navIds).toEqual(["dashboard", "posts", "login"]);
+    expect(navIds).toEqual(["dashboard", "posts", "comments", "login"]);
     expect(navigationSource).toContain("NAVIGATION_BLUEPRINT");
     expect(navigationSource).toContain("to: route.href");
     expect(navigationSource).toContain("route.requiresAuth !== false");

@@ -7,9 +7,7 @@ import (
 	"github.com/deicod/ermblog/graphql/dataloaders"
 )
 
-type postResolver struct{ *Resolver }
-
-func (r *postResolver) Author(ctx context.Context, obj *graphql.Post) (*graphql.User, error) {
+func (r *Resolver) Post_author(ctx context.Context, obj *graphql.Post) (*graphql.User, error) {
 	if obj == nil {
 		return nil, nil
 	}
