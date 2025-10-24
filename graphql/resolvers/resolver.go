@@ -22,15 +22,25 @@ type Options struct {
 
 // Resolver wires GraphQL resolvers into the executable schema.
 type Resolver struct {
-	ORM           *gen.Client
-	collector     metrics.Collector
-	subscriptions subscriptions.Broker
-	hooks         entityHooks
-	users         userProvider
+	ORM               *gen.Client
+	collector         metrics.Collector
+	subscriptions     subscriptions.Broker
+	hooks             entityHooks
+	users             userProvider
+	postsCounter      counter
+	commentsCounter   counter
+	mediaItemsCounter counter
+	categoriesCounter counter
+	tagsCounter       counter
+	usersCounter      counter
 }
 
 type userProvider interface {
 	ByID(ctx context.Context, id string) (*gen.User, error)
+}
+
+type counter interface {
+	Count(ctx context.Context) (int, error)
 }
 
 // New creates a resolver root bound to the provided ORM client.
@@ -48,6 +58,12 @@ func NewWithOptions(opts Options) *Resolver {
 	resolver.hooks = newEntityHooks()
 	if resolver.ORM != nil {
 		resolver.users = resolver.ORM.Users()
+		resolver.postsCounter = resolver.ORM.Posts()
+		resolver.commentsCounter = resolver.ORM.Comments()
+		resolver.mediaItemsCounter = resolver.ORM.Medias()
+		resolver.categoriesCounter = resolver.ORM.Categories()
+		resolver.tagsCounter = resolver.ORM.Tags()
+		resolver.usersCounter = resolver.ORM.Users()
 	}
 	return resolver
 }
@@ -78,6 +94,84 @@ func (r *Resolver) Mutation() graphql.MutationResolver { return &mutationResolve
 func (r *Resolver) Query() graphql.QueryResolver       { return &queryResolver{r} }
 func (r *Resolver) Subscription() graphql.SubscriptionResolver {
 	return &subscriptionResolver{r}
+}
+
+func (r *Resolver) postCounter() counter {
+	if r == nil {
+		return nil
+	}
+	if r.postsCounter != nil {
+		return r.postsCounter
+	}
+	if r.ORM != nil {
+		return r.ORM.Posts()
+	}
+	return nil
+}
+
+func (r *Resolver) commentCounter() counter {
+	if r == nil {
+		return nil
+	}
+	if r.commentsCounter != nil {
+		return r.commentsCounter
+	}
+	if r.ORM != nil {
+		return r.ORM.Comments()
+	}
+	return nil
+}
+
+func (r *Resolver) mediaCounter() counter {
+	if r == nil {
+		return nil
+	}
+	if r.mediaItemsCounter != nil {
+		return r.mediaItemsCounter
+	}
+	if r.ORM != nil {
+		return r.ORM.Medias()
+	}
+	return nil
+}
+
+func (r *Resolver) categoryCounter() counter {
+	if r == nil {
+		return nil
+	}
+	if r.categoriesCounter != nil {
+		return r.categoriesCounter
+	}
+	if r.ORM != nil {
+		return r.ORM.Categories()
+	}
+	return nil
+}
+
+func (r *Resolver) tagCounter() counter {
+	if r == nil {
+		return nil
+	}
+	if r.tagsCounter != nil {
+		return r.tagsCounter
+	}
+	if r.ORM != nil {
+		return r.ORM.Tags()
+	}
+	return nil
+}
+
+func (r *Resolver) userCounter() counter {
+	if r == nil {
+		return nil
+	}
+	if r.usersCounter != nil {
+		return r.usersCounter
+	}
+	if r.ORM != nil {
+		return r.ORM.Users()
+	}
+	return nil
 }
 
 type mutationResolver struct{ *Resolver }

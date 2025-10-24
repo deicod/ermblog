@@ -14,8 +14,8 @@ github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ3
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/deicod/erm v0.0.0-20251017231145-1a5b7be4cf58 h1:75D4eHT+e0H3RoufnbwpVfaGgd7QwAy4kyMpBKRKIVU=
-github.com/deicod/erm v0.0.0-20251017231145-1a5b7be4cf58/go.mod h1:ayhK3Wo+fhpxaMviGGW2KwfMCoq3kRKS8cnHf3UBlhU=
+github.com/deicod/erm v0.0.0-20251022203733-b3f3b996f4a1 h1:8fJ9QK506mHIa+78KiL/ekSlgdep0LIJ5RS3B2bSLAk=
+github.com/deicod/erm v0.0.0-20251022203733-b3f3b996f4a1/go.mod h1:ayhK3Wo+fhpxaMviGGW2KwfMCoq3kRKS8cnHf3UBlhU=
 github.com/dgryski/trifles v0.0.0-20230903005119-f50d829f2e54 h1:SG7nF6SRlWhcT7cNTs5R6Hk4V2lcmLz2NsG2VnInyNo=
 github.com/dgryski/trifles v0.0.0-20230903005119-f50d829f2e54/go.mod h1:if7Fbed8SFyPtHLHbg49SI7NAdJiC5WIA09pe59rfAA=
 github.com/go-logr/logr v1.2.2/go.mod h1:jdQByPbusPIv2/zmleS9BjJVeZ6kBagPoEUsqbVz/1A=

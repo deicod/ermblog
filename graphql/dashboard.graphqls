@@ -1,0 +1,11 @@
+type ManagementStats {
+  posts: Int!
+  comments: Int!
+  mediaItems: Int!
+  taxonomies: Int!
+  users: Int!
+}
+
+extend type Query {
+  managementStats: ManagementStats! @auth
+}
