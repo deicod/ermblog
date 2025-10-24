@@ -1,6 +1,16 @@
 package resolvers
 
-import "strings"
+import (
+	"context"
+	"strings"
+)
+
+func countThrough(ctx context.Context, repo counter) (int, error) {
+	if repo == nil {
+		return 0, nil
+	}
+	return repo.Count(ctx)
+}
 
 func firstNonEmpty(values ...string) string {
 	for _, value := range values {

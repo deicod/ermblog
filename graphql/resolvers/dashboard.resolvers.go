@@ -52,10 +52,3 @@ func (r *queryResolver) ManagementStats(ctx context.Context) (*graphql1.Manageme
 
 	return stats, nil
 }
-
-func countThrough(ctx context.Context, repo counter) (int, error) {
-	if repo == nil {
-		return 0, nil
-	}
-	return repo.Count(ctx)
-}
