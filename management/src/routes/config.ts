@@ -9,6 +9,7 @@ export const ROUTE_IDS = {
   comments: "comments",
   taxonomies: "taxonomies",
   media: "media",
+  options: "options",
 } as const;
 
 export type RouteId = (typeof ROUTE_IDS)[keyof typeof ROUTE_IDS];
@@ -89,6 +90,17 @@ export const ROUTE_CONFIG: RouteDefinition[] = [
     requiresAuth: true,
     lazy: async () => ({
       Component: (await import("./media")).MediaRoute,
+    }),
+  },
+  {
+    id: ROUTE_IDS.options,
+    path: "options",
+    href: "/options",
+    title: "Options",
+    description: "Inspect and edit application configuration values",
+    requiresAuth: true,
+    lazy: async () => ({
+      Component: (await import("./options")).OptionsRoute,
     }),
   },
 ];

@@ -91,6 +91,7 @@ describe("navigation metadata", () => {
       "comments",
       "taxonomies",
       "media",
+      "options",
       "login",
     ]);
     expect(navigationSource).toContain("NAVIGATION_BLUEPRINT");
