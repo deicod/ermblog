@@ -20,6 +20,7 @@ const NAVIGATION_BLUEPRINT = [
   { id: "comments", icon: "💬" },
   { id: "taxonomies", icon: "🗂️" },
   { id: "media", icon: "🖼️" },
+  { id: "options", icon: "⚙️" },
   { id: "login", icon: "🔐" },
 ] as const satisfies ReadonlyArray<{ id: RouteId; icon: string }>;
 
