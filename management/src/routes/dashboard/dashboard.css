@@ -1,0 +1,63 @@
+.dashboard-route {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.dashboard-route__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dashboard-route__health {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.dashboard-route__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  color: #4b5563;
+}
+
+.dashboard-route__intro p {
+  margin: 0;
+}
+
+.dashboard-route__metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dashboard-route__metrics > h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.dashboard-route__stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.dashboard-route__empty {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+@media (min-width: 768px) {
+  .dashboard-route__header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+}

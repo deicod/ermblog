@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<93034f0a02e6151f99bebe1c1df6838f>>
+ * @generated SignedSource<<754be261901f01e934641d127c214064>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,13 @@ import { ConcreteRequest } from 'relay-runtime';
 export type dashboardHealthQuery$variables = Record<PropertyKey, never>;
 export type dashboardHealthQuery$data = {
   readonly health: string;
+  readonly managementStats: {
+    readonly comments: number;
+    readonly mediaItems: number;
+    readonly posts: number;
+    readonly taxonomies: number;
+    readonly users: number;
+  } | null | undefined;
 };
 export type dashboardHealthQuery = {
   response: dashboardHealthQuery$data;
@@ -25,6 +32,52 @@ var v0 = [
     "args": null,
     "kind": "ScalarField",
     "name": "health",
+    "storageKey": null
+  },
+  {
+    "alias": null,
+    "args": null,
+    "concreteType": "ManagementStats",
+    "kind": "LinkedField",
+    "name": "managementStats",
+    "plural": false,
+    "selections": [
+      {
+        "alias": null,
+        "args": null,
+        "kind": "ScalarField",
+        "name": "posts",
+        "storageKey": null
+      },
+      {
+        "alias": null,
+        "args": null,
+        "kind": "ScalarField",
+        "name": "comments",
+        "storageKey": null
+      },
+      {
+        "alias": null,
+        "args": null,
+        "kind": "ScalarField",
+        "name": "mediaItems",
+        "storageKey": null
+      },
+      {
+        "alias": null,
+        "args": null,
+        "kind": "ScalarField",
+        "name": "taxonomies",
+        "storageKey": null
+      },
+      {
+        "alias": null,
+        "args": null,
+        "kind": "ScalarField",
+        "name": "users",
+        "storageKey": null
+      }
+    ],
     "storageKey": null
   }
 ];
@@ -46,16 +99,16 @@ return {
     "selections": (v0/*: any*/)
   },
   "params": {
-    "cacheID": "cb1e1c79c438f5bc138dda539528600c",
+    "cacheID": "23fd425b49c5203d928203cb32dff917",
     "id": null,
     "metadata": {},
     "name": "dashboardHealthQuery",
     "operationKind": "query",
-    "text": "query dashboardHealthQuery {\n  health\n}\n"
+    "text": "query dashboardHealthQuery {\n  health\n  managementStats {\n    posts\n    comments\n    mediaItems\n    taxonomies\n    users\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f7cf717e5babd83dd1d66f0575551ad8";
+(node as any).hash = "39b7cdc67bba4313a73f43a04b00e658";
 
 export default node;
