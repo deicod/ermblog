@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<21d3696437a45918487515cda68ee6fe>>
+ * @generated SignedSource<<522c899f32861f58ac9f6ca4e5191264>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -58,7 +58,14 @@ v1 = [
     "name": "status",
     "variableName": "status"
   }
-];
+],
+v2 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+};
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
@@ -119,13 +126,7 @@ return {
                 "name": "node",
                 "plural": false,
                 "selections": [
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "id",
-                    "storageKey": null
-                  },
+                  (v2/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -152,6 +153,39 @@ return {
                     "args": null,
                     "kind": "ScalarField",
                     "name": "authorID",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "User",
+                    "kind": "LinkedField",
+                    "name": "author",
+                    "plural": false,
+                    "selections": [
+                      (v2/*: any*/),
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "displayName",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "email",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "username",
+                        "storageKey": null
+                      }
+                    ],
                     "storageKey": null
                   },
                   {
@@ -209,16 +243,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "506dc831caab3dd2c2aa482364e16130",
+    "cacheID": "18e41173023e318652dde71183792f15",
     "id": null,
     "metadata": {},
     "name": "PostsTablePaginationQuery",
     "operationKind": "query",
-    "text": "query PostsTablePaginationQuery(\n  $after: String\n  $first: Int = 10\n  $status: PostStatus\n) {\n  ...PostsTableFragment_2mP0Nu\n}\n\nfragment PostsTableFragment_2mP0Nu on Query {\n  posts(first: $first, after: $after, status: $status) {\n    totalCount\n    edges {\n      cursor\n      node {\n        id\n        title\n        status\n        updatedAt\n        authorID\n        __typename\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query PostsTablePaginationQuery(\n  $after: String\n  $first: Int = 10\n  $status: PostStatus\n) {\n  ...PostsTableFragment_2mP0Nu\n}\n\nfragment PostsTableFragment_2mP0Nu on Query {\n  posts(first: $first, after: $after, status: $status) {\n    totalCount\n    edges {\n      cursor\n      node {\n        id\n        title\n        status\n        updatedAt\n        authorID\n        author {\n          id\n          displayName\n          email\n          username\n        }\n        __typename\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "2fbe6b178d2618011ea9debc8023023b";
+(node as any).hash = "ccea0cb20616f97eb111c5a06b525d13";
 
 export default node;

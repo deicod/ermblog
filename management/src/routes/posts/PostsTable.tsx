@@ -39,6 +39,12 @@ const postsTableFragment = graphql`
           status
           updatedAt
           authorID
+          author {
+            id
+            displayName
+            email
+            username
+          }
         }
       }
       pageInfo {
@@ -152,6 +158,7 @@ export function PostsTable({ queryRef, pageSize }: PostsTableProps) {
                     </tr>
                   );
                 }
+                const authorLabel = formatAuthorLabel(node.author, node.authorID);
                 return (
                   <tr key={node.id}>
                     <th scope="row">{node.title ?? "Untitled draft"}</th>
@@ -159,7 +166,7 @@ export function PostsTable({ queryRef, pageSize }: PostsTableProps) {
                       <StatusBadge status={node.status} />
                     </td>
                     <td>{formatUpdatedAt(node.updatedAt)}</td>
-                    <td>{node.authorID ?? "Unknown author"}</td>
+                    <td>{authorLabel}</td>
                   </tr>
                 );
               })
@@ -179,4 +186,33 @@ export function PostsTable({ queryRef, pageSize }: PostsTableProps) {
       </div>
     </div>
   );
+}
+
+type AuthorInfo = {
+  displayName?: string | null;
+  email?: string | null;
+  username?: string | null;
+};
+
+function formatAuthorLabel(author: AuthorInfo | null | undefined, authorID: string | null | undefined): string {
+  const displayName = author?.displayName?.trim();
+  if (displayName) {
+    return displayName;
+  }
+
+  const email = author?.email?.trim();
+  if (email) {
+    return email;
+  }
+
+  const username = author?.username?.trim();
+  if (username) {
+    return username;
+  }
+
+  if (authorID && authorID.trim()) {
+    return authorID;
+  }
+
+  return "Unknown author";
 }

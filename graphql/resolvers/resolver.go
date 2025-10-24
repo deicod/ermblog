@@ -91,6 +91,7 @@ func (r *Resolver) userClient() userProvider {
 }
 
 func (r *Resolver) Mutation() graphql.MutationResolver { return &mutationResolver{r} }
+func (r *Resolver) Post() graphql.PostResolver         { return &postResolver{r} }
 func (r *Resolver) Query() graphql.QueryResolver       { return &queryResolver{r} }
 func (r *Resolver) Subscription() graphql.SubscriptionResolver {
 	return &subscriptionResolver{r}

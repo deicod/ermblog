@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a36bc144d889dc82f904cb514ef8c2a7>>
+ * @generated SignedSource<<ff6bdbbea9b5555c2b925ac6093faf54>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,12 @@ export type PostsTableFragment$data = {
     readonly edges: ReadonlyArray<{
       readonly cursor: string;
       readonly node: {
+        readonly author: {
+          readonly displayName: string | null | undefined;
+          readonly email: string;
+          readonly id: string;
+          readonly username: string;
+        } | null | undefined;
         readonly authorID: string;
         readonly id: string;
         readonly status: PostStatus;
@@ -41,7 +47,14 @@ import PostsTablePaginationQuery_graphql from './PostsTablePaginationQuery.graph
 const node: ReaderFragment = (function(){
 var v0 = [
   "posts"
-];
+],
+v1 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+};
 return {
   "argumentDefinitions": [
     {
@@ -129,13 +142,7 @@ return {
               "name": "node",
               "plural": false,
               "selections": [
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "id",
-                  "storageKey": null
-                },
+                (v1/*: any*/),
                 {
                   "alias": null,
                   "args": null,
@@ -162,6 +169,39 @@ return {
                   "args": null,
                   "kind": "ScalarField",
                   "name": "authorID",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "concreteType": "User",
+                  "kind": "LinkedField",
+                  "name": "author",
+                  "plural": false,
+                  "selections": [
+                    (v1/*: any*/),
+                    {
+                      "alias": null,
+                      "args": null,
+                      "kind": "ScalarField",
+                      "name": "displayName",
+                      "storageKey": null
+                    },
+                    {
+                      "alias": null,
+                      "args": null,
+                      "kind": "ScalarField",
+                      "name": "email",
+                      "storageKey": null
+                    },
+                    {
+                      "alias": null,
+                      "args": null,
+                      "kind": "ScalarField",
+                      "name": "username",
+                      "storageKey": null
+                    }
+                  ],
                   "storageKey": null
                 },
                 {
@@ -211,6 +251,6 @@ return {
 };
 })();
 
-(node as any).hash = "2fbe6b178d2618011ea9debc8023023b";
+(node as any).hash = "ccea0cb20616f97eb111c5a06b525d13";
 
 export default node;
