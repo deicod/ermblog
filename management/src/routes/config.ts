@@ -8,6 +8,7 @@ export const ROUTE_IDS = {
   posts: "posts",
   comments: "comments",
   taxonomies: "taxonomies",
+  media: "media",
 } as const;
 
 export type RouteId = (typeof ROUTE_IDS)[keyof typeof ROUTE_IDS];
@@ -77,6 +78,17 @@ export const ROUTE_CONFIG: RouteDefinition[] = [
     requiresAuth: true,
     lazy: async () => ({
       Component: (await import("./taxonomies")).TaxonomiesRoute,
+    }),
+  },
+  {
+    id: ROUTE_IDS.media,
+    path: "media",
+    href: "/media",
+    title: "Media",
+    description: "Manage uploaded assets and metadata",
+    requiresAuth: true,
+    lazy: async () => ({
+      Component: (await import("./media")).MediaRoute,
     }),
   },
 ];
