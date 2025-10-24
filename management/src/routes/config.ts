@@ -7,6 +7,7 @@ export const ROUTE_IDS = {
   dashboard: "dashboard",
   posts: "posts",
   comments: "comments",
+  taxonomies: "taxonomies",
 } as const;
 
 export type RouteId = (typeof ROUTE_IDS)[keyof typeof ROUTE_IDS];
@@ -65,6 +66,17 @@ export const ROUTE_CONFIG: RouteDefinition[] = [
     requiresAuth: true,
     lazy: async () => ({
       Component: (await import("./comments")).CommentsRoute,
+    }),
+  },
+  {
+    id: ROUTE_IDS.taxonomies,
+    path: "taxonomies",
+    href: "/taxonomies",
+    title: "Taxonomies",
+    description: "Organize categories and tags for site content",
+    requiresAuth: true,
+    lazy: async () => ({
+      Component: (await import("./taxonomies")).TaxonomiesRoute,
     }),
   },
 ];
