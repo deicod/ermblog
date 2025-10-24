@@ -177,6 +177,14 @@ type ComplexityRoot struct {
 		DeletedUserID    func(childComplexity int) int
 	}
 
+	ManagementStats struct {
+		Comments   func(childComplexity int) int
+		MediaItems func(childComplexity int) int
+		Posts      func(childComplexity int) int
+		Taxonomies func(childComplexity int) int
+		Users      func(childComplexity int) int
+	}
+
 	Media struct {
 		AltText       func(childComplexity int) int
 		Caption       func(childComplexity int) int
@@ -288,25 +296,26 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Categories func(childComplexity int, first *int, after *string, last *int, before *string) int
-		Category   func(childComplexity int, id string) int
-		Comment    func(childComplexity int, id string) int
-		Comments   func(childComplexity int, first *int, after *string, last *int, before *string) int
-		Health     func(childComplexity int) int
-		Media      func(childComplexity int, id string) int
-		Medias     func(childComplexity int, first *int, after *string, last *int, before *string) int
-		Node       func(childComplexity int, id string) int
-		Option     func(childComplexity int, id string) int
-		Options    func(childComplexity int, first *int, after *string, last *int, before *string) int
-		Post       func(childComplexity int, id string) int
-		Posts      func(childComplexity int, first *int, after *string, last *int, before *string) int
-		Role       func(childComplexity int, id string) int
-		Roles      func(childComplexity int, first *int, after *string, last *int, before *string) int
-		Tag        func(childComplexity int, id string) int
-		Tags       func(childComplexity int, first *int, after *string, last *int, before *string) int
-		User       func(childComplexity int, id string) int
-		Users      func(childComplexity int, first *int, after *string, last *int, before *string) int
-		Viewer     func(childComplexity int) int
+		Categories      func(childComplexity int, first *int, after *string, last *int, before *string) int
+		Category        func(childComplexity int, id string) int
+		Comment         func(childComplexity int, id string) int
+		Comments        func(childComplexity int, first *int, after *string, last *int, before *string) int
+		Health          func(childComplexity int) int
+		ManagementStats func(childComplexity int) int
+		Media           func(childComplexity int, id string) int
+		Medias          func(childComplexity int, first *int, after *string, last *int, before *string) int
+		Node            func(childComplexity int, id string) int
+		Option          func(childComplexity int, id string) int
+		Options         func(childComplexity int, first *int, after *string, last *int, before *string) int
+		Post            func(childComplexity int, id string) int
+		Posts           func(childComplexity int, first *int, after *string, last *int, before *string) int
+		Role            func(childComplexity int, id string) int
+		Roles           func(childComplexity int, first *int, after *string, last *int, before *string) int
+		Tag             func(childComplexity int, id string) int
+		Tags            func(childComplexity int, first *int, after *string, last *int, before *string) int
+		User            func(childComplexity int, id string) int
+		Users           func(childComplexity int, first *int, after *string, last *int, before *string) int
+		Viewer          func(childComplexity int) int
 	}
 
 	Role struct {
@@ -486,6 +495,7 @@ type QueryResolver interface {
 	User(ctx context.Context, id string) (*User, error)
 	Users(ctx context.Context, first *int, after *string, last *int, before *string) (*UserConnection, error)
 	Viewer(ctx context.Context) (*Viewer, error)
+	ManagementStats(ctx context.Context) (*ManagementStats, error)
 }
 type SubscriptionResolver interface {
 	Noop(ctx context.Context) (<-chan *bool, error)
@@ -909,6 +919,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DeleteUserPayload.DeletedUserID(childComplexity), true
+
+	case "ManagementStats.comments":
+		if e.complexity.ManagementStats.Comments == nil {
+			break
+		}
+
+		return e.complexity.ManagementStats.Comments(childComplexity), true
+	case "ManagementStats.mediaItems":
+		if e.complexity.ManagementStats.MediaItems == nil {
+			break
+		}
+
+		return e.complexity.ManagementStats.MediaItems(childComplexity), true
+	case "ManagementStats.posts":
+		if e.complexity.ManagementStats.Posts == nil {
+			break
+		}
+
+		return e.complexity.ManagementStats.Posts(childComplexity), true
+	case "ManagementStats.taxonomies":
+		if e.complexity.ManagementStats.Taxonomies == nil {
+			break
+		}
+
+		return e.complexity.ManagementStats.Taxonomies(childComplexity), true
+	case "ManagementStats.users":
+		if e.complexity.ManagementStats.Users == nil {
+			break
+		}
+
+		return e.complexity.ManagementStats.Users(childComplexity), true
 
 	case "Media.altText":
 		if e.complexity.Media.AltText == nil {
@@ -1553,6 +1594,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Health(childComplexity), true
+	case "Query.managementStats":
+		if e.complexity.Query.ManagementStats == nil {
+			break
+		}
+
+		return e.complexity.Query.ManagementStats(childComplexity), true
 	case "Query.media":
 		if e.complexity.Query.Media == nil {
 			break
@@ -2299,7 +2346,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
-//go:embed "schema.graphqls" "viewer.graphqls"
+//go:embed "schema.graphqls" "viewer.graphqls" "dashboard.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -2313,6 +2360,7 @@ func sourceData(filename string) string {
 var sources = []*ast.Source{
 	{Name: "schema.graphqls", Input: sourceData("schema.graphqls"), BuiltIn: false},
 	{Name: "viewer.graphqls", Input: sourceData("viewer.graphqls"), BuiltIn: false},
+	{Name: "dashboard.graphqls", Input: sourceData("dashboard.graphqls"), BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -4971,6 +5019,151 @@ func (ec *executionContext) fieldContext_DeleteUserPayload_deletedUserID(_ conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ManagementStats_posts(ctx context.Context, field graphql.CollectedField, obj *ManagementStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ManagementStats_posts,
+		func(ctx context.Context) (any, error) {
+			return obj.Posts, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ManagementStats_posts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ManagementStats",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ManagementStats_comments(ctx context.Context, field graphql.CollectedField, obj *ManagementStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ManagementStats_comments,
+		func(ctx context.Context) (any, error) {
+			return obj.Comments, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ManagementStats_comments(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ManagementStats",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ManagementStats_mediaItems(ctx context.Context, field graphql.CollectedField, obj *ManagementStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ManagementStats_mediaItems,
+		func(ctx context.Context) (any, error) {
+			return obj.MediaItems, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ManagementStats_mediaItems(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ManagementStats",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ManagementStats_taxonomies(ctx context.Context, field graphql.CollectedField, obj *ManagementStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ManagementStats_taxonomies,
+		func(ctx context.Context) (any, error) {
+			return obj.Taxonomies, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ManagementStats_taxonomies(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ManagementStats",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ManagementStats_users(ctx context.Context, field graphql.CollectedField, obj *ManagementStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_ManagementStats_users,
+		func(ctx context.Context) (any, error) {
+			return obj.Users, nil
+		},
+		nil,
+		ec.marshalNInt2int,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_ManagementStats_users(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ManagementStats",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9185,6 +9378,60 @@ func (ec *executionContext) fieldContext_Query_viewer(_ context.Context, field g
 				return ec.fieldContext_Viewer_avatarURL(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_managementStats(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Query_managementStats,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Query().ManagementStats(ctx)
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.Auth == nil {
+					var zeroVal *ManagementStats
+					return zeroVal, errors.New("directive auth is not implemented")
+				}
+				return ec.directives.Auth(ctx, nil, directive0, nil)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNManagementStats2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐManagementStats,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Query_managementStats(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "posts":
+				return ec.fieldContext_ManagementStats_posts(ctx, field)
+			case "comments":
+				return ec.fieldContext_ManagementStats_comments(ctx, field)
+			case "mediaItems":
+				return ec.fieldContext_ManagementStats_mediaItems(ctx, field)
+			case "taxonomies":
+				return ec.fieldContext_ManagementStats_taxonomies(ctx, field)
+			case "users":
+				return ec.fieldContext_ManagementStats_users(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ManagementStats", field.Name)
 		},
 	}
 	return fc, nil
@@ -16298,6 +16545,65 @@ func (ec *executionContext) _DeleteUserPayload(ctx context.Context, sel ast.Sele
 	return out
 }
 
+var managementStatsImplementors = []string{"ManagementStats"}
+
+func (ec *executionContext) _ManagementStats(ctx context.Context, sel ast.SelectionSet, obj *ManagementStats) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, managementStatsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ManagementStats")
+		case "posts":
+			out.Values[i] = ec._ManagementStats_posts(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "comments":
+			out.Values[i] = ec._ManagementStats_comments(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "mediaItems":
+			out.Values[i] = ec._ManagementStats_mediaItems(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "taxonomies":
+			out.Values[i] = ec._ManagementStats_taxonomies(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "users":
+			out.Values[i] = ec._ManagementStats_users(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mediaImplementors = []string{"Media", "Node"}
 
 func (ec *executionContext) _Media(ctx context.Context, sel ast.SelectionSet, obj *Media) graphql.Marshaler {
@@ -17459,6 +17765,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_viewer(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "managementStats":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_managementStats(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -19199,6 +19527,20 @@ func (ec *executionContext) marshalNJSONB2encodingᚋjsonᚐRawMessage(ctx conte
 		return graphql.Null
 	}
 	return ec._JSONB(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNManagementStats2githubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐManagementStats(ctx context.Context, sel ast.SelectionSet, v ManagementStats) graphql.Marshaler {
+	return ec._ManagementStats(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNManagementStats2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐManagementStats(ctx context.Context, sel ast.SelectionSet, v *ManagementStats) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ManagementStats(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNMediaConnection2githubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐMediaConnection(ctx context.Context, sel ast.SelectionSet, v MediaConnection) graphql.Marshaler {

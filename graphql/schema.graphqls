@@ -11,6 +11,19 @@ type PageInfo {
 
 directive @auth(roles: [String!]) on FIELD_DEFINITION
 
+type Query {
+  node(id: ID!): Node
+  health: String!
+}
+
+type Mutation {
+  _noop: Boolean
+}
+
+type Subscription {
+  _noop: Boolean
+}
+
 # BEGIN GENERATED
 scalar JSONB
 scalar Timestamptz
@@ -99,7 +112,6 @@ type DeleteCategoryPayload {
   deletedCategoryID: ID!
 }
 
-
 type Comment implements Node {
   id: ID!
   postID: ID!
@@ -177,7 +189,6 @@ type DeleteCommentPayload {
   clientMutationId: String
   deletedCommentID: ID!
 }
-
 
 type Media implements Node {
   id: ID!
@@ -263,7 +274,6 @@ type DeleteMediaPayload {
   deletedMediaID: ID!
 }
 
-
 type Option implements Node {
   id: ID!
   name: String!
@@ -323,7 +333,6 @@ type DeleteOptionPayload {
   clientMutationId: String
   deletedOptionID: ID!
 }
-
 
 type Post implements Node {
   id: ID!
@@ -406,7 +415,6 @@ type DeletePostPayload {
   deletedPostID: ID!
 }
 
-
 type Role implements Node {
   id: ID!
   name: String!
@@ -470,7 +478,6 @@ type DeleteRolePayload {
   deletedRoleID: ID!
 }
 
-
 type Tag implements Node {
   id: ID!
   name: String!
@@ -530,7 +537,6 @@ type DeleteTagPayload {
   clientMutationId: String
   deletedTagID: ID!
 }
-
 
 type User implements Node {
   id: ID!
@@ -607,11 +613,7 @@ type DeleteUserPayload {
   deletedUserID: ID!
 }
 
-
-
-type Query {
-  node(id: ID!): Node
-  health: String!
+extend type Query {
   category(id: ID!): Category
   categories(first: Int, after: String, last: Int, before: String): CategoryConnection!
   comment(id: ID!): Comment
@@ -630,8 +632,7 @@ type Query {
   users(first: Int, after: String, last: Int, before: String): UserConnection!
 }
 
-type Mutation {
-  _noop: Boolean
+extend type Mutation {
   createCategory(input: CreateCategoryInput!): CreateCategoryPayload! @auth(roles: ["user"])
   updateCategory(input: UpdateCategoryInput!): UpdateCategoryPayload! @auth(roles: ["user"])
   deleteCategory(input: DeleteCategoryInput!): DeleteCategoryPayload! @auth(roles: ["user"])
@@ -658,8 +659,7 @@ type Mutation {
   deleteUser(input: DeleteUserInput!): DeleteUserPayload! @auth(roles: ["user"])
 }
 
-type Subscription {
-  _noop: Boolean
+extend type Subscription {
   commentCreated: Comment! @auth(roles: ["user"])
   commentUpdated: Comment! @auth(roles: ["user"])
   commentDeleted: ID! @auth(roles: ["user"])

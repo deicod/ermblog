@@ -297,6 +297,14 @@ type DeleteUserPayload struct {
 	DeletedUserID    string  `json:"deletedUserID"`
 }
 
+type ManagementStats struct {
+	Posts      int `json:"posts"`
+	Comments   int `json:"comments"`
+	MediaItems int `json:"mediaItems"`
+	Taxonomies int `json:"taxonomies"`
+	Users      int `json:"users"`
+}
+
 type Media struct {
 	ID            string          `json:"id"`
 	UploadedByID  *string         `json:"uploadedByID,omitempty"`
