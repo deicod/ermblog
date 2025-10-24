@@ -33,6 +33,7 @@ type Resolver struct {
 	categoriesCounter counter
 	tagsCounter       counter
 	usersCounter      counter
+	commentRepo       commentRepository
 }
 
 type userProvider interface {
@@ -91,7 +92,6 @@ func (r *Resolver) userClient() userProvider {
 }
 
 func (r *Resolver) Mutation() graphql.MutationResolver { return &mutationResolver{r} }
-func (r *Resolver) Post() graphql.PostResolver         { return &postResolver{r} }
 func (r *Resolver) Query() graphql.QueryResolver       { return &queryResolver{r} }
 func (r *Resolver) Subscription() graphql.SubscriptionResolver {
 	return &subscriptionResolver{r}
@@ -119,6 +119,19 @@ func (r *Resolver) commentCounter() counter {
 	}
 	if r.ORM != nil {
 		return r.ORM.Comments()
+	}
+	return nil
+}
+
+func (r *Resolver) commentRepository() commentRepository {
+	if r == nil {
+		return nil
+	}
+	if r.commentRepo != nil {
+		return r.commentRepo
+	}
+	if r.ORM != nil {
+		return newCommentRepository(r.ORM.Comments())
 	}
 	return nil
 }

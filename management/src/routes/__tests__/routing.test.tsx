@@ -30,6 +30,10 @@ vi.mock("../posts", () => ({
   PostsRoute: () => <div>Posts content</div>,
 }));
 
+vi.mock("../comments", () => ({
+  CommentsRoute: () => <div>Comments content</div>,
+}));
+
 vi.mock("../login", () => ({
   LoginRoute: () => <div>Login screen</div>,
 }));
@@ -85,6 +89,16 @@ describe("application routing", () => {
 
   it("redirects unauthenticated users attempting to access protected routes", async () => {
     const { router } = renderWithSession(["/"]);
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/login");
+    });
+
+    expect(screen.getByText("Login screen")).toBeInTheDocument();
+  });
+
+  it("redirects unauthenticated users attempting to access the comments route", async () => {
+    const { router } = renderWithSession(["/comments"]);
 
     await waitFor(() => {
       expect(router.state.location.pathname).toBe("/login");
