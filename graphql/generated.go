@@ -487,7 +487,7 @@ type QueryResolver interface {
 	Option(ctx context.Context, id string) (*Option, error)
 	Options(ctx context.Context, first *int, after *string, last *int, before *string) (*OptionConnection, error)
 	Post(ctx context.Context, id string) (*Post, error)
-	Posts(ctx context.Context, first *int, after *string, last *int, before *string) (*PostConnection, error)
+	Posts(ctx context.Context, first *int, after *string, last *int, before *string, status *PostStatus) (*PostConnection, error)
 	Role(ctx context.Context, id string) (*Role, error)
 	Roles(ctx context.Context, first *int, after *string, last *int, before *string) (*RoleConnection, error)
 	Tag(ctx context.Context, id string) (*Tag, error)
@@ -2847,6 +2847,11 @@ func (ec *executionContext) field_Query_posts_args(ctx context.Context, rawArgs 
 		return nil, err
 	}
 	args["before"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "status", ec.unmarshalOPostStatus2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐPostStatus)
+	if err != nil {
+		return nil, err
+	}
+	args["status"] = arg4
 	return args, nil
 }
 
@@ -8979,7 +8984,11 @@ func (ec *executionContext) _Query_posts(ctx context.Context, field graphql.Coll
 		ec.fieldContext_Query_posts,
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.resolvers.Query().Posts(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
+			var status *PostStatus
+			if raw, ok := fc.Args["status"]; ok && raw != nil {
+				status = raw.(*PostStatus)
+			}
+			return ec.resolvers.Query().Posts(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string), status)
 		},
 		nil,
 		ec.marshalNPostConnection2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐPostConnection,
