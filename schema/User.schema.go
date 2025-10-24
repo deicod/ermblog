@@ -10,7 +10,7 @@ func (User) Fields() []dsl.Field {
 		dsl.UUIDv7("id").Primary(),
 		dsl.String("username").NotEmpty(),
 		dsl.String("email").NotEmpty(),
-		dsl.String("password_hash").NotEmpty(),
+		dsl.String("password").ColumnName("password_hash").NotEmpty(),
 		dsl.String("display_name").Optional(),
 		dsl.Text("bio").Optional(),
 		dsl.String("avatar_url").Optional(),

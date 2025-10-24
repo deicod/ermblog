@@ -883,10 +883,9 @@ func (r *queryResolver) Comment(ctx context.Context, id string) (*graphql.Commen
 	return toGraphQLComment(record), nil
 }
 
-func (r *queryResolver) Comments(ctx context.Context, first *int, after *string, last *int, before *string, status *graphql.CommentStatus) (*graphql.CommentConnection, error) {
-	repo := r.commentRepository()
-	if repo == nil {
-		return nil, fmt.Errorf("comment repository is not configured")
+func (r *queryResolver) Comments(ctx context.Context, first *int, after *string, last *int, before *string) (*graphql.CommentConnection, error) {
+	if r.ORM == nil {
+		return nil, fmt.Errorf("orm client is not configured")
 	}
 	if last != nil || before != nil {
 		return nil, fmt.Errorf("backward pagination is not supported")
@@ -901,24 +900,11 @@ func (r *queryResolver) Comments(ctx context.Context, first *int, after *string,
 			offset = decoded + 1
 		}
 	}
-	listQuery := repo.Query()
-	if listQuery == nil {
-		return nil, fmt.Errorf("comment query is not configured")
-	}
-	totalQuery := repo.Query()
-	if totalQuery == nil {
-		return nil, fmt.Errorf("comment query is not configured")
-	}
-	if status != nil {
-		value := string(*status)
-		listQuery = listQuery.WhereStatusEq(value)
-		totalQuery = totalQuery.WhereStatusEq(value)
-	}
-	total, err := totalQuery.Count(ctx)
+	total, err := r.ORM.Comments().Count(ctx)
 	if err != nil {
 		return nil, err
 	}
-	records, err := listQuery.Offset(offset).Limit(limit).OrderBySubmittedAtDesc().All(ctx)
+	records, err := r.ORM.Comments().List(ctx, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -1814,7 +1800,7 @@ func (r *queryResolver) Post(ctx context.Context, id string) (*graphql.Post, err
 	return toGraphQLPost(record), nil
 }
 
-func (r *queryResolver) Posts(ctx context.Context, first *int, after *string, last *int, before *string, status *graphql.PostStatus) (*graphql.PostConnection, error) {
+func (r *queryResolver) Posts(ctx context.Context, first *int, after *string, last *int, before *string) (*graphql.PostConnection, error) {
 	if r.ORM == nil {
 		return nil, fmt.Errorf("orm client is not configured")
 	}
@@ -1831,19 +1817,11 @@ func (r *queryResolver) Posts(ctx context.Context, first *int, after *string, la
 			offset = decoded + 1
 		}
 	}
-	postsQuery := r.ORM.Posts().Query()
-	if status != nil {
-		postsQuery.WhereStatusEq(string(*status))
-	}
-	totalQuery := r.ORM.Posts().Query()
-	if status != nil {
-		totalQuery.WhereStatusEq(string(*status))
-	}
-	total, err := totalQuery.Count(ctx)
+	total, err := r.ORM.Posts().Count(ctx)
 	if err != nil {
 		return nil, err
 	}
-	records, err := postsQuery.Offset(offset).Limit(limit).OrderByCreatedAtDesc().All(ctx)
+	records, err := r.ORM.Posts().List(ctx, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -2757,17 +2735,16 @@ func toGraphQLUser(record *gen.User) *graphql.User {
 		return nil
 	}
 	return &graphql.User{
-		ID:           relay.ToGlobalID("User", record.ID),
-		Username:     record.Username,
-		Email:        record.Email,
-		PasswordHash: record.PasswordHash,
-		DisplayName:  record.DisplayName,
-		Bio:          record.Bio,
-		AvatarURL:    record.AvatarURL,
-		WebsiteURL:   record.WebsiteURL,
-		LastLoginAt:  record.LastLoginAt,
-		CreatedAt:    record.CreatedAt,
-		UpdatedAt:    record.UpdatedAt,
+		ID:          relay.ToGlobalID("User", record.ID),
+		Username:    record.Username,
+		Email:       record.Email,
+		DisplayName: record.DisplayName,
+		Bio:         record.Bio,
+		AvatarURL:   record.AvatarURL,
+		WebsiteURL:  record.WebsiteURL,
+		LastLoginAt: record.LastLoginAt,
+		CreatedAt:   record.CreatedAt,
+		UpdatedAt:   record.UpdatedAt,
 	}
 }
 
@@ -2871,8 +2848,8 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input graphql.CreateU
 	if input.Email != nil {
 		model.Email = *input.Email
 	}
-	if input.PasswordHash != nil {
-		model.PasswordHash = *input.PasswordHash
+	if input.Password != nil {
+		model.Password = *input.Password
 	}
 	if input.DisplayName != nil {
 		model.DisplayName = input.DisplayName
@@ -2932,8 +2909,8 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, input graphql.UpdateU
 	if input.Email != nil {
 		model.Email = *input.Email
 	}
-	if input.PasswordHash != nil {
-		model.PasswordHash = *input.PasswordHash
+	if input.Password != nil {
+		model.Password = *input.Password
 	}
 	if input.DisplayName != nil {
 		model.DisplayName = input.DisplayName

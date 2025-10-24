@@ -202,7 +202,7 @@ type CreateUserInput struct {
 	ID               *string    `json:"id,omitempty"`
 	Username         *string    `json:"username,omitempty"`
 	Email            *string    `json:"email,omitempty"`
-	PasswordHash     *string    `json:"passwordHash,omitempty"`
+	Password         *string    `json:"password,omitempty"`
 	DisplayName      *string    `json:"displayName,omitempty"`
 	Bio              *string    `json:"bio,omitempty"`
 	AvatarURL        *string    `json:"avatarURL,omitempty"`
@@ -372,7 +372,6 @@ type PageInfo struct {
 type Post struct {
 	ID              string          `json:"id"`
 	AuthorID        string          `json:"authorID"`
-	Author          *User           `json:"author,omitempty"`
 	FeaturedMediaID *string         `json:"featuredMediaID,omitempty"`
 	Title           string          `json:"title"`
 	Slug            string          `json:"slug"`
@@ -586,7 +585,7 @@ type UpdateUserInput struct {
 	ID               string     `json:"id"`
 	Username         *string    `json:"username,omitempty"`
 	Email            *string    `json:"email,omitempty"`
-	PasswordHash     *string    `json:"passwordHash,omitempty"`
+	Password         *string    `json:"password,omitempty"`
 	DisplayName      *string    `json:"displayName,omitempty"`
 	Bio              *string    `json:"bio,omitempty"`
 	AvatarURL        *string    `json:"avatarURL,omitempty"`
@@ -602,17 +601,16 @@ type UpdateUserPayload struct {
 }
 
 type User struct {
-	ID           string     `json:"id"`
-	Username     string     `json:"username"`
-	Email        string     `json:"email"`
-	PasswordHash string     `json:"passwordHash"`
-	DisplayName  *string    `json:"displayName,omitempty"`
-	Bio          *string    `json:"bio,omitempty"`
-	AvatarURL    *string    `json:"avatarURL,omitempty"`
-	WebsiteURL   *string    `json:"websiteURL,omitempty"`
-	LastLoginAt  *time.Time `json:"lastLoginAt,omitempty"`
-	CreatedAt    time.Time  `json:"createdAt"`
-	UpdatedAt    time.Time  `json:"updatedAt"`
+	ID          string     `json:"id"`
+	Username    string     `json:"username"`
+	Email       string     `json:"email"`
+	DisplayName *string    `json:"displayName,omitempty"`
+	Bio         *string    `json:"bio,omitempty"`
+	AvatarURL   *string    `json:"avatarURL,omitempty"`
+	WebsiteURL  *string    `json:"websiteURL,omitempty"`
+	LastLoginAt *time.Time `json:"lastLoginAt,omitempty"`
+	CreatedAt   time.Time  `json:"createdAt"`
+	UpdatedAt   time.Time  `json:"updatedAt"`
 }
 
 func (User) IsNode()            {}
