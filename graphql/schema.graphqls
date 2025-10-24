@@ -621,7 +621,13 @@ type Query {
   option(id: ID!): Option
   options(first: Int, after: String, last: Int, before: String): OptionConnection!
   post(id: ID!): Post
-  posts(first: Int, after: String, last: Int, before: String): PostConnection!
+  posts(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    status: PostStatus
+  ): PostConnection!
   role(id: ID!): Role
   roles(first: Int, after: String, last: Int, before: String): RoleConnection!
   tag(id: ID!): Tag

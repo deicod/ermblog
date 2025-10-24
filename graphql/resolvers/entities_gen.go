@@ -1800,7 +1800,7 @@ func (r *queryResolver) Post(ctx context.Context, id string) (*graphql.Post, err
 	return toGraphQLPost(record), nil
 }
 
-func (r *queryResolver) Posts(ctx context.Context, first *int, after *string, last *int, before *string) (*graphql.PostConnection, error) {
+func (r *queryResolver) Posts(ctx context.Context, first *int, after *string, last *int, before *string, status *graphql.PostStatus) (*graphql.PostConnection, error) {
 	if r.ORM == nil {
 		return nil, fmt.Errorf("orm client is not configured")
 	}
@@ -1817,11 +1817,19 @@ func (r *queryResolver) Posts(ctx context.Context, first *int, after *string, la
 			offset = decoded + 1
 		}
 	}
-	total, err := r.ORM.Posts().Count(ctx)
+	postsQuery := r.ORM.Posts().Query()
+	if status != nil {
+		postsQuery.WhereStatusEq(string(*status))
+	}
+	totalQuery := r.ORM.Posts().Query()
+	if status != nil {
+		totalQuery.WhereStatusEq(string(*status))
+	}
+	total, err := totalQuery.Count(ctx)
 	if err != nil {
 		return nil, err
 	}
-	records, err := r.ORM.Posts().List(ctx, limit, offset)
+	records, err := postsQuery.Offset(offset).Limit(limit).OrderByCreatedAtDesc().All(ctx)
 	if err != nil {
 		return nil, err
 	}
