@@ -900,11 +900,15 @@ func (r *queryResolver) Comments(ctx context.Context, first *int, after *string,
 			offset = decoded + 1
 		}
 	}
-	total, err := r.ORM.Comments().Count(ctx)
+	total, err := r.ORM.Comments().Query().Count(ctx)
 	if err != nil {
 		return nil, err
 	}
-	records, err := r.ORM.Comments().List(ctx, limit, offset)
+	records, err := r.ORM.Comments().Query().
+		OrderBySubmittedAtDesc().
+		Limit(limit).
+		Offset(offset).
+		All(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -1817,11 +1821,15 @@ func (r *queryResolver) Posts(ctx context.Context, first *int, after *string, la
 			offset = decoded + 1
 		}
 	}
-	total, err := r.ORM.Posts().Count(ctx)
+	total, err := r.ORM.Posts().Query().Count(ctx)
 	if err != nil {
 		return nil, err
 	}
-	records, err := r.ORM.Posts().List(ctx, limit, offset)
+	records, err := r.ORM.Posts().Query().
+		OrderByCreatedAtDesc().
+		Limit(limit).
+		Offset(offset).
+		All(ctx)
 	if err != nil {
 		return nil, err
 	}
