@@ -7,6 +7,7 @@ export const ROUTE_IDS = {
   dashboard: "dashboard",
   posts: "posts",
   comments: "comments",
+  roles: "roles",
   users: "users",
   taxonomies: "taxonomies",
   media: "media",
@@ -69,6 +70,17 @@ export const ROUTE_CONFIG: RouteDefinition[] = [
     requiresAuth: true,
     lazy: async () => ({
       Component: (await import("./users")).UsersRoute,
+    }),
+  },
+  {
+    id: ROUTE_IDS.roles,
+    path: "roles",
+    href: "/roles",
+    title: "Roles",
+    description: "Manage capability bundles and permission policies",
+    requiresAuth: true,
+    lazy: async () => ({
+      Component: (await import("./roles")).RolesRoute,
     }),
   },
   {

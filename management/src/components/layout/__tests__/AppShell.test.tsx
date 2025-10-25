@@ -55,6 +55,7 @@ describe("route configuration", () => {
     const dashboard = routes.get("dashboard");
     const posts = routes.get("posts");
     const users = routes.get("users");
+    const roles = routes.get("roles");
     const comments = routes.get("comments");
     expect(dashboard).toBeDefined();
     expect(dashboard?.href).toBe("/");
@@ -68,6 +69,10 @@ describe("route configuration", () => {
     expect(users?.href).toBe("/users");
     expect(users?.title).toBe("Users");
     expect(users?.description).toMatch(/Manage user accounts/i);
+    expect(roles).toBeDefined();
+    expect(roles?.href).toBe("/roles");
+    expect(roles?.title).toBe("Roles");
+    expect(roles?.description).toMatch(/Manage capability bundles/i);
     expect(comments).toBeDefined();
     expect(comments?.href).toBe("/comments");
     expect(comments?.title).toBe("Comments");
@@ -94,6 +99,7 @@ describe("navigation metadata", () => {
       "dashboard",
       "posts",
       "users",
+      "roles",
       "comments",
       "taxonomies",
       "media",
