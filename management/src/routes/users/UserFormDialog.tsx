@@ -333,7 +333,19 @@ export function UserCreateDialog({ availableRoles, onClose, onSuccess, onError }
         }
         commitAssignRoles({
           variables: { input: { userID: userId, roleIDs: roleIds } },
-          onCompleted: () => resolve(),
+          onCompleted: (_response, errors) => {
+            if (errors && errors.length > 0) {
+              reject(
+                new Error(
+                  errors.map((error) => error.message).join(" ") ||
+                    "Unable to assign roles. Try again.",
+                ),
+              );
+              return;
+            }
+
+            resolve();
+          },
           onError: (error) => reject(error),
         });
       }),
@@ -483,7 +495,19 @@ export function UserEditDialog({ user, availableRoles, onClose, onSuccess, onErr
         }
         commitAssignRoles({
           variables: { input: { userID: userId, roleIDs: roleIds } },
-          onCompleted: () => resolve(),
+          onCompleted: (_response, errors) => {
+            if (errors && errors.length > 0) {
+              reject(
+                new Error(
+                  errors.map((error) => error.message).join(" ") ||
+                    "Unable to assign roles. Try again.",
+                ),
+              );
+              return;
+            }
+
+            resolve();
+          },
           onError: (error) => reject(error),
         });
       }),
@@ -499,7 +523,19 @@ export function UserEditDialog({ user, availableRoles, onClose, onSuccess, onErr
         }
         commitRemoveRoles({
           variables: { input: { userID: userId, roleIDs: roleIds } },
-          onCompleted: () => resolve(),
+          onCompleted: (_response, errors) => {
+            if (errors && errors.length > 0) {
+              reject(
+                new Error(
+                  errors.map((error) => error.message).join(" ") ||
+                    "Unable to remove roles. Try again.",
+                ),
+              );
+              return;
+            }
+
+            resolve();
+          },
           onError: (error) => reject(error),
         });
       }),
