@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0feb41aa3efdef1864b73d6d452844ba>>
+ * @generated SignedSource<<6e27370aa38b300e8010d04f338603c0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,7 +18,7 @@ export type UpdateUserInput = {
   email?: string | null | undefined;
   id: string;
   lastLoginAt?: any | null | undefined;
-  passwordHash?: string | null | undefined;
+  password?: string | null | undefined;
   updatedAt?: any | null | undefined;
   username?: string | null | undefined;
   websiteURL?: string | null | undefined;

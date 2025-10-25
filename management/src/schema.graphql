@@ -686,7 +686,7 @@ input CreateUserInput {
     id: ID
     username: String
     email: String
-    passwordHash: String
+    password: String
     displayName: String
     bio: String
     avatarURL: String
@@ -706,7 +706,7 @@ input UpdateUserInput {
     id: ID!
     username: String
     email: String
-    passwordHash: String
+    password: String
     displayName: String
     bio: String
     avatarURL: String

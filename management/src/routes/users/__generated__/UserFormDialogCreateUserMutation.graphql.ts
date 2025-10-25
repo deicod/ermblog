@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<736304c7dfe552d3fccd512077fcecba>>
+ * @generated SignedSource<<d9aed25df78fee48bc58942b2385dceb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,7 +18,7 @@ export type CreateUserInput = {
   email?: string | null | undefined;
   id?: string | null | undefined;
   lastLoginAt?: any | null | undefined;
-  passwordHash?: string | null | undefined;
+  password?: string | null | undefined;
   updatedAt?: any | null | undefined;
   username?: string | null | undefined;
   websiteURL?: string | null | undefined;
