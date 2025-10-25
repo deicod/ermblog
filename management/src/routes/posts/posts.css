@@ -89,6 +89,17 @@
   color: #111827;
 }
 
+.posts-table__title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.posts-table__title-link:hover,
+.posts-table__title-link:focus-visible {
+  text-decoration: underline;
+  color: #2563eb;
+}
+
 .posts-table__table tbody tr:last-of-type td {
   border-bottom: none;
 }
@@ -167,4 +178,212 @@
 .status-badge--unknown {
   color: #6b7280;
   background-color: rgba(229, 231, 235, 0.6);
+}
+
+.post-editor-route {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.post-editor-route__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.post-editor-route__header > div > p,
+.post-editor-route__header > p {
+  margin: 0;
+  color: #4b5563;
+}
+
+.post-editor-route__back-link {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.post-editor-route__back-link:hover,
+.post-editor-route__back-link:focus-visible {
+  text-decoration: underline;
+}
+
+.post-editor-route__loading {
+  padding: 2rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background-color: #f9fafb;
+  color: #4b5563;
+}
+
+.post-editor-route--empty {
+  gap: 1rem;
+}
+
+.post-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.75rem;
+}
+
+.post-editor__intro,
+.post-editor__section-intro {
+  margin: 0;
+  color: #4b5563;
+}
+
+.post-editor__grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.post-editor__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background-color: #f9fafb;
+}
+
+.post-editor__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.95rem;
+  color: #1f2937;
+}
+
+.post-editor__field input,
+.post-editor__field select,
+.post-editor__field textarea {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #d1d5db;
+  font-size: 0.95rem;
+  color: #111827;
+  background-color: #ffffff;
+}
+
+.post-editor__field input:focus-visible,
+.post-editor__field select:focus-visible,
+.post-editor__field textarea:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.65);
+  outline-offset: 2px;
+}
+
+.post-editor__field--stacked textarea {
+  min-height: 6rem;
+  font-family: inherit;
+}
+
+.post-editor__field-group {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.post-editor__error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
+
+.post-editor__status {
+  margin: 0;
+  color: #065f46;
+  font-weight: 600;
+}
+
+.post-editor__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.post-editor__actions button {
+  padding: 0.6rem 1.5rem;
+  border-radius: 9999px;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+
+.post-editor__actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+  background: #cbd5f5;
+  color: #334155;
+}
+
+.post-editor__actions button:not(:disabled):hover,
+.post-editor__actions button:not(:disabled):focus-visible {
+  filter: brightness(1.05);
+}
+
+.post-editor__relationships {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background-color: #f9fafb;
+}
+
+.post-editor__relationship-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.post-editor__relationship-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.post-editor__relationship-group legend {
+  font-weight: 600;
+  color: #111827;
+}
+
+.post-editor__relationship-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.post-editor__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #1f2937;
+}
+
+.post-editor__checkbox input {
+  width: 1rem;
+  height: 1rem;
+}
+
+.post-editor__hint {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
 }

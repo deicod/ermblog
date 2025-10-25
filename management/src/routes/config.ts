@@ -6,6 +6,7 @@ export const ROUTE_IDS = {
   login: "login",
   dashboard: "dashboard",
   posts: "posts",
+  postEditor: "postEditor",
   comments: "comments",
   roles: "roles",
   users: "users",
@@ -59,6 +60,17 @@ export const ROUTE_CONFIG: RouteDefinition[] = [
     requiresAuth: true,
     lazy: async () => ({
       Component: (await import("./posts")).PostsRoute,
+    }),
+  },
+  {
+    id: ROUTE_IDS.postEditor,
+    path: "posts/:postId",
+    href: "/posts/:postId",
+    title: "Edit post",
+    description: "Update post content, relationships, and SEO metadata",
+    requiresAuth: true,
+    lazy: async () => ({
+      Component: (await import("./posts/PostEditorRoute")).PostEditorRoute,
     }),
   },
   {

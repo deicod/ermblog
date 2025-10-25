@@ -483,6 +483,7 @@ type Post implements Node {
     authorID: ID!
     author: User
     featuredMediaID: ID
+    featuredMedia: Media
     title: String!
     slug: String!
     status: PostStatus!
@@ -493,6 +494,8 @@ type Post implements Node {
     publishedAt: Timestamptz
     createdAt: Timestamptz!
     updatedAt: Timestamptz!
+    categories: [Category!]!
+    tags: [Tag!]!
 }
 
 type PostEdge {
@@ -521,6 +524,8 @@ input CreatePostInput {
     publishedAt: Timestamptz
     createdAt: Timestamptz
     updatedAt: Timestamptz
+    categoryIDs: [ID!]
+    tagIDs: [ID!]
 }
 
 type CreatePostPayload {
@@ -543,6 +548,8 @@ input UpdatePostInput {
     publishedAt: Timestamptz
     createdAt: Timestamptz
     updatedAt: Timestamptz
+    categoryIDs: [ID!]
+    tagIDs: [ID!]
 }
 
 type UpdatePostPayload {

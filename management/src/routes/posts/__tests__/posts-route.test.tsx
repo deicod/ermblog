@@ -1,6 +1,7 @@
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RelayEnvironmentProvider } from "react-relay";
+import { MemoryRouter } from "react-router-dom";
 import { createMockEnvironment } from "relay-test-utils";
 import { describe, expect, it } from "vitest";
 
@@ -9,7 +10,9 @@ import { POSTS_PAGE_SIZE, PostsRoute } from "../../posts";
 function renderPosts(environment = createMockEnvironment()) {
   render(
     <RelayEnvironmentProvider environment={environment}>
-      <PostsRoute />
+      <MemoryRouter>
+        <PostsRoute />
+      </MemoryRouter>
     </RelayEnvironmentProvider>,
   );
   return environment;
@@ -106,9 +109,9 @@ describe("PostsRoute", () => {
     });
 
     const table = await screen.findByRole("table");
-    expect(within(table).getByText("Editorial draft")).toBeInTheDocument();
+    expect(within(table).getByRole("link", { name: "Editorial draft" })).toBeInTheDocument();
     expect(within(table).getByText("Editor Extraordinaire")).toBeInTheDocument();
-    expect(within(table).getByText("Breaking news")).toBeInTheDocument();
+    expect(within(table).getByRole("link", { name: "Breaking news" })).toBeInTheDocument();
     expect(within(table).getByText("reporter@example.com")).toBeInTheDocument();
 
     const statusSelect = screen.getByLabelText("Status");
@@ -139,8 +142,8 @@ describe("PostsRoute", () => {
       });
     });
 
-    expect(screen.getByText("Editorial draft")).toBeInTheDocument();
-    expect(screen.queryByText("Breaking news")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Editorial draft" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Breaking news" })).not.toBeInTheDocument();
   });
 
   it("renders an empty state when no posts are returned", async () => {
@@ -260,7 +263,7 @@ describe("PostsRoute", () => {
       });
     });
 
-    expect(await screen.findByText("Third story")).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Third story" })).toBeInTheDocument();
     expect(screen.getByText("Unknown author")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Load more" })).toBeDisabled();
   });
