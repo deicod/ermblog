@@ -1,0 +1,297 @@
+import { act, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { RelayEnvironmentProvider } from "react-relay";
+import { createMockEnvironment } from "relay-test-utils";
+import { describe, expect, it } from "vitest";
+
+import { USERS_PAGE_SIZE, UsersRoute } from "../../users";
+
+function renderUsers(environment = createMockEnvironment()) {
+  render(
+    <RelayEnvironmentProvider environment={environment}>
+      <UsersRoute />
+    </RelayEnvironmentProvider>,
+  );
+  return environment;
+}
+
+type UserNodeInput = {
+  id: string;
+  username: string;
+  email: string;
+  displayName?: string | null;
+  bio?: string | null;
+  avatarURL?: string | null;
+  websiteURL?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+function buildUsersPayload(
+  users: UserNodeInput[],
+  pageInfo?: { hasNextPage?: boolean; endCursor?: string | null },
+) {
+  const edges = users.map((user, index) => ({
+    cursor: `cursor-${index + 1}`,
+    node: {
+      __typename: "User",
+      ...user,
+      displayName: user.displayName ?? null,
+      bio: user.bio ?? null,
+      avatarURL: user.avatarURL ?? null,
+      websiteURL: user.websiteURL ?? null,
+      createdAt: user.createdAt ?? null,
+      updatedAt: user.updatedAt ?? null,
+    },
+  }));
+
+  return {
+    users: {
+      __typename: "UserConnection",
+      totalCount: users.length,
+      edges,
+      pageInfo: {
+        __typename: "PageInfo",
+        hasNextPage: pageInfo?.hasNextPage ?? false,
+        hasPreviousPage: false,
+        startCursor: edges[0]?.cursor ?? null,
+        endCursor: pageInfo?.endCursor ?? edges[edges.length - 1]?.cursor ?? null,
+      },
+    },
+  };
+}
+
+describe("UsersRoute", () => {
+  it("renders account records and filters them with the search box", async () => {
+    const environment = renderUsers();
+    const initialOperation = environment.mock.getMostRecentOperation();
+    expect(initialOperation.fragment.node.name).toBe("usersRouteQuery");
+
+    await act(async () => {
+      environment.mock.resolve(initialOperation, {
+        data: buildUsersPayload([
+          {
+            id: "user-1",
+            username: "opslead",
+            email: "ops@example.com",
+            displayName: "Operations Lead",
+            bio: "Keeps the trains running on time.",
+            websiteURL: "https://ops.example.com",
+            updatedAt: "2024-10-10T10:00:00.000Z",
+            createdAt: "2024-10-09T10:00:00.000Z",
+          },
+          {
+            id: "user-2",
+            username: "editor",
+            email: "editor@example.com",
+            displayName: "Chief Editor",
+            bio: "Reviews and publishes content.",
+            avatarURL: "https://cdn.example/editor.png",
+            updatedAt: "2024-10-11T09:15:00.000Z",
+            createdAt: "2024-10-09T08:00:00.000Z",
+          },
+        ]),
+      });
+    });
+
+    const table = await screen.findByRole("table");
+    const opsRow = within(table).getByRole("row", { name: /opslead/i });
+    expect(within(opsRow).getByText("Operations Lead")).toBeInTheDocument();
+    expect(within(opsRow).getByText("ops@example.com")).toBeInTheDocument();
+    expect(within(opsRow).getByText("https://ops.example.com")).toBeInTheDocument();
+
+    const editorRow = within(table).getByRole("row", { name: /editor/i });
+    expect(within(editorRow).getByText("Chief Editor")).toBeInTheDocument();
+    expect(within(editorRow).getByText("https://cdn.example/editor.png")).toBeInTheDocument();
+
+    const searchInput = screen.getByLabelText("Search users");
+    await userEvent.clear(searchInput);
+    await userEvent.type(searchInput, "ops");
+
+    expect(screen.getByRole("row", { name: /opslead/i })).toBeInTheDocument();
+    expect(screen.queryByRole("row", { name: /editor/i })).not.toBeInTheDocument();
+  });
+
+  it("loads additional pages when requesting more users", async () => {
+    const environment = renderUsers();
+    const initialOperation = environment.mock.getMostRecentOperation();
+
+    await act(async () => {
+      environment.mock.resolve(initialOperation, {
+        data: buildUsersPayload(
+          [
+            {
+              id: "user-1",
+              username: "first",
+              email: "first@example.com",
+              createdAt: "2024-10-10T09:00:00.000Z",
+            },
+          ],
+          { hasNextPage: true, endCursor: "cursor-1" },
+        ),
+      });
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: "Load more" }));
+
+    const paginationOperation = environment.mock.getMostRecentOperation();
+    expect(paginationOperation.fragment.node.name).toBe("UsersManagerPaginationQuery");
+    expect(paginationOperation.request.variables).toMatchObject({ first: USERS_PAGE_SIZE });
+  });
+
+  it("creates a user through the dialog form", async () => {
+    const environment = renderUsers();
+    const initialOperation = environment.mock.getMostRecentOperation();
+
+    await act(async () => {
+      environment.mock.resolve(initialOperation, { data: buildUsersPayload([]) });
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: "New user" }));
+
+    await userEvent.type(screen.getByLabelText("Username"), "analyst");
+    await userEvent.type(screen.getByLabelText("Email"), "analyst@example.com");
+    await userEvent.type(screen.getByLabelText("Display name"), "Data Analyst");
+    await userEvent.type(screen.getByLabelText("Website"), "https://data.example.com");
+    await userEvent.type(screen.getByLabelText("Avatar URL"), "https://cdn.example/analyst.png");
+    await userEvent.type(screen.getByLabelText("Bio"), "Transforms data into actionable insight.");
+
+    await userEvent.click(screen.getByRole("button", { name: "Create user" }));
+
+    const mutationOperation = environment.mock.getMostRecentOperation();
+    expect(mutationOperation.fragment.node.name).toBe("UserFormDialogCreateUserMutation");
+    expect(mutationOperation.request.variables.input).toMatchObject({
+      username: "analyst",
+      email: "analyst@example.com",
+      displayName: "Data Analyst",
+      websiteURL: "https://data.example.com",
+    });
+
+    await act(async () => {
+      environment.mock.resolve(mutationOperation, {
+        data: {
+          createUser: {
+            __typename: "CreateUserPayload",
+            user: {
+              __typename: "User",
+              id: "user-3",
+              username: "analyst",
+              email: "analyst@example.com",
+              displayName: "Data Analyst",
+              bio: "Transforms data into actionable insight.",
+              avatarURL: "https://cdn.example/analyst.png",
+              websiteURL: "https://data.example.com",
+              createdAt: "2024-10-12T09:00:00.000Z",
+              updatedAt: "2024-10-12T09:00:00.000Z",
+            },
+          },
+        },
+      });
+    });
+
+    const refreshOperation = environment.mock.getMostRecentOperation();
+    expect(refreshOperation.fragment.node.name).toBe("UsersManagerPaginationQuery");
+    expect(refreshOperation.request.variables).toMatchObject({ first: USERS_PAGE_SIZE });
+
+    await act(async () => {
+      environment.mock.resolve(refreshOperation, {
+        data: buildUsersPayload([
+          {
+            id: "user-3",
+            username: "analyst",
+            email: "analyst@example.com",
+            displayName: "Data Analyst",
+            bio: "Transforms data into actionable insight.",
+            avatarURL: "https://cdn.example/analyst.png",
+            websiteURL: "https://data.example.com",
+            createdAt: "2024-10-12T09:00:00.000Z",
+            updatedAt: "2024-10-12T09:00:00.000Z",
+          },
+        ]),
+      });
+    });
+
+    await screen.findByText("User created successfully.");
+    expect(screen.queryByRole("dialog", { name: /Create new user/i })).not.toBeInTheDocument();
+  });
+
+  it("updates a user profile via the edit dialog", async () => {
+    const environment = renderUsers();
+    const initialOperation = environment.mock.getMostRecentOperation();
+
+    await act(async () => {
+      environment.mock.resolve(initialOperation, {
+        data: buildUsersPayload([
+          {
+            id: "user-2",
+            username: "reviewer",
+            email: "reviewer@example.com",
+            displayName: "Content Reviewer",
+            bio: "Reviews submissions before publishing.",
+            updatedAt: "2024-10-11T10:00:00.000Z",
+            createdAt: "2024-10-10T08:00:00.000Z",
+          },
+        ]),
+      });
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit user" }));
+    await userEvent.clear(screen.getByLabelText("Display name"));
+    await userEvent.type(screen.getByLabelText("Display name"), "Senior Reviewer");
+    await userEvent.clear(screen.getByLabelText("Bio"));
+    await userEvent.type(screen.getByLabelText("Bio"), "Mentors the review team and ensures standards.");
+
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    const mutationOperation = environment.mock.getMostRecentOperation();
+    expect(mutationOperation.fragment.node.name).toBe("UserFormDialogUpdateUserMutation");
+    expect(mutationOperation.request.variables.input).toMatchObject({
+      id: "user-2",
+      displayName: "Senior Reviewer",
+    });
+
+    await act(async () => {
+      environment.mock.resolve(mutationOperation, {
+        data: {
+          updateUser: {
+            __typename: "UpdateUserPayload",
+            user: {
+              __typename: "User",
+              id: "user-2",
+              username: "reviewer",
+              email: "reviewer@example.com",
+              displayName: "Senior Reviewer",
+              bio: "Mentors the review team and ensures standards.",
+              avatarURL: null,
+              websiteURL: null,
+              createdAt: "2024-10-10T08:00:00.000Z",
+              updatedAt: "2024-10-12T08:00:00.000Z",
+            },
+          },
+        },
+      });
+    });
+
+    const refreshOperation = environment.mock.getMostRecentOperation();
+    expect(refreshOperation.fragment.node.name).toBe("UsersManagerPaginationQuery");
+    expect(refreshOperation.request.variables).toMatchObject({ first: USERS_PAGE_SIZE });
+
+    await act(async () => {
+      environment.mock.resolve(refreshOperation, {
+        data: buildUsersPayload([
+          {
+            id: "user-2",
+            username: "reviewer",
+            email: "reviewer@example.com",
+            displayName: "Senior Reviewer",
+            bio: "Mentors the review team and ensures standards.",
+            updatedAt: "2024-10-12T08:00:00.000Z",
+            createdAt: "2024-10-10T08:00:00.000Z",
+          },
+        ]),
+      });
+    });
+
+    await screen.findByText("User profile updated successfully.");
+  });
+});
