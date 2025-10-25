@@ -1,4 +1,4 @@
-import { act, render, screen, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RelayEnvironmentProvider } from "react-relay";
 import { MemoryRouter } from "react-router-dom";
@@ -6,13 +6,16 @@ import { createMockEnvironment } from "relay-test-utils";
 import { describe, expect, it } from "vitest";
 
 import { POSTS_PAGE_SIZE, PostsRoute } from "../../posts";
+import { ToastProvider } from "../../../providers/ToastProvider";
 
 function renderPosts(environment = createMockEnvironment()) {
   render(
     <RelayEnvironmentProvider environment={environment}>
-      <MemoryRouter>
-        <PostsRoute />
-      </MemoryRouter>
+      <ToastProvider>
+        <MemoryRouter>
+          <PostsRoute />
+        </MemoryRouter>
+      </ToastProvider>
     </RelayEnvironmentProvider>,
   );
   return environment;
@@ -67,6 +70,12 @@ function buildPostsPayload(posts: PostNodeInput[], pageInfo?: { hasNextPage?: bo
       },
     },
   };
+}
+
+function findOperationByName(environment: ReturnType<typeof createMockEnvironment>, name: string) {
+  return environment.mock.findOperation(
+    (operation) => operation.request.node.params.name === name,
+  );
 }
 
 describe("PostsRoute", () => {
@@ -266,5 +275,160 @@ describe("PostsRoute", () => {
     expect(await screen.findByRole("link", { name: "Third story" })).toBeInTheDocument();
     expect(screen.getByText("Unknown author")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Load more" })).toBeDisabled();
+  });
+
+  it("updates posts in response to the postUpdated subscription and renders a toast", async () => {
+    const environment = renderPosts();
+    const initialOperation = environment.mock.getMostRecentOperation();
+
+    await act(async () => {
+      environment.mock.resolve(initialOperation, {
+        data: buildPostsPayload([
+          {
+            id: "post-1",
+            title: "Breaking news",
+            status: "draft",
+            updatedAt: "2024-10-11T09:00:00.000Z",
+            authorID: "author-1",
+            author: {
+              id: "author-1",
+              displayName: "Reporter",
+              email: "reporter@example.com",
+              username: "reporter",
+            },
+          },
+        ]),
+      });
+    });
+
+    const postUpdatedOperation = findOperationByName(
+      environment,
+      "PostsSubscriptionsPostUpdatedSubscription",
+    );
+
+    await act(async () => {
+      environment.mock.nextValue(postUpdatedOperation, {
+        data: {
+          postUpdated: {
+            __typename: "Post",
+            id: "post-1",
+            title: "Breaking news",
+            status: "published",
+            updatedAt: "2024-10-11T10:15:00.000Z",
+            authorID: "author-1",
+            author: {
+              __typename: "User",
+              id: "author-1",
+              displayName: "Reporter",
+              email: "reporter@example.com",
+              username: "reporter",
+            },
+          },
+        },
+      });
+      environment.mock.complete(postUpdatedOperation);
+    });
+
+    await waitFor(() => {
+      const link = screen.getByRole("link", { name: "Breaking news" });
+      const row = link.closest("tr");
+      if (!row) {
+        throw new Error("Expected to find the post row");
+      }
+      expect(within(row).getByText("Published")).toBeInTheDocument();
+    });
+
+    const notifications = screen.getByRole("region", { name: "Notifications" });
+    expect(within(notifications).getByText("“Breaking news” is now Published.")).toBeInTheDocument();
+  });
+
+  it("removes posts from the filtered view when a subscription updates the status", async () => {
+    const environment = renderPosts();
+    const initialOperation = environment.mock.getMostRecentOperation();
+
+    await act(async () => {
+      environment.mock.resolve(initialOperation, {
+        data: buildPostsPayload([
+          {
+            id: "post-1",
+            title: "Breaking news",
+            status: "draft",
+            updatedAt: "2024-10-11T09:00:00.000Z",
+            authorID: "author-1",
+            author: {
+              id: "author-1",
+              displayName: "Reporter",
+              email: "reporter@example.com",
+              username: "reporter",
+            },
+          },
+        ]),
+      });
+    });
+
+    const statusSelect = screen.getByLabelText("Status");
+    await userEvent.selectOptions(statusSelect, "draft");
+
+    const refetchOperation = environment.mock.getMostRecentOperation();
+    await act(async () => {
+      environment.mock.resolve(refetchOperation, {
+        data: buildPostsPayload([
+          {
+            id: "post-1",
+            title: "Breaking news",
+            status: "draft",
+            updatedAt: "2024-10-11T09:00:00.000Z",
+            authorID: "author-1",
+            author: {
+              id: "author-1",
+              displayName: "Reporter",
+              email: "reporter@example.com",
+              username: "reporter",
+            },
+          },
+        ]),
+      });
+    });
+
+    expect(await screen.findByRole("link", { name: "Breaking news" })).toBeInTheDocument();
+
+    const postUpdatedOperation = findOperationByName(
+      environment,
+      "PostsSubscriptionsPostUpdatedSubscription",
+    );
+
+    await act(async () => {
+      environment.mock.nextValue(postUpdatedOperation, {
+        data: {
+          postUpdated: {
+            __typename: "Post",
+            id: "post-1",
+            title: "Breaking news",
+            status: "published",
+            updatedAt: "2024-10-11T10:15:00.000Z",
+            authorID: "author-1",
+            author: {
+              __typename: "User",
+              id: "author-1",
+              displayName: "Reporter",
+              email: "reporter@example.com",
+              username: "reporter",
+            },
+          },
+        },
+      });
+      environment.mock.complete(postUpdatedOperation);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("link", { name: "Breaking news" })).not.toBeInTheDocument();
+    });
+
+    expect(await screen.findByText("No posts match the “draft” status.")).toBeInTheDocument();
+    expect(screen.getByText("Total posts: 0")).toBeInTheDocument();
+
+    const notifications = screen.getByRole("region", { name: "Notifications" });
+    expect(within(notifications).getByText("“Breaking news” is now Published.")).toBeInTheDocument();
+    expect(within(notifications).getByText("Post updated")).toBeInTheDocument();
   });
 });

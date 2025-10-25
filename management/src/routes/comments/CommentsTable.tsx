@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
 import { graphql, useMutation, usePaginationFragment } from "react-relay";
-import { ConnectionHandler, type RecordSourceSelectorProxy } from "relay-runtime";
 
 import { StatusChip } from "./StatusChip";
 import type {
@@ -9,6 +8,10 @@ import type {
   CommentsTableFragment$key,
 } from "./__generated__/CommentsTableFragment.graphql";
 import type { CommentsTableUpdateCommentStatusMutation } from "./__generated__/CommentsTableUpdateCommentStatusMutation.graphql";
+import {
+  applyCommentStatusChangeToConnections,
+  isKnownCommentStatus,
+} from "./commentConnectionUtils";
 
 type CommentsTableProps = {
   queryRef: CommentsTableFragment$key;
@@ -65,101 +68,6 @@ type CommentEdge = NonNullable<
 
 type CommentNode = NonNullable<NonNullable<CommentEdge>["node"]>;
 
-type ApplyStatusChangeOptions = {
-  store: RecordSourceSelectorProxy;
-  commentId: string;
-  previousStatus: CommentStatus;
-  nextStatus: CommentStatus;
-};
-
-const KNOWN_STATUSES: CommentStatus[] = ["pending", "approved", "spam", "trash"];
-
-function isKnownStatus(status: CommentStatus | null | undefined): status is CommentStatus {
-  return status != null && KNOWN_STATUSES.includes(status);
-}
-
-function connectionStatusMatches(
-  filterStatus: CommentStatus | null,
-  statusToMatch: CommentStatus,
-): boolean {
-  return filterStatus == null || filterStatus === statusToMatch;
-}
-
-function getConnection(store: RecordSourceSelectorProxy, status: CommentStatus | null) {
-  const root = store.getRoot();
-  if (status == null) {
-    return (
-      ConnectionHandler.getConnection(root, "CommentsTable_comments", { status: null }) ??
-      ConnectionHandler.getConnection(root, "CommentsTable_comments")
-    );
-  }
-  return ConnectionHandler.getConnection(root, "CommentsTable_comments", { status });
-}
-
-function connectionHasNode(connection: ReturnType<typeof getConnection>, commentId: string): boolean {
-  const edges = connection?.getLinkedRecords("edges");
-  if (!edges) {
-    return false;
-  }
-  return edges.some((edge) => {
-    const node = edge?.getLinkedRecord("node");
-    return node?.getDataID() === commentId;
-  });
-}
-
-function adjustTotalCount(connection: ReturnType<typeof getConnection>, delta: number) {
-  if (!connection || delta === 0) {
-    return;
-  }
-  const currentValue = connection.getValue("totalCount");
-  if (typeof currentValue !== "number") {
-    return;
-  }
-  const nextValue = Math.max(0, currentValue + delta);
-  connection.setValue(nextValue, "totalCount");
-}
-
-function applyStatusChangeToConnections({
-  store,
-  commentId,
-  previousStatus,
-  nextStatus,
-}: ApplyStatusChangeOptions) {
-  const commentRecord = store.get(commentId);
-  if (!commentRecord) {
-    return;
-  }
-  commentRecord.setValue(nextStatus, "status");
-
-  const filters: Array<CommentStatus | null> = [null, "pending", "approved", "spam", "trash"];
-  filters.forEach((filterStatus) => {
-    const connection = getConnection(store, filterStatus);
-    if (!connection) {
-      return;
-    }
-    const matchedBefore = connectionStatusMatches(filterStatus, previousStatus);
-    const matchesNow = connectionStatusMatches(filterStatus, nextStatus);
-
-    if (matchedBefore && !matchesNow) {
-      const existed = connectionHasNode(connection, commentId);
-      ConnectionHandler.deleteNode(connection, commentId);
-      if (existed) {
-        adjustTotalCount(connection, -1);
-      }
-      return;
-    }
-
-    if (!matchedBefore && matchesNow) {
-      if (connectionHasNode(connection, commentId)) {
-        return;
-      }
-      const edge = ConnectionHandler.createEdge(store, connection, commentRecord, "CommentEdge");
-      ConnectionHandler.insertEdgeBefore(connection, edge);
-      adjustTotalCount(connection, 1);
-    }
-  });
-}
-
 type CommentRowActionsProps = {
   comment: CommentNode;
   onActionStart: () => void;
@@ -190,7 +98,7 @@ const ACTIONS_BY_STATUS: Record<CommentStatus, CommentStatusAction[]> = {
 
 function CommentRowActions({ comment, onActionStart, onError }: CommentRowActionsProps) {
   const { id: commentId, status } = comment;
-  const commentStatus = isKnownStatus(status) ? status : null;
+  const commentStatus = isKnownCommentStatus(status) ? status : null;
   const actions = useMemo(() => {
     if (!commentStatus) {
       return [] as CommentStatusAction[];
@@ -219,14 +127,14 @@ function CommentRowActions({ comment, onActionStart, onError }: CommentRowAction
           },
         },
         optimisticUpdater: (store) =>
-          applyStatusChangeToConnections({
+          applyCommentStatusChangeToConnections({
             store,
             commentId,
             previousStatus: commentStatus,
             nextStatus,
           }),
         updater: (store) =>
-          applyStatusChangeToConnections({
+          applyCommentStatusChangeToConnections({
             store,
             commentId,
             previousStatus: commentStatus,
