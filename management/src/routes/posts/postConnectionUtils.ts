@@ -123,6 +123,11 @@ export function applyPostStatusChangeToConnections({
   const resolvedNextStatus = nextStatus && isKnownPostStatus(nextStatus) ? nextStatus : null;
   postRecord.setValue(resolvedNextStatus, "status");
 
+  const existedInAnyConnection = POST_STATUS_FILTERS.some((filterStatus) => {
+    const connection = getPostConnection(store, filterStatus);
+    return connection ? postConnectionHasNode(connection, postId) : false;
+  });
+
   POST_STATUS_FILTERS.forEach((filterStatus) => {
     const connection = getPostConnection(store, filterStatus);
     if (!connection) {
@@ -142,6 +147,9 @@ export function applyPostStatusChangeToConnections({
     }
 
     if (!hasNode && shouldAppear) {
+      if (!existedInAnyConnection) {
+        return;
+      }
       const edge = ConnectionHandler.createEdge(store, connection, postRecord, POST_EDGE_TYPE);
       ConnectionHandler.insertEdgeBefore(connection, edge);
       adjustPostTotalCount(connection, 1);

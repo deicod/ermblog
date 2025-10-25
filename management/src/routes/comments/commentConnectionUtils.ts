@@ -126,6 +126,11 @@ export function applyCommentStatusChangeToConnections({
   const resolvedNextStatus = nextStatus && isKnownCommentStatus(nextStatus) ? nextStatus : null;
   commentRecord.setValue(resolvedNextStatus, "status");
 
+  const existedInAnyConnection = COMMENT_STATUS_FILTERS.some((filterStatus) => {
+    const connection = getCommentConnection(store, filterStatus);
+    return connection ? commentConnectionHasNode(connection, commentId) : false;
+  });
+
   COMMENT_STATUS_FILTERS.forEach((filterStatus) => {
     const connection = getCommentConnection(store, filterStatus);
     if (!connection) {
@@ -145,6 +150,9 @@ export function applyCommentStatusChangeToConnections({
     }
 
     if (!hasNode && shouldAppear) {
+      if (!existedInAnyConnection) {
+        return;
+      }
       const edge = ConnectionHandler.createEdge(store, connection, commentRecord, COMMENT_EDGE_TYPE);
       ConnectionHandler.insertEdgeBefore(connection, edge);
       adjustCommentTotalCount(connection, 1);
