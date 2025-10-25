@@ -7,7 +7,9 @@ import type {
   UserFormDialogUpdateUserMutation,
   UserFormDialogUpdateUserMutation$variables,
 } from "./__generated__/UserFormDialogUpdateUserMutation.graphql";
-import type { UserRecord } from "./UsersManager";
+import type { UserFormDialogAssignUserRolesMutation } from "./__generated__/UserFormDialogAssignUserRolesMutation.graphql";
+import type { UserFormDialogRemoveUserRolesMutation } from "./__generated__/UserFormDialogRemoveUserRolesMutation.graphql";
+import type { RoleOption, UserRecord } from "./UsersManager";
 
 type UserFormState = {
   username: string;
@@ -18,6 +20,7 @@ type UserFormState = {
   websiteURL: string;
   password: string;
   passwordConfirmation: string;
+  selectedRoleIds: string[];
 };
 
 type UserDialogCallbacks = {
@@ -62,6 +65,26 @@ const updateUserMutation = graphql`
   }
 `;
 
+const assignUserRolesMutation = graphql`
+  mutation UserFormDialogAssignUserRolesMutation($input: AssignUserRolesInput!) {
+    assignUserRoles(input: $input) {
+      user {
+        id
+      }
+    }
+  }
+`;
+
+const removeUserRolesMutation = graphql`
+  mutation UserFormDialogRemoveUserRolesMutation($input: RemoveUserRolesInput!) {
+    removeUserRoles(input: $input) {
+      user {
+        id
+      }
+    }
+  }
+`;
+
 function buildInitialState(user?: UserRecord | null): UserFormState {
   return {
     username: user?.username ?? "",
@@ -72,6 +95,7 @@ function buildInitialState(user?: UserRecord | null): UserFormState {
     websiteURL: user?.websiteURL ?? "",
     password: "",
     passwordConfirmation: "",
+    selectedRoleIds: user?.roles.map((role) => role.id) ?? [],
   };
 }
 
@@ -91,6 +115,9 @@ type UserFormDialogBaseProps = {
   confirmationRequired: boolean;
   errorMessage: string | null;
   onFieldChange: (field: keyof UserFormState, value: string) => void;
+  availableRoles: ReadonlyArray<RoleOption>;
+  selectedRoleIds: ReadonlyArray<string>;
+  onRoleToggle: (roleId: string, selected: boolean) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onClose: () => void;
 };
@@ -106,6 +133,9 @@ function UserFormDialogBase({
   confirmationRequired,
   errorMessage,
   onFieldChange,
+  availableRoles,
+  selectedRoleIds,
+  onRoleToggle,
   onSubmit,
   onClose,
 }: UserFormDialogBaseProps) {
@@ -120,6 +150,7 @@ function UserFormDialogBase({
       bio: `${idPrefix}-bio`,
       password: `${idPrefix}-password`,
       confirmPassword: `${idPrefix}-confirm-password`,
+      roles: `${idPrefix}-roles`,
     }),
     [idPrefix],
   );
@@ -226,6 +257,25 @@ function UserFormDialogBase({
               rows={5}
             />
           </div>
+          <fieldset className="user-dialog__field" aria-labelledby={ids.roles} disabled={busy}>
+            <legend id={ids.roles}>Roles</legend>
+            {availableRoles.length === 0 ? (
+              <p className="user-dialog__roles-empty">No roles available.</p>
+            ) : (
+              <div className="user-dialog__roles">
+                {availableRoles.map((role) => (
+                  <label key={role.id} className="user-dialog__role-option">
+                    <input
+                      type="checkbox"
+                      checked={selectedRoleIds.includes(role.id)}
+                      onChange={(event) => onRoleToggle(role.id, event.target.checked)}
+                    />
+                    {role.name}
+                  </label>
+                ))}
+              </div>
+            )}
+          </fieldset>
           {errorMessage ? (
             <div className="user-dialog__error" role="alert">
               {errorMessage}
@@ -245,15 +295,62 @@ function UserFormDialogBase({
   );
 }
 
-export function UserCreateDialog({ onClose, onSuccess, onError }: UserDialogCallbacks) {
+type UserCreateDialogProps = UserDialogCallbacks & {
+  availableRoles: ReadonlyArray<RoleOption>;
+};
+
+export function UserCreateDialog({ availableRoles, onClose, onSuccess, onError }: UserCreateDialogProps) {
   const [state, setState] = useState<UserFormState>(() => buildInitialState());
-  const [commit, isInFlight] = useMutation<UserFormDialogCreateUserMutation>(createUserMutation);
+  const [commitCreate, isCreating] = useMutation<UserFormDialogCreateUserMutation>(createUserMutation);
+  const [commitAssignRoles, isAssigningRoles] =
+    useMutation<UserFormDialogAssignUserRolesMutation>(assignUserRolesMutation);
   const [formError, setFormError] = useState<string | null>(null);
 
   const handleChange = useCallback((field: keyof UserFormState, value: string) => {
     setState((current) => ({ ...current, [field]: value }));
     setFormError(null);
   }, []);
+
+  const handleRoleToggle = useCallback((roleId: string, selected: boolean) => {
+    setState((current) => {
+      const next = new Set(current.selectedRoleIds);
+      if (selected) {
+        next.add(roleId);
+      } else {
+        next.delete(roleId);
+      }
+      return { ...current, selectedRoleIds: Array.from(next) };
+    });
+    setFormError(null);
+  }, []);
+
+  const assignRoles = useCallback(
+    (userId: string, roleIds: string[]) =>
+      new Promise<void>((resolve, reject) => {
+        if (roleIds.length === 0) {
+          resolve();
+          return;
+        }
+        commitAssignRoles({
+          variables: { input: { userID: userId, roleIDs: roleIds } },
+          onCompleted: (_response, errors) => {
+            if (errors && errors.length > 0) {
+              reject(
+                new Error(
+                  errors.map((error) => error.message).join(" ") ||
+                    "Unable to assign roles. Try again.",
+                ),
+              );
+              return;
+            }
+
+            resolve();
+          },
+          onError: (error) => reject(error),
+        });
+      }),
+    [commitAssignRoles],
+  );
 
   const handleSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
@@ -280,7 +377,7 @@ export function UserCreateDialog({ onClose, onSuccess, onError }: UserDialogCall
 
       setFormError(null);
 
-      commit({
+      commitCreate({
         variables: {
           input: {
             username,
@@ -292,14 +389,28 @@ export function UserCreateDialog({ onClose, onSuccess, onError }: UserDialogCall
             websiteURL: normalizeOptional(state.websiteURL),
           },
         },
-        onCompleted: (response, errors) => {
+        onCompleted: async (response, errors) => {
           if (errors && errors.length > 0) {
             const message = errors.map((error) => error.message).join(" ") || "Unable to create the user. Try again.";
             setFormError(message);
             onError(message);
             return;
           }
+
           const newUserId = response.createUser?.user?.id ?? undefined;
+
+          if (newUserId && state.selectedRoleIds.length > 0) {
+            try {
+              await assignRoles(newUserId, state.selectedRoleIds);
+            } catch (error) {
+              const message =
+                (error instanceof Error ? error.message : null) || "Unable to assign roles to the new user. Try again.";
+              setFormError(message);
+              onError(message);
+              return;
+            }
+          }
+
           onSuccess("User created successfully.", { userId: newUserId });
           onClose();
           setState(buildInitialState());
@@ -312,7 +423,7 @@ export function UserCreateDialog({ onClose, onSuccess, onError }: UserDialogCall
         },
       });
     },
-    [commit, onClose, onError, onSuccess, state],
+    [assignRoles, commitCreate, onClose, onError, onSuccess, state],
   );
 
   return (
@@ -322,11 +433,14 @@ export function UserCreateDialog({ onClose, onSuccess, onError }: UserDialogCall
       description="Provision a new account, capture contact details, and seed profile metadata for downstream services."
       submitLabel="Create user"
       state={state}
-      busy={isInFlight}
+      busy={isCreating || isAssigningRoles}
       passwordRequired
       confirmationRequired
       errorMessage={formError}
       onFieldChange={handleChange}
+      availableRoles={availableRoles}
+      selectedRoleIds={state.selectedRoleIds}
+      onRoleToggle={handleRoleToggle}
       onSubmit={handleSubmit}
       onClose={onClose}
     />
@@ -335,11 +449,16 @@ export function UserCreateDialog({ onClose, onSuccess, onError }: UserDialogCall
 
 type UserEditDialogProps = UserDialogCallbacks & {
   user: UserRecord;
+  availableRoles: ReadonlyArray<RoleOption>;
 };
 
-export function UserEditDialog({ user, onClose, onSuccess, onError }: UserEditDialogProps) {
+export function UserEditDialog({ user, availableRoles, onClose, onSuccess, onError }: UserEditDialogProps) {
   const [state, setState] = useState<UserFormState>(() => buildInitialState(user));
-  const [commit, isInFlight] = useMutation<UserFormDialogUpdateUserMutation>(updateUserMutation);
+  const [commitUpdate, isUpdating] = useMutation<UserFormDialogUpdateUserMutation>(updateUserMutation);
+  const [commitAssignRoles, isAssigningRoles] =
+    useMutation<UserFormDialogAssignUserRolesMutation>(assignUserRolesMutation);
+  const [commitRemoveRoles, isRemovingRoles] =
+    useMutation<UserFormDialogRemoveUserRolesMutation>(removeUserRolesMutation);
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -347,10 +466,81 @@ export function UserEditDialog({ user, onClose, onSuccess, onError }: UserEditDi
     setFormError(null);
   }, [user]);
 
+  const initialRoleIds = useMemo(() => user.roles.map((role) => role.id), [user.roles]);
+
   const handleChange = useCallback((field: keyof UserFormState, value: string) => {
     setState((current) => ({ ...current, [field]: value }));
     setFormError(null);
   }, []);
+
+  const handleRoleToggle = useCallback((roleId: string, selected: boolean) => {
+    setState((current) => {
+      const next = new Set(current.selectedRoleIds);
+      if (selected) {
+        next.add(roleId);
+      } else {
+        next.delete(roleId);
+      }
+      return { ...current, selectedRoleIds: Array.from(next) };
+    });
+    setFormError(null);
+  }, []);
+
+  const assignRoles = useCallback(
+    (userId: string, roleIds: string[]) =>
+      new Promise<void>((resolve, reject) => {
+        if (roleIds.length === 0) {
+          resolve();
+          return;
+        }
+        commitAssignRoles({
+          variables: { input: { userID: userId, roleIDs: roleIds } },
+          onCompleted: (_response, errors) => {
+            if (errors && errors.length > 0) {
+              reject(
+                new Error(
+                  errors.map((error) => error.message).join(" ") ||
+                    "Unable to assign roles. Try again.",
+                ),
+              );
+              return;
+            }
+
+            resolve();
+          },
+          onError: (error) => reject(error),
+        });
+      }),
+    [commitAssignRoles],
+  );
+
+  const removeRoles = useCallback(
+    (userId: string, roleIds: string[]) =>
+      new Promise<void>((resolve, reject) => {
+        if (roleIds.length === 0) {
+          resolve();
+          return;
+        }
+        commitRemoveRoles({
+          variables: { input: { userID: userId, roleIDs: roleIds } },
+          onCompleted: (_response, errors) => {
+            if (errors && errors.length > 0) {
+              reject(
+                new Error(
+                  errors.map((error) => error.message).join(" ") ||
+                    "Unable to remove roles. Try again.",
+                ),
+              );
+              return;
+            }
+
+            resolve();
+          },
+          onError: (error) => reject(error),
+        });
+      }),
+    [commitRemoveRoles],
+  );
 
   const handleSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
@@ -389,15 +579,30 @@ export function UserEditDialog({ user, onClose, onSuccess, onError }: UserEditDi
 
       setFormError(null);
 
-      commit({
+      commitUpdate({
         variables: { input },
-        onCompleted: (response, errors) => {
+        onCompleted: async (response, errors) => {
           if (errors && errors.length > 0) {
             const message = errors.map((error) => error.message).join(" ") || "Unable to update the user. Try again.";
             setFormError(message);
             onError(message);
             return;
           }
+
+          const rolesToAssign = state.selectedRoleIds.filter((id) => !initialRoleIds.includes(id));
+          const rolesToRemove = initialRoleIds.filter((id) => !state.selectedRoleIds.includes(id));
+
+          try {
+            await assignRoles(user.id, rolesToAssign);
+            await removeRoles(user.id, rolesToRemove);
+          } catch (error) {
+            const message =
+              (error instanceof Error ? error.message : null) || "Unable to update the user's roles. Try again.";
+            setFormError(message);
+            onError(message);
+            return;
+          }
+
           onSuccess("User profile updated successfully.");
           onClose();
           setFormError(null);
@@ -409,7 +614,7 @@ export function UserEditDialog({ user, onClose, onSuccess, onError }: UserEditDi
         },
       });
     },
-    [commit, onClose, onError, onSuccess, state, user.id],
+    [assignRoles, commitUpdate, initialRoleIds, onClose, onError, onSuccess, removeRoles, state, user.id],
   );
 
   return (
@@ -419,11 +624,14 @@ export function UserEditDialog({ user, onClose, onSuccess, onError }: UserEditDi
       description={`Edit contact channels and profile details for ${user.username}.`}
       submitLabel="Save changes"
       state={state}
-      busy={isInFlight}
+      busy={isUpdating || isAssigningRoles || isRemovingRoles}
       passwordRequired={false}
       confirmationRequired={Boolean(state.password)}
       errorMessage={formError}
       onFieldChange={handleChange}
+      availableRoles={availableRoles}
+      selectedRoleIds={state.selectedRoleIds}
+      onRoleToggle={handleRoleToggle}
       onSubmit={handleSubmit}
       onClose={onClose}
     />

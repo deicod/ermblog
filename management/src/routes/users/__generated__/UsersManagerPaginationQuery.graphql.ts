@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<cc2db5dc783201d87a52e785ba3cedc0>>
+ * @generated SignedSource<<784e657aae27f5f0fad2ea18dce47f06>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -46,7 +46,61 @@ v1 = [
     "name": "first",
     "variableName": "first"
   }
-];
+],
+v2 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+},
+v3 = {
+  "alias": null,
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "first",
+      "value": 100
+    }
+  ],
+  "concreteType": "RoleConnection",
+  "kind": "LinkedField",
+  "name": "roles",
+  "plural": false,
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "concreteType": "RoleEdge",
+      "kind": "LinkedField",
+      "name": "edges",
+      "plural": true,
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "concreteType": "Role",
+          "kind": "LinkedField",
+          "name": "node",
+          "plural": false,
+          "selections": [
+            (v2/*: any*/),
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "name",
+              "storageKey": null
+            }
+          ],
+          "storageKey": null
+        }
+      ],
+      "storageKey": null
+    }
+  ],
+  "storageKey": "roles(first:100)"
+};
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
@@ -107,13 +161,7 @@ return {
                 "name": "node",
                 "plural": false,
                 "selections": [
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "id",
-                    "storageKey": null
-                  },
+                  (v2/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -170,6 +218,7 @@ return {
                     "name": "updatedAt",
                     "storageKey": null
                   },
+                  (v3/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -219,20 +268,21 @@ return {
         "key": "UsersManager_users",
         "kind": "LinkedHandle",
         "name": "users"
-      }
+      },
+      (v3/*: any*/)
     ]
   },
   "params": {
-    "cacheID": "d3453d505384adbda02080ab9494f86a",
+    "cacheID": "4088768d696d8f0cf3d9f3096acabc7c",
     "id": null,
     "metadata": {},
     "name": "UsersManagerPaginationQuery",
     "operationKind": "query",
-    "text": "query UsersManagerPaginationQuery(\n  $after: String\n  $first: Int = 20\n) {\n  ...UsersManagerFragment_2HEEH6\n}\n\nfragment UsersManagerFragment_2HEEH6 on Query {\n  users(first: $first, after: $after) {\n    totalCount\n    edges {\n      cursor\n      node {\n        id\n        username\n        email\n        displayName\n        bio\n        avatarURL\n        websiteURL\n        createdAt\n        updatedAt\n        __typename\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query UsersManagerPaginationQuery(\n  $after: String\n  $first: Int = 20\n) {\n  ...UsersManagerFragment_2HEEH6\n}\n\nfragment UsersManagerFragment_2HEEH6 on Query {\n  users(first: $first, after: $after) {\n    totalCount\n    edges {\n      cursor\n      node {\n        id\n        username\n        email\n        displayName\n        bio\n        avatarURL\n        websiteURL\n        createdAt\n        updatedAt\n        roles(first: 100) {\n          edges {\n            node {\n              id\n              name\n            }\n          }\n        }\n        __typename\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n  roles(first: 100) {\n    edges {\n      node {\n        id\n        name\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "72d40d36e5be7ce80deffb16ee615a00";
+(node as any).hash = "e62900341bda1c15879ca67d46e899f3";
 
 export default node;

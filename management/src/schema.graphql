@@ -13,6 +13,28 @@ type PageInfo {
 
 directive @auth(roles: [String!]) on FIELD_DEFINITION
 
+input AssignUserRolesInput {
+    clientMutationId: String
+    userID: ID!
+    roleIDs: [ID!]!
+}
+
+type AssignUserRolesPayload {
+    clientMutationId: String
+    user: User
+}
+
+input RemoveUserRolesInput {
+    clientMutationId: String
+    userID: ID!
+    roleIDs: [ID!]!
+}
+
+type RemoveUserRolesPayload {
+    clientMutationId: String
+    user: User
+}
+
 type Query {
     node(id: ID!): Node
     health: String!
@@ -123,6 +145,10 @@ type Mutation {
     updateUser(input: UpdateUserInput!): UpdateUserPayload!
         @auth(roles: ["user"])
     deleteUser(input: DeleteUserInput!): DeleteUserPayload!
+        @auth(roles: ["user"])
+    assignUserRoles(input: AssignUserRolesInput!): AssignUserRolesPayload!
+        @auth(roles: ["user"])
+    removeUserRoles(input: RemoveUserRolesInput!): RemoveUserRolesPayload!
         @auth(roles: ["user"])
 }
 
@@ -542,6 +568,7 @@ type Role implements Node {
     capabilities: JSONB
     createdAt: Timestamptz!
     updatedAt: Timestamptz!
+    users(first: Int, after: String, last: Int, before: String): UserConnection!
 }
 
 type RoleEdge {
@@ -668,6 +695,7 @@ type User implements Node {
     lastLoginAt: Timestamptz
     createdAt: Timestamptz!
     updatedAt: Timestamptz!
+    roles(first: Int, after: String, last: Int, before: String): RoleConnection!
 }
 
 type UserEdge {

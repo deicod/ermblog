@@ -16,6 +16,17 @@ type Node interface {
 	GetID() string
 }
 
+type AssignUserRolesInput struct {
+	ClientMutationID *string  `json:"clientMutationId,omitempty"`
+	UserID           string   `json:"userID"`
+	RoleIDs          []string `json:"roleIDs"`
+}
+
+type AssignUserRolesPayload struct {
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
+	User             *User   `json:"user,omitempty"`
+}
+
 type Category struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`
@@ -402,6 +413,17 @@ type PostEdge struct {
 type Query struct {
 }
 
+type RemoveUserRolesInput struct {
+	ClientMutationID *string  `json:"clientMutationId,omitempty"`
+	UserID           string   `json:"userID"`
+	RoleIDs          []string `json:"roleIDs"`
+}
+
+type RemoveUserRolesPayload struct {
+	ClientMutationID *string `json:"clientMutationId,omitempty"`
+	User             *User   `json:"user,omitempty"`
+}
+
 type Role struct {
 	ID           string          `json:"id"`
 	Name         string          `json:"name"`
@@ -410,6 +432,7 @@ type Role struct {
 	Capabilities json.RawMessage `json:"capabilities,omitempty"`
 	CreatedAt    time.Time       `json:"createdAt"`
 	UpdatedAt    time.Time       `json:"updatedAt"`
+	Users        *UserConnection `json:"users"`
 }
 
 func (Role) IsNode()            {}
@@ -601,16 +624,18 @@ type UpdateUserPayload struct {
 }
 
 type User struct {
-	ID          string     `json:"id"`
-	Username    string     `json:"username"`
-	Email       string     `json:"email"`
-	DisplayName *string    `json:"displayName,omitempty"`
-	Bio         *string    `json:"bio,omitempty"`
-	AvatarURL   *string    `json:"avatarURL,omitempty"`
-	WebsiteURL  *string    `json:"websiteURL,omitempty"`
-	LastLoginAt *time.Time `json:"lastLoginAt,omitempty"`
-	CreatedAt   time.Time  `json:"createdAt"`
-	UpdatedAt   time.Time  `json:"updatedAt"`
+	ID          string          `json:"id"`
+	Username    string          `json:"username"`
+	Email       string          `json:"email"`
+	Password    string          `json:"password"`
+	DisplayName *string         `json:"displayName,omitempty"`
+	Bio         *string         `json:"bio,omitempty"`
+	AvatarURL   *string         `json:"avatarURL,omitempty"`
+	WebsiteURL  *string         `json:"websiteURL,omitempty"`
+	LastLoginAt *time.Time      `json:"lastLoginAt,omitempty"`
+	CreatedAt   time.Time       `json:"createdAt"`
+	UpdatedAt   time.Time       `json:"updatedAt"`
+	Roles       *RoleConnection `json:"roles"`
 }
 
 func (User) IsNode()            {}

@@ -6,6 +6,11 @@ import type { UsersManagerFragment$data } from "./__generated__/UsersManagerFrag
 import { UserCreateDialog, UserEditDialog } from "./UserFormDialog";
 import { UsersTable } from "./UsersTable";
 
+export type RoleOption = {
+  id: string;
+  name: string;
+};
+
 export type UserRecord = {
   id: string;
   username: string;
@@ -16,6 +21,7 @@ export type UserRecord = {
   websiteURL: string | null;
   createdAt: string | null;
   updatedAt: string | null;
+  roles: RoleOption[];
 };
 
 type UsersManagerProps = {
@@ -41,6 +47,14 @@ const usersManagerFragment = graphql`
           websiteURL
           createdAt
           updatedAt
+          roles(first: 100) {
+            edges {
+              node {
+                id
+                name
+              }
+            }
+          }
         }
       }
       pageInfo {
@@ -48,8 +62,29 @@ const usersManagerFragment = graphql`
         endCursor
       }
     }
+    roles(first: 100) {
+      edges {
+        node {
+          id
+          name
+        }
+      }
+    }
   }
 `;
+
+function normalizeRoleEdges(
+  connection:
+    | { edges: ReadonlyArray<{ readonly node: { readonly id: string; readonly name: string } | null } | null> }
+    | null
+    | undefined,
+): RoleOption[] {
+  const edges = connection?.edges ?? [];
+  return edges
+    .map((edge) => edge?.node)
+    .filter((node): node is NonNullable<typeof node> => Boolean(node))
+    .map((node) => ({ id: node.id, name: node.name }));
+}
 
 function normalizeUsers(data: UsersManagerFragment$data | null | undefined): UserRecord[] {
   const edges = data?.users?.edges ?? [];
@@ -66,6 +101,7 @@ function normalizeUsers(data: UsersManagerFragment$data | null | undefined): Use
       websiteURL: node.websiteURL ?? null,
       createdAt: node.createdAt ?? null,
       updatedAt: node.updatedAt ?? null,
+      roles: normalizeRoleEdges(node.roles),
     }));
 }
 
@@ -76,6 +112,7 @@ export function UsersManager({ queryRef, pageSize }: UsersManagerProps) {
   );
 
   const users = useMemo(() => normalizeUsers(data), [data]);
+  const availableRoles = useMemo(() => normalizeRoleEdges(data?.roles), [data]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateOpen, setCreateOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -224,6 +261,7 @@ export function UsersManager({ queryRef, pageSize }: UsersManagerProps) {
       </div>
       {isCreateOpen ? (
         <UserCreateDialog
+          availableRoles={availableRoles}
           onClose={() => setCreateOpen(false)}
           onSuccess={handleCreateSuccess}
           onError={handleCreateError}
@@ -232,6 +270,7 @@ export function UsersManager({ queryRef, pageSize }: UsersManagerProps) {
       {editingUser ? (
         <UserEditDialog
           user={editingUser}
+          availableRoles={availableRoles}
           onClose={() => setEditingUserId(null)}
           onSuccess={handleEditSuccess}
           onError={handleEditError}

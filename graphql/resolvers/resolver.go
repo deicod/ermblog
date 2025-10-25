@@ -27,6 +27,8 @@ type Resolver struct {
 	subscriptions     subscriptions.Broker
 	hooks             entityHooks
 	users             userProvider
+	roles             roleProvider
+	userRoles         userRoleManager
 	postsCounter      counter
 	commentsCounter   counter
 	mediaItemsCounter counter
@@ -38,6 +40,17 @@ type Resolver struct {
 
 type userProvider interface {
 	ByID(ctx context.Context, id string) (*gen.User, error)
+}
+
+type roleProvider interface {
+	ByID(ctx context.Context, id string) (*gen.Role, error)
+}
+
+type userRoleManager interface {
+	AssignUserRoles(ctx context.Context, userID string, roleIDs []string) error
+	RemoveUserRoles(ctx context.Context, userID string, roleIDs []string) error
+	ListRolesForUser(ctx context.Context, userID string) ([]*gen.Role, error)
+	ListUsersForRole(ctx context.Context, roleID string) ([]*gen.User, error)
 }
 
 type counter interface {
@@ -59,6 +72,8 @@ func NewWithOptions(opts Options) *Resolver {
 	resolver.hooks = newEntityHooks()
 	if resolver.ORM != nil {
 		resolver.users = resolver.ORM.Users()
+		resolver.roles = resolver.ORM.Roles()
+		resolver.userRoles = resolver.ORM
 		resolver.postsCounter = resolver.ORM.Posts()
 		resolver.commentsCounter = resolver.ORM.Comments()
 		resolver.mediaItemsCounter = resolver.ORM.Medias()
@@ -87,6 +102,32 @@ func (r *Resolver) userClient() userProvider {
 	}
 	if r.ORM != nil {
 		return r.ORM.Users()
+	}
+	return nil
+}
+
+func (r *Resolver) roleClient() roleProvider {
+	if r == nil {
+		return nil
+	}
+	if r.roles != nil {
+		return r.roles
+	}
+	if r.ORM != nil {
+		return r.ORM.Roles()
+	}
+	return nil
+}
+
+func (r *Resolver) userRoleService() userRoleManager {
+	if r == nil {
+		return nil
+	}
+	if r.userRoles != nil {
+		return r.userRoles
+	}
+	if r.ORM != nil {
+		return r.ORM
 	}
 	return nil
 }

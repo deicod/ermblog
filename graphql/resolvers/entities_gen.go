@@ -887,6 +887,18 @@ func (r *queryResolver) Comments(ctx context.Context, first *int, after *string,
 	if last != nil || before != nil {
 		return nil, fmt.Errorf("backward pagination is not supported")
 	}
+	repo := r.commentRepository()
+	if repo == nil {
+		return nil, fmt.Errorf("comment repository is not configured")
+	}
+	query := repo.Query()
+	if query == nil {
+		return &graphql.CommentConnection{
+			Edges:    []*graphql.CommentEdge{},
+			PageInfo: &graphql.PageInfo{HasNextPage: false, HasPreviousPage: false},
+		}, nil
+	}
+	query = query.OrderBySubmittedAtDesc()
 	limit := defaultPageSize
 	if first != nil && *first > 0 {
 		limit = *first
@@ -897,27 +909,17 @@ func (r *queryResolver) Comments(ctx context.Context, first *int, after *string,
 			offset = decoded + 1
 		}
 	}
-	repo := r.commentRepository()
-	if repo == nil {
-		return nil, fmt.Errorf("comment repository is not configured")
-	}
-	countQuery := repo.Query()
-	if countQuery == nil {
-		return nil, fmt.Errorf("comment query is not configured")
-	}
-	total, err := countQuery.Count(ctx)
+	total, err := query.Count(ctx)
 	if err != nil {
 		return nil, err
 	}
-	listQuery := repo.Query()
-	if listQuery == nil {
-		return nil, fmt.Errorf("comment query is not configured")
+	if offset > 0 {
+		query = query.Offset(offset)
 	}
-	records, err := listQuery.
-		OrderBySubmittedAtDesc().
-		Limit(limit).
-		Offset(offset).
-		All(ctx)
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	records, err := query.All(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -1830,15 +1832,11 @@ func (r *queryResolver) Posts(ctx context.Context, first *int, after *string, la
 			offset = decoded + 1
 		}
 	}
-	total, err := r.ORM.Posts().Query().Count(ctx)
+	total, err := r.ORM.Posts().Count(ctx)
 	if err != nil {
 		return nil, err
 	}
-	records, err := r.ORM.Posts().Query().
-		OrderByCreatedAtDesc().
-		Limit(limit).
-		Offset(offset).
-		All(ctx)
+	records, err := r.ORM.Posts().List(ctx, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -2755,6 +2753,7 @@ func toGraphQLUser(record *gen.User) *graphql.User {
 		ID:          relay.ToGlobalID("User", record.ID),
 		Username:    record.Username,
 		Email:       record.Email,
+		Password:    record.Password,
 		DisplayName: record.DisplayName,
 		Bio:         record.Bio,
 		AvatarURL:   record.AvatarURL,

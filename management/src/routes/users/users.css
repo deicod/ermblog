@@ -257,6 +257,33 @@
   min-height: 5rem;
 }
 
+.user-dialog__roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.user-dialog__role-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  background: #f3f4f6;
+  font-size: 0.9rem;
+  color: #1f2937;
+}
+
+.user-dialog__role-option input {
+  accent-color: #10b981;
+}
+
+.user-dialog__roles-empty {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
 .user-dialog__actions {
   display: flex;
   justify-content: flex-end;

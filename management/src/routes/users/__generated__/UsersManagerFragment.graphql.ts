@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ce174e2b94021de89ac39ef9e92852a4>>
+ * @generated SignedSource<<b479052404a02a466c05ce655d19e28b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,6 +11,14 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type UsersManagerFragment$data = {
+  readonly roles: {
+    readonly edges: ReadonlyArray<{
+      readonly node: {
+        readonly id: string;
+        readonly name: string;
+      } | null | undefined;
+    }>;
+  };
   readonly users: {
     readonly edges: ReadonlyArray<{
       readonly cursor: string;
@@ -21,6 +29,14 @@ export type UsersManagerFragment$data = {
         readonly displayName: string | null | undefined;
         readonly email: string;
         readonly id: string;
+        readonly roles: {
+          readonly edges: ReadonlyArray<{
+            readonly node: {
+              readonly id: string;
+              readonly name: string;
+            } | null | undefined;
+          }>;
+        };
         readonly updatedAt: any;
         readonly username: string;
         readonly websiteURL: string | null | undefined;
@@ -44,7 +60,61 @@ import UsersManagerPaginationQuery_graphql from './UsersManagerPaginationQuery.g
 const node: ReaderFragment = (function(){
 var v0 = [
   "users"
-];
+],
+v1 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+},
+v2 = {
+  "alias": null,
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "first",
+      "value": 100
+    }
+  ],
+  "concreteType": "RoleConnection",
+  "kind": "LinkedField",
+  "name": "roles",
+  "plural": false,
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "concreteType": "RoleEdge",
+      "kind": "LinkedField",
+      "name": "edges",
+      "plural": true,
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "concreteType": "Role",
+          "kind": "LinkedField",
+          "name": "node",
+          "plural": false,
+          "selections": [
+            (v1/*: any*/),
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "name",
+              "storageKey": null
+            }
+          ],
+          "storageKey": null
+        }
+      ],
+      "storageKey": null
+    }
+  ],
+  "storageKey": "roles(first:100)"
+};
 return {
   "argumentDefinitions": [
     {
@@ -121,13 +191,7 @@ return {
               "name": "node",
               "plural": false,
               "selections": [
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "id",
-                  "storageKey": null
-                },
+                (v1/*: any*/),
                 {
                   "alias": null,
                   "args": null,
@@ -184,6 +248,7 @@ return {
                   "name": "updatedAt",
                   "storageKey": null
                 },
+                (v2/*: any*/),
                 {
                   "alias": null,
                   "args": null,
@@ -224,13 +289,14 @@ return {
         }
       ],
       "storageKey": null
-    }
+    },
+    (v2/*: any*/)
   ],
   "type": "Query",
   "abstractKey": null
 };
 })();
 
-(node as any).hash = "72d40d36e5be7ce80deffb16ee615a00";
+(node as any).hash = "e62900341bda1c15879ca67d46e899f3";
 
 export default node;

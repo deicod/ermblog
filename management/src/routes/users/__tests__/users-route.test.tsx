@@ -2,7 +2,7 @@ import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RelayEnvironmentProvider } from "react-relay";
 import { createMockEnvironment } from "relay-test-utils";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { USERS_PAGE_SIZE, UsersRoute } from "../../users";
 
@@ -25,12 +25,15 @@ type UserNodeInput = {
   websiteURL?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
+  roles?: ReadonlyArray<{ id: string; name: string }>;
 };
 
-function buildUsersPayload(
-  users: UserNodeInput[],
-  pageInfo?: { hasNextPage?: boolean; endCursor?: string | null },
-) {
+type PayloadOptions = {
+  pageInfo?: { hasNextPage?: boolean; endCursor?: string | null };
+  availableRoles?: ReadonlyArray<{ id: string; name: string }>;
+};
+
+function buildUsersPayload(users: UserNodeInput[], options?: PayloadOptions) {
   const edges = users.map((user, index) => ({
     cursor: `cursor-${index + 1}`,
     node: {
@@ -42,6 +45,18 @@ function buildUsersPayload(
       websiteURL: user.websiteURL ?? null,
       createdAt: user.createdAt ?? null,
       updatedAt: user.updatedAt ?? null,
+      roles: {
+        __typename: "RoleConnection",
+        edges: (user.roles ?? []).map((role, roleIndex) => ({
+          __typename: "RoleEdge",
+          cursor: `role-${user.id}-${roleIndex}`,
+          node: {
+            __typename: "Role",
+            id: role.id,
+            name: role.name,
+          },
+        })),
+      },
     },
   }));
 
@@ -52,11 +67,23 @@ function buildUsersPayload(
       edges,
       pageInfo: {
         __typename: "PageInfo",
-        hasNextPage: pageInfo?.hasNextPage ?? false,
+        hasNextPage: options?.pageInfo?.hasNextPage ?? false,
         hasPreviousPage: false,
         startCursor: edges[0]?.cursor ?? null,
-        endCursor: pageInfo?.endCursor ?? edges[edges.length - 1]?.cursor ?? null,
+        endCursor: options?.pageInfo?.endCursor ?? edges[edges.length - 1]?.cursor ?? null,
       },
+    },
+    roles: {
+      __typename: "RoleConnection",
+      edges: (options?.availableRoles ?? []).map((role, index) => ({
+        __typename: "RoleEdge",
+        cursor: `available-role-${index}`,
+        node: {
+          __typename: "Role",
+          id: role.id,
+          name: role.name,
+        },
+      })),
     },
   };
 }
@@ -69,28 +96,38 @@ describe("UsersRoute", () => {
 
     await act(async () => {
       environment.mock.resolve(initialOperation, {
-        data: buildUsersPayload([
+        data: buildUsersPayload(
+          [
+            {
+              id: "user-1",
+              username: "opslead",
+              email: "ops@example.com",
+              displayName: "Operations Lead",
+              bio: "Keeps the trains running on time.",
+              websiteURL: "https://ops.example.com",
+              updatedAt: "2024-10-10T10:00:00.000Z",
+              createdAt: "2024-10-09T10:00:00.000Z",
+              roles: [{ id: "role-admin", name: "Administrator" }],
+            },
+            {
+              id: "user-2",
+              username: "editor",
+              email: "editor@example.com",
+              displayName: "Chief Editor",
+              bio: "Reviews and publishes content.",
+              avatarURL: "https://cdn.example/editor.png",
+              updatedAt: "2024-10-11T09:15:00.000Z",
+              createdAt: "2024-10-09T08:00:00.000Z",
+              roles: [{ id: "role-editor", name: "Editor" }],
+            },
+          ],
           {
-            id: "user-1",
-            username: "opslead",
-            email: "ops@example.com",
-            displayName: "Operations Lead",
-            bio: "Keeps the trains running on time.",
-            websiteURL: "https://ops.example.com",
-            updatedAt: "2024-10-10T10:00:00.000Z",
-            createdAt: "2024-10-09T10:00:00.000Z",
+            availableRoles: [
+              { id: "role-admin", name: "Administrator" },
+              { id: "role-editor", name: "Editor" },
+            ],
           },
-          {
-            id: "user-2",
-            username: "editor",
-            email: "editor@example.com",
-            displayName: "Chief Editor",
-            bio: "Reviews and publishes content.",
-            avatarURL: "https://cdn.example/editor.png",
-            updatedAt: "2024-10-11T09:15:00.000Z",
-            createdAt: "2024-10-09T08:00:00.000Z",
-          },
-        ]),
+        ),
       });
     });
 
@@ -99,10 +136,12 @@ describe("UsersRoute", () => {
     expect(within(opsRow).getByText("Operations Lead")).toBeInTheDocument();
     expect(within(opsRow).getByText("ops@example.com")).toBeInTheDocument();
     expect(within(opsRow).getByText("https://ops.example.com")).toBeInTheDocument();
+    expect(within(opsRow).getByText("Administrator")).toBeInTheDocument();
 
     const editorRow = within(table).getByRole("row", { name: /editor/i });
     expect(within(editorRow).getByText("Chief Editor")).toBeInTheDocument();
     expect(within(editorRow).getByText("https://cdn.example/editor.png")).toBeInTheDocument();
+    expect(within(editorRow).getByText("Editor")).toBeInTheDocument();
 
     const searchInput = screen.getByLabelText("Search users");
     await userEvent.clear(searchInput);
@@ -127,16 +166,36 @@ describe("UsersRoute", () => {
               createdAt: "2024-10-10T09:00:00.000Z",
             },
           ],
-          { hasNextPage: true, endCursor: "cursor-1" },
+          { pageInfo: { hasNextPage: true, endCursor: "cursor-1" } },
         ),
       });
     });
 
-    await userEvent.click(screen.getByRole("button", { name: "Load more" }));
+    const resolver = vi.fn((operation: any) => {
+      expect(operation.fragment.node.name).toBe("UsersManagerPaginationQuery");
+      expect(operation.request.variables).toMatchObject({ first: USERS_PAGE_SIZE });
+      return {
+        data: buildUsersPayload(
+          [
+            {
+              id: "user-2",
+              username: "second",
+              email: "second@example.com",
+              createdAt: "2024-10-12T11:00:00.000Z",
+            },
+          ],
+          { pageInfo: { hasNextPage: false, endCursor: "cursor-2" } },
+        ),
+      };
+    });
+    environment.mock.queueOperationResolver(resolver);
 
-    const paginationOperation = environment.mock.getMostRecentOperation();
-    expect(paginationOperation.fragment.node.name).toBe("UsersManagerPaginationQuery");
-    expect(paginationOperation.request.variables).toMatchObject({ first: USERS_PAGE_SIZE });
+    const loadMoreButton = await screen.findByRole("button", { name: "Load more" });
+    await act(async () => {
+      await userEvent.click(loadMoreButton);
+    });
+
+    expect(resolver).toHaveBeenCalledTimes(1);
   });
 
   it("creates a user through the dialog form", async () => {
@@ -144,7 +203,14 @@ describe("UsersRoute", () => {
     const initialOperation = environment.mock.getMostRecentOperation();
 
     await act(async () => {
-      environment.mock.resolve(initialOperation, { data: buildUsersPayload([]) });
+      environment.mock.resolve(initialOperation, {
+        data: buildUsersPayload([], {
+          availableRoles: [
+            { id: "role-admin", name: "Administrator" },
+            { id: "role-editor", name: "Editor" },
+          ],
+        }),
+      });
     });
 
     await userEvent.click(screen.getByRole("button", { name: "New user" }));
@@ -157,6 +223,7 @@ describe("UsersRoute", () => {
     await userEvent.type(screen.getByLabelText("Website"), "https://data.example.com");
     await userEvent.type(screen.getByLabelText("Avatar URL"), "https://cdn.example/analyst.png");
     await userEvent.type(screen.getByLabelText("Bio"), "Transforms data into actionable insight.");
+    await userEvent.click(screen.getByRole("checkbox", { name: "Administrator" }));
 
     await userEvent.click(screen.getByRole("button", { name: "Create user" }));
 
@@ -192,6 +259,24 @@ describe("UsersRoute", () => {
       });
     });
 
+    const assignOperation = environment.mock.getMostRecentOperation();
+    expect(assignOperation.fragment.node.name).toBe("UserFormDialogAssignUserRolesMutation");
+    expect(assignOperation.request.variables.input).toMatchObject({
+      userID: "user-3",
+      roleIDs: ["role-admin"],
+    });
+
+    await act(async () => {
+      environment.mock.resolve(assignOperation, {
+        data: {
+          assignUserRoles: {
+            __typename: "AssignUserRolesPayload",
+            user: { __typename: "User", id: "user-3" },
+          },
+        },
+      });
+    });
+
     const refreshOperation = environment.mock.getMostRecentOperation();
     expect(refreshOperation.fragment.node.name).toBe("UsersManagerPaginationQuery");
     expect(refreshOperation.request.variables).toMatchObject({ first: USERS_PAGE_SIZE });
@@ -209,8 +294,14 @@ describe("UsersRoute", () => {
             websiteURL: "https://data.example.com",
             createdAt: "2024-10-12T09:00:00.000Z",
             updatedAt: "2024-10-12T09:00:00.000Z",
+            roles: [{ id: "role-admin", name: "Administrator" }],
           },
-        ]),
+        ], {
+          availableRoles: [
+            { id: "role-admin", name: "Administrator" },
+            { id: "role-editor", name: "Editor" },
+          ],
+        }),
       });
     });
 
@@ -224,17 +315,27 @@ describe("UsersRoute", () => {
 
     await act(async () => {
       environment.mock.resolve(initialOperation, {
-        data: buildUsersPayload([
+        data: buildUsersPayload(
+          [
+            {
+              id: "user-2",
+              username: "reviewer",
+              email: "reviewer@example.com",
+              displayName: "Content Reviewer",
+              bio: "Reviews submissions before publishing.",
+              updatedAt: "2024-10-11T10:00:00.000Z",
+              createdAt: "2024-10-10T08:00:00.000Z",
+              roles: [{ id: "role-editor", name: "Editor" }],
+            },
+          ],
           {
-            id: "user-2",
-            username: "reviewer",
-            email: "reviewer@example.com",
-            displayName: "Content Reviewer",
-            bio: "Reviews submissions before publishing.",
-            updatedAt: "2024-10-11T10:00:00.000Z",
-            createdAt: "2024-10-10T08:00:00.000Z",
+            availableRoles: [
+              { id: "role-admin", name: "Administrator" },
+              { id: "role-editor", name: "Editor" },
+              { id: "role-viewer", name: "Viewer" },
+            ],
           },
-        ]),
+        ),
       });
     });
 
@@ -243,6 +344,17 @@ describe("UsersRoute", () => {
     await userEvent.type(screen.getByLabelText("Display name"), "Senior Reviewer");
     await userEvent.clear(screen.getByLabelText("Bio"));
     await userEvent.type(screen.getByLabelText("Bio"), "Mentors the review team and ensures standards.");
+
+    const adminRole = screen.getByRole("checkbox", { name: "Administrator" });
+    const editorRole = screen.getByRole("checkbox", { name: "Editor" });
+    const viewerRole = screen.getByRole("checkbox", { name: "Viewer" });
+
+    expect(adminRole).not.toBeChecked();
+    expect(editorRole).toBeChecked();
+    expect(viewerRole).not.toBeChecked();
+
+    await userEvent.click(adminRole);
+    await userEvent.click(editorRole);
 
     await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
@@ -275,6 +387,42 @@ describe("UsersRoute", () => {
       });
     });
 
+    const assignOperation = environment.mock.getMostRecentOperation();
+    expect(assignOperation.fragment.node.name).toBe("UserFormDialogAssignUserRolesMutation");
+    expect(assignOperation.request.variables.input).toMatchObject({
+      userID: "user-2",
+      roleIDs: ["role-admin"],
+    });
+
+    await act(async () => {
+      environment.mock.resolve(assignOperation, {
+        data: {
+          assignUserRoles: {
+            __typename: "AssignUserRolesPayload",
+            user: { __typename: "User", id: "user-2" },
+          },
+        },
+      });
+    });
+
+    const removeOperation = environment.mock.getMostRecentOperation();
+    expect(removeOperation.fragment.node.name).toBe("UserFormDialogRemoveUserRolesMutation");
+    expect(removeOperation.request.variables.input).toMatchObject({
+      userID: "user-2",
+      roleIDs: ["role-editor"],
+    });
+
+    await act(async () => {
+      environment.mock.resolve(removeOperation, {
+        data: {
+          removeUserRoles: {
+            __typename: "RemoveUserRolesPayload",
+            user: { __typename: "User", id: "user-2" },
+          },
+        },
+      });
+    });
+
     const refreshOperation = environment.mock.getMostRecentOperation();
     expect(refreshOperation.fragment.node.name).toBe("UsersManagerPaginationQuery");
     expect(refreshOperation.request.variables).toMatchObject({ first: USERS_PAGE_SIZE });
@@ -290,8 +438,15 @@ describe("UsersRoute", () => {
             bio: "Mentors the review team and ensures standards.",
             updatedAt: "2024-10-12T08:00:00.000Z",
             createdAt: "2024-10-10T08:00:00.000Z",
+            roles: [{ id: "role-admin", name: "Administrator" }],
           },
-        ]),
+        ], {
+          availableRoles: [
+            { id: "role-admin", name: "Administrator" },
+            { id: "role-editor", name: "Editor" },
+            { id: "role-viewer", name: "Viewer" },
+          ],
+        }),
       });
     });
 

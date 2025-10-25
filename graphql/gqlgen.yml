@@ -2,6 +2,7 @@ schema:
   - graphql/schema.graphqls
   - graphql/viewer.graphqls
   - graphql/dashboard.graphqls
+  - graphql/user_roles.graphqls
 exec:
   filename: graphql/generated.go
 model:

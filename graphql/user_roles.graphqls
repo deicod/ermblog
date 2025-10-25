@@ -1,0 +1,34 @@
+extend type User {
+  roles(first: Int, after: String, last: Int, before: String): RoleConnection!
+}
+
+extend type Role {
+  users(first: Int, after: String, last: Int, before: String): UserConnection!
+}
+
+input AssignUserRolesInput {
+  clientMutationId: String
+  userID: ID!
+  roleIDs: [ID!]!
+}
+
+type AssignUserRolesPayload {
+  clientMutationId: String
+  user: User
+}
+
+input RemoveUserRolesInput {
+  clientMutationId: String
+  userID: ID!
+  roleIDs: [ID!]!
+}
+
+type RemoveUserRolesPayload {
+  clientMutationId: String
+  user: User
+}
+
+extend type Mutation {
+  assignUserRoles(input: AssignUserRolesInput!): AssignUserRolesPayload! @auth(roles: ["user"])
+  removeUserRoles(input: RemoveUserRolesInput!): RemoveUserRolesPayload! @auth(roles: ["user"])
+}
