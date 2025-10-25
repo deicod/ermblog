@@ -291,6 +291,26 @@ func (m *mockPool) QueryRow(_ context.Context, sql string, args ...any) pgx.Row 
 
 func (m *mockPool) Exec(_ context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
 	switch {
+	case strings.HasPrefix(sql, "WITH deleted AS (") && strings.Contains(sql, "FROM post_categories"):
+		postID := args[0].(string)
+		m.postCategories[postID] = []string{}
+		ids, _ := args[1].([]string)
+		for _, categoryID := range ids {
+			if !contains(m.postCategories[postID], categoryID) {
+				m.postCategories[postID] = append(m.postCategories[postID], categoryID)
+			}
+		}
+		return pgconn.CommandTag{}, nil
+	case strings.HasPrefix(sql, "WITH deleted AS (") && strings.Contains(sql, "FROM post_tags"):
+		postID := args[0].(string)
+		m.postTags[postID] = []string{}
+		ids, _ := args[1].([]string)
+		for _, tagID := range ids {
+			if !contains(m.postTags[postID], tagID) {
+				m.postTags[postID] = append(m.postTags[postID], tagID)
+			}
+		}
+		return pgconn.CommandTag{}, nil
 	case strings.HasPrefix(sql, "DELETE FROM post_categories"):
 		postID := args[0].(string)
 		m.postCategories[postID] = []string{}

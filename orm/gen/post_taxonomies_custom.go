@@ -6,10 +6,22 @@ import (
 )
 
 const (
-	replacePostCategoriesDeleteQuery = `DELETE FROM post_categories WHERE post_id = $1`
-	replacePostCategoriesInsertQuery = `INSERT INTO post_categories (post_id, category_id) VALUES ($1, $2) ON CONFLICT (category_id, post_id) DO NOTHING`
-	replacePostTagsDeleteQuery       = `DELETE FROM post_tags WHERE post_id = $1`
-	replacePostTagsInsertQuery       = `INSERT INTO post_tags (post_id, tag_id) VALUES ($1, $2) ON CONFLICT (post_id, tag_id) DO NOTHING`
+	replacePostCategoriesQuery = `WITH deleted AS (
+DELETE FROM post_categories WHERE post_id = $1
+), input AS (
+SELECT DISTINCT value::uuid AS category_id FROM unnest($2::uuid[]) AS t(value)
+)
+INSERT INTO post_categories (post_id, category_id)
+SELECT $1, input.category_id FROM input
+ON CONFLICT (category_id, post_id) DO NOTHING`
+	replacePostTagsQuery = `WITH deleted AS (
+DELETE FROM post_tags WHERE post_id = $1
+), input AS (
+SELECT DISTINCT value::uuid AS tag_id FROM unnest($2::uuid[]) AS t(value)
+)
+INSERT INTO post_tags (post_id, tag_id)
+SELECT $1, input.tag_id FROM input
+ON CONFLICT (post_id, tag_id) DO NOTHING`
 )
 
 func (c *Client) ReplacePostCategories(ctx context.Context, postID string, categoryIDs []string) error {
@@ -22,13 +34,13 @@ func (c *Client) ReplacePostCategories(ctx context.Context, postID string, categ
 	if _, err := c.Posts().ByID(ctx, postID); err != nil {
 		return err
 	}
-	if _, err := c.db.Pool.Exec(ctx, replacePostCategoriesDeleteQuery, postID); err != nil {
-		return err
+	writer := c.db.Writer()
+	if writer == nil {
+		return fmt.Errorf("orm writer pool is not configured")
 	}
-	if len(categoryIDs) == 0 {
-		return nil
-	}
+
 	seen := make(map[string]struct{}, len(categoryIDs))
+	uniqueCategoryIDs := make([]string, 0, len(categoryIDs))
 	for _, categoryID := range categoryIDs {
 		if categoryID == "" {
 			return fmt.Errorf("categoryID is required")
@@ -37,9 +49,11 @@ func (c *Client) ReplacePostCategories(ctx context.Context, postID string, categ
 			continue
 		}
 		seen[categoryID] = struct{}{}
-		if _, err := c.db.Pool.Exec(ctx, replacePostCategoriesInsertQuery, postID, categoryID); err != nil {
-			return err
-		}
+		uniqueCategoryIDs = append(uniqueCategoryIDs, categoryID)
+	}
+
+	if _, err := writer.Exec(ctx, replacePostCategoriesQuery, postID, uniqueCategoryIDs); err != nil {
+		return err
 	}
 	return nil
 }
@@ -54,13 +68,13 @@ func (c *Client) ReplacePostTags(ctx context.Context, postID string, tagIDs []st
 	if _, err := c.Posts().ByID(ctx, postID); err != nil {
 		return err
 	}
-	if _, err := c.db.Pool.Exec(ctx, replacePostTagsDeleteQuery, postID); err != nil {
-		return err
+	writer := c.db.Writer()
+	if writer == nil {
+		return fmt.Errorf("orm writer pool is not configured")
 	}
-	if len(tagIDs) == 0 {
-		return nil
-	}
+
 	seen := make(map[string]struct{}, len(tagIDs))
+	uniqueTagIDs := make([]string, 0, len(tagIDs))
 	for _, tagID := range tagIDs {
 		if tagID == "" {
 			return fmt.Errorf("tagID is required")
@@ -69,9 +83,11 @@ func (c *Client) ReplacePostTags(ctx context.Context, postID string, tagIDs []st
 			continue
 		}
 		seen[tagID] = struct{}{}
-		if _, err := c.db.Pool.Exec(ctx, replacePostTagsInsertQuery, postID, tagID); err != nil {
-			return err
-		}
+		uniqueTagIDs = append(uniqueTagIDs, tagID)
+	}
+
+	if _, err := writer.Exec(ctx, replacePostTagsQuery, postID, uniqueTagIDs); err != nil {
+		return err
 	}
 	return nil
 }
