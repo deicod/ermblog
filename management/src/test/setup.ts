@@ -21,6 +21,7 @@ vi.mock("relay-runtime", async () => {
   const actual = await vi.importActual<typeof import("relay-runtime")>("relay-runtime");
   return {
     ...actual,
+    ConnectionHandler: (actual as any).ConnectionHandler,
     ConcreteRequest: (actual as any).ConcreteRequest ?? ({} as never),
   };
 });

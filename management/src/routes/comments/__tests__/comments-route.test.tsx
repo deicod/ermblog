@@ -1,4 +1,4 @@
-import { act, render, screen, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RelayEnvironmentProvider } from "react-relay";
 import { createMockEnvironment } from "relay-test-utils";
@@ -124,5 +124,201 @@ describe("CommentsRoute", () => {
     );
     expect(emptyState).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Load more" })).toBeDisabled();
+  });
+
+  it("optimistically updates the comment status when approving from the all filter", async () => {
+    const environment = renderComments();
+    const initialOperation = environment.mock.getMostRecentOperation();
+
+    await act(async () => {
+      environment.mock.resolve(initialOperation, {
+        data: buildCommentsPayload([
+          {
+            id: "comment-1",
+            content: "Awaiting review",
+            status: "pending",
+            authorName: "Jamie",
+            submittedAt: "2024-10-12T12:00:00.000Z",
+          },
+        ]),
+      });
+    });
+
+    const commentCell = await screen.findByText("Awaiting review");
+    const row = commentCell.closest("tr");
+    if (!row) {
+      throw new Error("Expected comment row to be present");
+    }
+
+    const approveButton = within(row).getByRole("button", { name: "Approve" });
+    await userEvent.click(approveButton);
+
+    await waitFor(() => {
+      expect(
+        within(row).getByRole("button", { name: "Mark as spam" }),
+      ).toBeDisabled();
+    });
+    expect(within(row).queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
+    expect(within(row).getByText("Approved")).toBeInTheDocument();
+
+    const mutation = environment.mock.getMostRecentOperation();
+    expect(mutation.fragment.node.name).toBe("CommentsTableUpdateCommentStatusMutation");
+    expect(mutation.request.variables).toEqual({
+      input: {
+        id: "comment-1",
+        status: "approved",
+      },
+    });
+
+    await act(async () => {
+      environment.mock.resolve(mutation, {
+        data: {
+          updateComment: {
+            comment: {
+              __typename: "Comment",
+              id: "comment-1",
+              status: "approved",
+            },
+          },
+        },
+      });
+    });
+
+    const markSpamButton = within(row).getByRole("button", { name: "Mark as spam" });
+    expect(markSpamButton).toBeEnabled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("removes comments from the filtered view when their status changes", async () => {
+    const environment = renderComments();
+    const initialOperation = environment.mock.getMostRecentOperation();
+
+    await act(async () => {
+      environment.mock.resolve(initialOperation, {
+        data: buildCommentsPayload([
+          {
+            id: "comment-1",
+            content: "Needs review",
+            status: "pending",
+            authorName: "Alex",
+            submittedAt: "2024-10-12T11:00:00.000Z",
+          },
+        ]),
+      });
+    });
+
+    const statusSelect = screen.getByLabelText(/Status/i);
+    await userEvent.selectOptions(statusSelect, "pending");
+
+    const refetchOperation = environment.mock.getMostRecentOperation();
+    await act(async () => {
+      environment.mock.resolve(refetchOperation, {
+        data: buildCommentsPayload([
+          {
+            id: "comment-1",
+            content: "Needs review",
+            status: "pending",
+            authorName: "Alex",
+            submittedAt: "2024-10-12T11:00:00.000Z",
+          },
+        ]),
+      });
+    });
+
+    const commentCell = await screen.findByText("Needs review");
+    const row = commentCell.closest("tr");
+    if (!row) {
+      throw new Error("Expected comment row to be present");
+    }
+
+    const approveButton = within(row).getByRole("button", { name: "Approve" });
+    await userEvent.click(approveButton);
+
+    const mutation = environment.mock.getMostRecentOperation();
+    expect(mutation.fragment.node.name).toBe("CommentsTableUpdateCommentStatusMutation");
+
+    await waitFor(() => {
+      expect(screen.queryByText("Needs review")).not.toBeInTheDocument();
+    });
+
+    expect(await screen.findByText("No comments match the “pending” status.")).toBeInTheDocument();
+    expect(screen.getByText("Total comments: 0")).toBeInTheDocument();
+
+    await act(async () => {
+      environment.mock.resolve(mutation, {
+        data: {
+          updateComment: {
+            comment: {
+              __typename: "Comment",
+              id: "comment-1",
+              status: "approved",
+            },
+          },
+        },
+      });
+    });
+  });
+
+  it("restores the previous state and shows an error when the mutation fails", async () => {
+    const environment = renderComments();
+    const initialOperation = environment.mock.getMostRecentOperation();
+
+    await act(async () => {
+      environment.mock.resolve(initialOperation, {
+        data: buildCommentsPayload([
+          {
+            id: "comment-1",
+            content: "Needs review",
+            status: "pending",
+            authorName: "Alex",
+            submittedAt: "2024-10-12T11:00:00.000Z",
+          },
+        ]),
+      });
+    });
+
+    const statusSelect = screen.getByLabelText(/Status/i);
+    await userEvent.selectOptions(statusSelect, "pending");
+
+    const refetchOperation = environment.mock.getMostRecentOperation();
+    await act(async () => {
+      environment.mock.resolve(refetchOperation, {
+        data: buildCommentsPayload([
+          {
+            id: "comment-1",
+            content: "Needs review",
+            status: "pending",
+            authorName: "Alex",
+            submittedAt: "2024-10-12T11:00:00.000Z",
+          },
+        ]),
+      });
+    });
+
+    const commentCell = await screen.findByText("Needs review");
+    const row = commentCell.closest("tr");
+    if (!row) {
+      throw new Error("Expected comment row to be present");
+    }
+
+    const markSpamButton = within(row).getByRole("button", { name: "Mark as spam" });
+    await userEvent.click(markSpamButton);
+
+    const mutation = environment.mock.getMostRecentOperation();
+
+    await act(async () => {
+      environment.mock.reject(mutation, new Error("Network error"));
+    });
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Failed to update comment status. Network error",
+    );
+    expect(await screen.findByText("Needs review")).toBeInTheDocument();
+    expect(
+      within(screen.getByText("Needs review").closest("tr") as HTMLTableRowElement).getByRole(
+        "button",
+        { name: "Mark as spam" },
+      ),
+    ).toBeEnabled();
   });
 });
