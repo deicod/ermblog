@@ -47,6 +47,8 @@ export interface RelaySubscribeOptions {
   maxRetries?: number;
   retryDelayMs?: number;
   clientFactory?: (options: ClientOptions) => Client;
+  tokenStorage?: SessionTokenStorage;
+  authorizationHeaderFormatter?: (token: SessionToken) => string;
 }
 
 export class RelayNetworkError extends Error {
@@ -145,6 +147,8 @@ interface RelaySubscribeResolvedOptions {
   maxRetries: number;
   retryDelayMs: number;
   clientFactory: (options: ClientOptions) => Client;
+  tokenStorage?: SessionTokenStorage;
+  authorizationHeaderFormatter: (token: SessionToken) => string;
 }
 
 function resolveSubscribeOptions(
@@ -160,6 +164,9 @@ function resolveSubscribeOptions(
     maxRetries: options.maxRetries ?? runtimeConfig.wsMaxRetries,
     retryDelayMs: options.retryDelayMs ?? runtimeConfig.wsRetryDelayMs,
     clientFactory: options.clientFactory ?? createClient,
+    tokenStorage: options.tokenStorage ?? browserSessionTokenStorage,
+    authorizationHeaderFormatter:
+      options.authorizationHeaderFormatter ?? defaultAuthorizationFormatter,
   };
 }
 
@@ -326,9 +333,42 @@ export const createSubscribeFn = (
       );
     }
 
+    const buildConnectionParams = async () => {
+      const baseParams = await (async () => {
+        if (typeof resolved.connectionParams === "function") {
+          return await resolved.connectionParams();
+        }
+
+        if (resolved.connectionParams !== undefined) {
+          return resolved.connectionParams;
+        }
+
+        return {};
+      })();
+
+      const params =
+        typeof baseParams === "object" && baseParams !== null
+          ? { ...(baseParams as Record<string, unknown>) }
+          : {};
+
+      const sessionToken = resolved.tokenStorage?.getSessionToken?.();
+
+      if (
+        sessionToken?.accessToken &&
+        !Object.prototype.hasOwnProperty.call(params, "Authorization")
+      ) {
+        params.Authorization = resolved.authorizationHeaderFormatter(sessionToken);
+      }
+
+      return params;
+    };
+
     client = resolved.clientFactory({
       url: resolved.endpoint,
-      connectionParams: resolved.connectionParams,
+      connectionParams:
+        resolved.connectionParams || resolved.tokenStorage
+          ? buildConnectionParams
+          : undefined,
       lazy: resolved.lazy,
       retryAttempts: Math.max(0, resolved.maxRetries),
       retryWait: async () => {
