@@ -71,3 +71,18 @@ export default defineConfig([
   },
 ])
 ```
+
+## Runtime configuration
+
+The Relay environment reads its transport settings from environment variables so you can point the SPA at different backends without rebuilding:
+
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `VITE_GRAPHQL_HTTP_ENDPOINT` | HTTP endpoint for GraphQL queries and mutations. | `http://localhost:8080/graphql` |
+| `VITE_GRAPHQL_HTTP_MAX_RETRIES` | Retry attempts for HTTP requests. | `1` |
+| `VITE_GRAPHQL_HTTP_RETRY_DELAY_MS` | Delay between HTTP retries in milliseconds. | `250` |
+| `VITE_GRAPHQL_WS_ENDPOINT` | WebSocket endpoint for subscriptions. | `ws://localhost:8080/graphql` |
+| `VITE_GRAPHQL_WS_MAX_RETRIES` | Reconnect attempts for the WebSocket client. | `5` |
+| `VITE_GRAPHQL_WS_RETRY_DELAY_MS` | Delay between WebSocket reconnect attempts in milliseconds. | `500` |
+
+When the API enables subscriptions (`graphql.subscriptions` in `erm.yaml`), set the corresponding `VITE_…` variables in your shell or `.env` file before running `pnpm dev` so Relay can negotiate the WebSocket connection.
