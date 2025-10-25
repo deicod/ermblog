@@ -50,6 +50,11 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AssignUserRolesPayload struct {
+		ClientMutationID func(childComplexity int) int
+		User             func(childComplexity int) int
+	}
+
 	Category struct {
 		CreatedAt   func(childComplexity int) int
 		Description func(childComplexity int) int
@@ -214,31 +219,33 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateCategory func(childComplexity int, input CreateCategoryInput) int
-		CreateComment  func(childComplexity int, input CreateCommentInput) int
-		CreateMedia    func(childComplexity int, input CreateMediaInput) int
-		CreateOption   func(childComplexity int, input CreateOptionInput) int
-		CreatePost     func(childComplexity int, input CreatePostInput) int
-		CreateRole     func(childComplexity int, input CreateRoleInput) int
-		CreateTag      func(childComplexity int, input CreateTagInput) int
-		CreateUser     func(childComplexity int, input CreateUserInput) int
-		DeleteCategory func(childComplexity int, input DeleteCategoryInput) int
-		DeleteComment  func(childComplexity int, input DeleteCommentInput) int
-		DeleteMedia    func(childComplexity int, input DeleteMediaInput) int
-		DeleteOption   func(childComplexity int, input DeleteOptionInput) int
-		DeletePost     func(childComplexity int, input DeletePostInput) int
-		DeleteRole     func(childComplexity int, input DeleteRoleInput) int
-		DeleteTag      func(childComplexity int, input DeleteTagInput) int
-		DeleteUser     func(childComplexity int, input DeleteUserInput) int
-		Noop           func(childComplexity int) int
-		UpdateCategory func(childComplexity int, input UpdateCategoryInput) int
-		UpdateComment  func(childComplexity int, input UpdateCommentInput) int
-		UpdateMedia    func(childComplexity int, input UpdateMediaInput) int
-		UpdateOption   func(childComplexity int, input UpdateOptionInput) int
-		UpdatePost     func(childComplexity int, input UpdatePostInput) int
-		UpdateRole     func(childComplexity int, input UpdateRoleInput) int
-		UpdateTag      func(childComplexity int, input UpdateTagInput) int
-		UpdateUser     func(childComplexity int, input UpdateUserInput) int
+		AssignUserRoles func(childComplexity int, input AssignUserRolesInput) int
+		CreateCategory  func(childComplexity int, input CreateCategoryInput) int
+		CreateComment   func(childComplexity int, input CreateCommentInput) int
+		CreateMedia     func(childComplexity int, input CreateMediaInput) int
+		CreateOption    func(childComplexity int, input CreateOptionInput) int
+		CreatePost      func(childComplexity int, input CreatePostInput) int
+		CreateRole      func(childComplexity int, input CreateRoleInput) int
+		CreateTag       func(childComplexity int, input CreateTagInput) int
+		CreateUser      func(childComplexity int, input CreateUserInput) int
+		DeleteCategory  func(childComplexity int, input DeleteCategoryInput) int
+		DeleteComment   func(childComplexity int, input DeleteCommentInput) int
+		DeleteMedia     func(childComplexity int, input DeleteMediaInput) int
+		DeleteOption    func(childComplexity int, input DeleteOptionInput) int
+		DeletePost      func(childComplexity int, input DeletePostInput) int
+		DeleteRole      func(childComplexity int, input DeleteRoleInput) int
+		DeleteTag       func(childComplexity int, input DeleteTagInput) int
+		DeleteUser      func(childComplexity int, input DeleteUserInput) int
+		Noop            func(childComplexity int) int
+		RemoveUserRoles func(childComplexity int, input RemoveUserRolesInput) int
+		UpdateCategory  func(childComplexity int, input UpdateCategoryInput) int
+		UpdateComment   func(childComplexity int, input UpdateCommentInput) int
+		UpdateMedia     func(childComplexity int, input UpdateMediaInput) int
+		UpdateOption    func(childComplexity int, input UpdateOptionInput) int
+		UpdatePost      func(childComplexity int, input UpdatePostInput) int
+		UpdateRole      func(childComplexity int, input UpdateRoleInput) int
+		UpdateTag       func(childComplexity int, input UpdateTagInput) int
+		UpdateUser      func(childComplexity int, input UpdateUserInput) int
 	}
 
 	Option struct {
@@ -318,6 +325,11 @@ type ComplexityRoot struct {
 		Viewer          func(childComplexity int) int
 	}
 
+	RemoveUserRolesPayload struct {
+		ClientMutationID func(childComplexity int) int
+		User             func(childComplexity int) int
+	}
+
 	Role struct {
 		Capabilities func(childComplexity int) int
 		CreatedAt    func(childComplexity int) int
@@ -326,6 +338,7 @@ type ComplexityRoot struct {
 		Name         func(childComplexity int) int
 		Slug         func(childComplexity int) int
 		UpdatedAt    func(childComplexity int) int
+		Users        func(childComplexity int, first *int, after *string, last *int, before *string) int
 	}
 
 	RoleConnection struct {
@@ -423,6 +436,8 @@ type ComplexityRoot struct {
 		Email       func(childComplexity int) int
 		ID          func(childComplexity int) int
 		LastLoginAt func(childComplexity int) int
+		Password    func(childComplexity int) int
+		Roles       func(childComplexity int, first *int, after *string, last *int, before *string) int
 		UpdatedAt   func(childComplexity int) int
 		Username    func(childComplexity int) int
 		WebsiteURL  func(childComplexity int) int
@@ -473,6 +488,8 @@ type MutationResolver interface {
 	CreateUser(ctx context.Context, input CreateUserInput) (*CreateUserPayload, error)
 	UpdateUser(ctx context.Context, input UpdateUserInput) (*UpdateUserPayload, error)
 	DeleteUser(ctx context.Context, input DeleteUserInput) (*DeleteUserPayload, error)
+	AssignUserRoles(ctx context.Context, input AssignUserRolesInput) (*AssignUserRolesPayload, error)
+	RemoveUserRoles(ctx context.Context, input RemoveUserRolesInput) (*RemoveUserRolesPayload, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id string) (Node, error)
@@ -530,6 +547,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AssignUserRolesPayload.clientMutationId":
+		if e.complexity.AssignUserRolesPayload.ClientMutationID == nil {
+			break
+		}
+
+		return e.complexity.AssignUserRolesPayload.ClientMutationID(childComplexity), true
+	case "AssignUserRolesPayload.user":
+		if e.complexity.AssignUserRolesPayload.User == nil {
+			break
+		}
+
+		return e.complexity.AssignUserRolesPayload.User(childComplexity), true
 
 	case "Category.createdAt":
 		if e.complexity.Category.CreatedAt == nil {
@@ -1067,6 +1097,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.MediaEdge.Node(childComplexity), true
 
+	case "Mutation.assignUserRoles":
+		if e.complexity.Mutation.AssignUserRoles == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_assignUserRoles_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AssignUserRoles(childComplexity, args["input"].(AssignUserRolesInput)), true
 	case "Mutation.createCategory":
 		if e.complexity.Mutation.CreateCategory == nil {
 			break
@@ -1249,6 +1290,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.Noop(childComplexity), true
+	case "Mutation.removeUserRoles":
+		if e.complexity.Mutation.RemoveUserRoles == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removeUserRoles_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RemoveUserRoles(childComplexity, args["input"].(RemoveUserRolesInput)), true
 	case "Mutation.updateCategory":
 		if e.complexity.Mutation.UpdateCategory == nil {
 			break
@@ -1749,6 +1801,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.Viewer(childComplexity), true
 
+	case "RemoveUserRolesPayload.clientMutationId":
+		if e.complexity.RemoveUserRolesPayload.ClientMutationID == nil {
+			break
+		}
+
+		return e.complexity.RemoveUserRolesPayload.ClientMutationID(childComplexity), true
+	case "RemoveUserRolesPayload.user":
+		if e.complexity.RemoveUserRolesPayload.User == nil {
+			break
+		}
+
+		return e.complexity.RemoveUserRolesPayload.User(childComplexity), true
+
 	case "Role.capabilities":
 		if e.complexity.Role.Capabilities == nil {
 			break
@@ -1791,6 +1856,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Role.UpdatedAt(childComplexity), true
+	case "Role.users":
+		if e.complexity.Role.Users == nil {
+			break
+		}
+
+		args, err := ec.field_Role_users_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Role.Users(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
 
 	case "RoleConnection.edges":
 		if e.complexity.RoleConnection.Edges == nil {
@@ -2118,6 +2194,23 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.User.LastLoginAt(childComplexity), true
+	case "User.password":
+		if e.complexity.User.Password == nil {
+			break
+		}
+
+		return e.complexity.User.Password(childComplexity), true
+	case "User.roles":
+		if e.complexity.User.Roles == nil {
+			break
+		}
+
+		args, err := ec.field_User_roles_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.User.Roles(childComplexity, args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
 	case "User.updatedAt":
 		if e.complexity.User.UpdatedAt == nil {
 			break
@@ -2202,6 +2295,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputAssignUserRolesInput,
 		ec.unmarshalInputCreateCategoryInput,
 		ec.unmarshalInputCreateCommentInput,
 		ec.unmarshalInputCreateMediaInput,
@@ -2218,6 +2312,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteRoleInput,
 		ec.unmarshalInputDeleteTagInput,
 		ec.unmarshalInputDeleteUserInput,
+		ec.unmarshalInputRemoveUserRolesInput,
 		ec.unmarshalInputUpdateCategoryInput,
 		ec.unmarshalInputUpdateCommentInput,
 		ec.unmarshalInputUpdateMediaInput,
@@ -2339,7 +2434,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
-//go:embed "schema.graphqls" "viewer.graphqls" "dashboard.graphqls"
+//go:embed "schema.graphqls" "viewer.graphqls" "dashboard.graphqls" "user_roles.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -2354,6 +2449,7 @@ var sources = []*ast.Source{
 	{Name: "schema.graphqls", Input: sourceData("schema.graphqls"), BuiltIn: false},
 	{Name: "viewer.graphqls", Input: sourceData("viewer.graphqls"), BuiltIn: false},
 	{Name: "dashboard.graphqls", Input: sourceData("dashboard.graphqls"), BuiltIn: false},
+	{Name: "user_roles.graphqls", Input: sourceData("user_roles.graphqls"), BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -2369,6 +2465,17 @@ func (ec *executionContext) dir_auth_args(ctx context.Context, rawArgs map[strin
 		return nil, err
 	}
 	args["roles"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_assignUserRoles_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNAssignUserRolesInput2githubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐAssignUserRolesInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -2541,6 +2648,17 @@ func (ec *executionContext) field_Mutation_deleteUser_args(ctx context.Context, 
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteUserInput2githubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐDeleteUserInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_removeUserRoles_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRemoveUserRolesInput2githubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐRemoveUserRolesInput)
 	if err != nil {
 		return nil, err
 	}
@@ -2954,6 +3072,58 @@ func (ec *executionContext) field_Query_users_args(ctx context.Context, rawArgs 
 	return args, nil
 }
 
+func (ec *executionContext) field_Role_users_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_User_roles_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "last", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "before", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	return args, nil
+}
+
 func (ec *executionContext) field___Directive_args_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -3005,6 +3175,90 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AssignUserRolesPayload_clientMutationId(ctx context.Context, field graphql.CollectedField, obj *AssignUserRolesPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AssignUserRolesPayload_clientMutationId,
+		func(ctx context.Context) (any, error) {
+			return obj.ClientMutationID, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AssignUserRolesPayload_clientMutationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AssignUserRolesPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AssignUserRolesPayload_user(ctx context.Context, field graphql.CollectedField, obj *AssignUserRolesPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_AssignUserRolesPayload_user,
+		func(ctx context.Context) (any, error) {
+			return obj.User, nil
+		},
+		nil,
+		ec.marshalOUser2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐUser,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_AssignUserRolesPayload_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AssignUserRolesPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "password":
+				return ec.fieldContext_User_password(ctx, field)
+			case "displayName":
+				return ec.fieldContext_User_displayName(ctx, field)
+			case "bio":
+				return ec.fieldContext_User_bio(ctx, field)
+			case "avatarURL":
+				return ec.fieldContext_User_avatarURL(ctx, field)
+			case "websiteURL":
+				return ec.fieldContext_User_websiteURL(ctx, field)
+			case "lastLoginAt":
+				return ec.fieldContext_User_lastLoginAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_User_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_User_updatedAt(ctx, field)
+			case "roles":
+				return ec.fieldContext_User_roles(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _Category_id(ctx context.Context, field graphql.CollectedField, obj *Category) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
@@ -4392,6 +4646,8 @@ func (ec *executionContext) fieldContext_CreateRolePayload_role(_ context.Contex
 				return ec.fieldContext_Role_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Role_updatedAt(ctx, field)
+			case "users":
+				return ec.fieldContext_Role_users(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Role", field.Name)
 		},
@@ -4530,6 +4786,8 @@ func (ec *executionContext) fieldContext_CreateUserPayload_user(_ context.Contex
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "password":
+				return ec.fieldContext_User_password(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -4544,6 +4802,8 @@ func (ec *executionContext) fieldContext_CreateUserPayload_user(_ context.Contex
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_User_updatedAt(ctx, field)
+			case "roles":
+				return ec.fieldContext_User_roles(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -7346,6 +7606,136 @@ func (ec *executionContext) fieldContext_Mutation_deleteUser(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_assignUserRoles(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_assignUserRoles,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().AssignUserRoles(ctx, fc.Args["input"].(AssignUserRolesInput))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				roles, err := ec.unmarshalOString2ᚕstringᚄ(ctx, []any{"user"})
+				if err != nil {
+					var zeroVal *AssignUserRolesPayload
+					return zeroVal, err
+				}
+				if ec.directives.Auth == nil {
+					var zeroVal *AssignUserRolesPayload
+					return zeroVal, errors.New("directive auth is not implemented")
+				}
+				return ec.directives.Auth(ctx, nil, directive0, roles)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNAssignUserRolesPayload2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐAssignUserRolesPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_assignUserRoles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "clientMutationId":
+				return ec.fieldContext_AssignUserRolesPayload_clientMutationId(ctx, field)
+			case "user":
+				return ec.fieldContext_AssignUserRolesPayload_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AssignUserRolesPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_assignUserRoles_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_removeUserRoles(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_removeUserRoles,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().RemoveUserRoles(ctx, fc.Args["input"].(RemoveUserRolesInput))
+		},
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				roles, err := ec.unmarshalOString2ᚕstringᚄ(ctx, []any{"user"})
+				if err != nil {
+					var zeroVal *RemoveUserRolesPayload
+					return zeroVal, err
+				}
+				if ec.directives.Auth == nil {
+					var zeroVal *RemoveUserRolesPayload
+					return zeroVal, errors.New("directive auth is not implemented")
+				}
+				return ec.directives.Auth(ctx, nil, directive0, roles)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalNRemoveUserRolesPayload2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐRemoveUserRolesPayload,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_removeUserRoles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "clientMutationId":
+				return ec.fieldContext_RemoveUserRolesPayload_clientMutationId(ctx, field)
+			case "user":
+				return ec.fieldContext_RemoveUserRolesPayload_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RemoveUserRolesPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_removeUserRoles_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Option_id(ctx context.Context, field graphql.CollectedField, obj *Option) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9050,6 +9440,8 @@ func (ec *executionContext) fieldContext_Query_role(ctx context.Context, field g
 				return ec.fieldContext_Role_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Role_updatedAt(ctx, field)
+			case "users":
+				return ec.fieldContext_Role_users(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Role", field.Name)
 		},
@@ -9252,6 +9644,8 @@ func (ec *executionContext) fieldContext_Query_user(ctx context.Context, field g
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "password":
+				return ec.fieldContext_User_password(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -9266,6 +9660,8 @@ func (ec *executionContext) fieldContext_Query_user(ctx context.Context, field g
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_User_updatedAt(ctx, field)
+			case "roles":
+				return ec.fieldContext_User_roles(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -9534,6 +9930,90 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _RemoveUserRolesPayload_clientMutationId(ctx context.Context, field graphql.CollectedField, obj *RemoveUserRolesPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RemoveUserRolesPayload_clientMutationId,
+		func(ctx context.Context) (any, error) {
+			return obj.ClientMutationID, nil
+		},
+		nil,
+		ec.marshalOString2ᚖstring,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_RemoveUserRolesPayload_clientMutationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RemoveUserRolesPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RemoveUserRolesPayload_user(ctx context.Context, field graphql.CollectedField, obj *RemoveUserRolesPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_RemoveUserRolesPayload_user,
+		func(ctx context.Context) (any, error) {
+			return obj.User, nil
+		},
+		nil,
+		ec.marshalOUser2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐUser,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_RemoveUserRolesPayload_user(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RemoveUserRolesPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "password":
+				return ec.fieldContext_User_password(ctx, field)
+			case "displayName":
+				return ec.fieldContext_User_displayName(ctx, field)
+			case "bio":
+				return ec.fieldContext_User_bio(ctx, field)
+			case "avatarURL":
+				return ec.fieldContext_User_avatarURL(ctx, field)
+			case "websiteURL":
+				return ec.fieldContext_User_websiteURL(ctx, field)
+			case "lastLoginAt":
+				return ec.fieldContext_User_lastLoginAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_User_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_User_updatedAt(ctx, field)
+			case "roles":
+				return ec.fieldContext_User_roles(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Role_id(ctx context.Context, field graphql.CollectedField, obj *Role) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9737,6 +10217,54 @@ func (ec *executionContext) fieldContext_Role_updatedAt(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Role_users(ctx context.Context, field graphql.CollectedField, obj *Role) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Role_users,
+		func(ctx context.Context) (any, error) {
+			return obj.Users, nil
+		},
+		nil,
+		ec.marshalNUserConnection2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐUserConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Role_users(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Role",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_UserConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_UserConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_UserConnection_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UserConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Role_users_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _RoleConnection_edges(ctx context.Context, field graphql.CollectedField, obj *RoleConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -9907,6 +10435,8 @@ func (ec *executionContext) fieldContext_RoleEdge_node(_ context.Context, field 
 				return ec.fieldContext_Role_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Role_updatedAt(ctx, field)
+			case "users":
+				return ec.fieldContext_Role_users(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Role", field.Name)
 		},
@@ -10389,6 +10919,8 @@ func (ec *executionContext) fieldContext_Subscription_roleCreated(_ context.Cont
 				return ec.fieldContext_Role_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Role_updatedAt(ctx, field)
+			case "users":
+				return ec.fieldContext_Role_users(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Role", field.Name)
 		},
@@ -10452,6 +10984,8 @@ func (ec *executionContext) fieldContext_Subscription_roleUpdated(_ context.Cont
 				return ec.fieldContext_Role_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Role_updatedAt(ctx, field)
+			case "users":
+				return ec.fieldContext_Role_users(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Role", field.Name)
 		},
@@ -10554,6 +11088,8 @@ func (ec *executionContext) fieldContext_Subscription_userCreated(_ context.Cont
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "password":
+				return ec.fieldContext_User_password(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -10568,6 +11104,8 @@ func (ec *executionContext) fieldContext_Subscription_userCreated(_ context.Cont
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_User_updatedAt(ctx, field)
+			case "roles":
+				return ec.fieldContext_User_roles(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -10623,6 +11161,8 @@ func (ec *executionContext) fieldContext_Subscription_userUpdated(_ context.Cont
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "password":
+				return ec.fieldContext_User_password(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -10637,6 +11177,8 @@ func (ec *executionContext) fieldContext_Subscription_userUpdated(_ context.Cont
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_User_updatedAt(ctx, field)
+			case "roles":
+				return ec.fieldContext_User_roles(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -11511,6 +12053,8 @@ func (ec *executionContext) fieldContext_UpdateRolePayload_role(_ context.Contex
 				return ec.fieldContext_Role_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Role_updatedAt(ctx, field)
+			case "users":
+				return ec.fieldContext_Role_users(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Role", field.Name)
 		},
@@ -11649,6 +12193,8 @@ func (ec *executionContext) fieldContext_UpdateUserPayload_user(_ context.Contex
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "password":
+				return ec.fieldContext_User_password(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -11663,6 +12209,8 @@ func (ec *executionContext) fieldContext_UpdateUserPayload_user(_ context.Contex
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_User_updatedAt(ctx, field)
+			case "roles":
+				return ec.fieldContext_User_roles(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -11745,6 +12293,35 @@ func (ec *executionContext) _User_email(ctx context.Context, field graphql.Colle
 }
 
 func (ec *executionContext) fieldContext_User_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_password(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_User_password,
+		func(ctx context.Context) (any, error) {
+			return obj.Password, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_User_password(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -11960,6 +12537,54 @@ func (ec *executionContext) fieldContext_User_updatedAt(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _User_roles(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_User_roles,
+		func(ctx context.Context) (any, error) {
+			return obj.Roles, nil
+		},
+		nil,
+		ec.marshalNRoleConnection2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐRoleConnection,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_User_roles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_RoleConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_RoleConnection_pageInfo(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_RoleConnection_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RoleConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_User_roles_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UserConnection_edges(ctx context.Context, field graphql.CollectedField, obj *UserConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -12122,6 +12747,8 @@ func (ec *executionContext) fieldContext_UserEdge_node(_ context.Context, field 
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "password":
+				return ec.fieldContext_User_password(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -12136,6 +12763,8 @@ func (ec *executionContext) fieldContext_UserEdge_node(_ context.Context, field 
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_User_updatedAt(ctx, field)
+			case "roles":
+				return ec.fieldContext_User_roles(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -13705,6 +14334,47 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputAssignUserRolesInput(ctx context.Context, obj any) (AssignUserRolesInput, error) {
+	var it AssignUserRolesInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"clientMutationId", "userID", "roleIDs"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "clientMutationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientMutationId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClientMutationID = data
+		case "userID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userID"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UserID = data
+		case "roleIDs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roleIDs"))
+			data, err := ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RoleIDs = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateCategoryInput(ctx context.Context, obj any) (CreateCategoryInput, error) {
 	var it CreateCategoryInput
 	asMap := map[string]any{}
@@ -14391,6 +15061,13 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 				return it, err
 			}
 			it.Email = data
+		case "password":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Password = data
 		case "displayName":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -14712,6 +15389,47 @@ func (ec *executionContext) unmarshalInputDeleteUserInput(ctx context.Context, o
 				return it, err
 			}
 			it.ID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputRemoveUserRolesInput(ctx context.Context, obj any) (RemoveUserRolesInput, error) {
+	var it RemoveUserRolesInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"clientMutationId", "userID", "roleIDs"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "clientMutationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientMutationId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClientMutationID = data
+		case "userID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userID"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UserID = data
+		case "roleIDs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roleIDs"))
+			data, err := ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RoleIDs = data
 		}
 	}
 
@@ -15404,6 +16122,13 @@ func (ec *executionContext) unmarshalInputUpdateUserInput(ctx context.Context, o
 				return it, err
 			}
 			it.Email = data
+		case "password":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Password = data
 		case "displayName":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -15531,6 +16256,44 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var assignUserRolesPayloadImplementors = []string{"AssignUserRolesPayload"}
+
+func (ec *executionContext) _AssignUserRolesPayload(ctx context.Context, sel ast.SelectionSet, obj *AssignUserRolesPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, assignUserRolesPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AssignUserRolesPayload")
+		case "clientMutationId":
+			out.Values[i] = ec._AssignUserRolesPayload_clientMutationId(ctx, field, obj)
+		case "user":
+			out.Values[i] = ec._AssignUserRolesPayload_user(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
 
 var categoryImplementors = []string{"Category", "Node"}
 
@@ -16906,6 +17669,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "assignUserRoles":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_assignUserRoles(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "removeUserRoles":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_removeUserRoles(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -17765,6 +18542,44 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
+var removeUserRolesPayloadImplementors = []string{"RemoveUserRolesPayload"}
+
+func (ec *executionContext) _RemoveUserRolesPayload(ctx context.Context, sel ast.SelectionSet, obj *RemoveUserRolesPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, removeUserRolesPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RemoveUserRolesPayload")
+		case "clientMutationId":
+			out.Values[i] = ec._RemoveUserRolesPayload_clientMutationId(ctx, field, obj)
+		case "user":
+			out.Values[i] = ec._RemoveUserRolesPayload_user(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var roleImplementors = []string{"Role", "Node"}
 
 func (ec *executionContext) _Role(ctx context.Context, sel ast.SelectionSet, obj *Role) graphql.Marshaler {
@@ -17802,6 +18617,11 @@ func (ec *executionContext) _Role(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "updatedAt":
 			out.Values[i] = ec._Role_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "users":
+			out.Values[i] = ec._Role_users(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -18443,6 +19263,11 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "password":
+			out.Values[i] = ec._User_password(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "displayName":
 			out.Values[i] = ec._User_displayName(ctx, field, obj)
 		case "bio":
@@ -18460,6 +19285,11 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "updatedAt":
 			out.Values[i] = ec._User_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "roles":
+			out.Values[i] = ec._User_roles(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -18956,6 +19786,25 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) unmarshalNAssignUserRolesInput2githubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐAssignUserRolesInput(ctx context.Context, v any) (AssignUserRolesInput, error) {
+	res, err := ec.unmarshalInputAssignUserRolesInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAssignUserRolesPayload2githubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐAssignUserRolesPayload(ctx context.Context, sel ast.SelectionSet, v AssignUserRolesPayload) graphql.Marshaler {
+	return ec._AssignUserRolesPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAssignUserRolesPayload2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐAssignUserRolesPayload(ctx context.Context, sel ast.SelectionSet, v *AssignUserRolesPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AssignUserRolesPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := ec.unmarshalInputBoolean(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -19438,6 +20287,36 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return ec._ID(ctx, sel, &v)
 }
 
+func (ec *executionContext) unmarshalNID2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNID2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNID2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNID2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, error) {
 	res, err := ec.unmarshalInputInt(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -19722,6 +20601,25 @@ func (ec *executionContext) unmarshalNPostType2githubᚗcomᚋdeicodᚋermblog�
 
 func (ec *executionContext) marshalNPostType2githubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐPostType(ctx context.Context, sel ast.SelectionSet, v PostType) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) unmarshalNRemoveUserRolesInput2githubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐRemoveUserRolesInput(ctx context.Context, v any) (RemoveUserRolesInput, error) {
+	res, err := ec.unmarshalInputRemoveUserRolesInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRemoveUserRolesPayload2githubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐRemoveUserRolesPayload(ctx context.Context, sel ast.SelectionSet, v RemoveUserRolesPayload) graphql.Marshaler {
+	return ec._RemoveUserRolesPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRemoveUserRolesPayload2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐRemoveUserRolesPayload(ctx context.Context, sel ast.SelectionSet, v *RemoveUserRolesPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RemoveUserRolesPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNRole2githubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐRole(ctx context.Context, sel ast.SelectionSet, v Role) graphql.Marshaler {

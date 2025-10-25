@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7f292795faa5cf88a56ce66b47ea521b>>
+ * @generated SignedSource<<7ec0ec63423071d2bcb17cc6f92caafe>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -35,7 +35,61 @@ v1 = [
     "name": "first",
     "variableName": "first"
   }
-];
+],
+v2 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+},
+v3 = {
+  "alias": null,
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "first",
+      "value": 100
+    }
+  ],
+  "concreteType": "RoleConnection",
+  "kind": "LinkedField",
+  "name": "roles",
+  "plural": false,
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "concreteType": "RoleEdge",
+      "kind": "LinkedField",
+      "name": "edges",
+      "plural": true,
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "concreteType": "Role",
+          "kind": "LinkedField",
+          "name": "node",
+          "plural": false,
+          "selections": [
+            (v2/*: any*/),
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "name",
+              "storageKey": null
+            }
+          ],
+          "storageKey": null
+        }
+      ],
+      "storageKey": null
+    }
+  ],
+  "storageKey": "roles(first:100)"
+};
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
@@ -96,13 +150,7 @@ return {
                 "name": "node",
                 "plural": false,
                 "selections": [
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "id",
-                    "storageKey": null
-                  },
+                  (v2/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -159,6 +207,7 @@ return {
                     "name": "updatedAt",
                     "storageKey": null
                   },
+                  (v3/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -208,16 +257,17 @@ return {
         "key": "UsersManager_users",
         "kind": "LinkedHandle",
         "name": "users"
-      }
+      },
+      (v3/*: any*/)
     ]
   },
   "params": {
-    "cacheID": "05e5671fd1081f6a42f0a4d4e68f3873",
+    "cacheID": "537d733e0bd5f7c4387f7d390dc8a5ea",
     "id": null,
     "metadata": {},
     "name": "usersRouteQuery",
     "operationKind": "query",
-    "text": "query usersRouteQuery(\n  $first: Int = 20\n) {\n  ...UsersManagerFragment_3ASum4\n}\n\nfragment UsersManagerFragment_3ASum4 on Query {\n  users(first: $first) {\n    totalCount\n    edges {\n      cursor\n      node {\n        id\n        username\n        email\n        displayName\n        bio\n        avatarURL\n        websiteURL\n        createdAt\n        updatedAt\n        __typename\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query usersRouteQuery(\n  $first: Int = 20\n) {\n  ...UsersManagerFragment_3ASum4\n}\n\nfragment UsersManagerFragment_3ASum4 on Query {\n  users(first: $first) {\n    totalCount\n    edges {\n      cursor\n      node {\n        id\n        username\n        email\n        displayName\n        bio\n        avatarURL\n        websiteURL\n        createdAt\n        updatedAt\n        roles(first: 100) {\n          edges {\n            node {\n              id\n              name\n            }\n          }\n        }\n        __typename\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n  roles(first: 100) {\n    edges {\n      node {\n        id\n        name\n      }\n    }\n  }\n}\n"
   }
 };
 })();

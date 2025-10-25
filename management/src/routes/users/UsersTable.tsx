@@ -37,6 +37,13 @@ function summarizeBio(value: string | null): string {
   return `${trimmed.slice(0, 117)}…`;
 }
 
+function summarizeRoles(roles: ReadonlyArray<{ name: string }>): string {
+  if (!roles.length) {
+    return "No roles assigned";
+  }
+  return roles.map((role) => role.name).join(", ");
+}
+
 export function UsersTable({ users, emptyMessage, onEdit }: UsersTableProps) {
   return (
     <table className="users-table__table">
@@ -46,6 +53,7 @@ export function UsersTable({ users, emptyMessage, onEdit }: UsersTableProps) {
           <th scope="col">Display name</th>
           <th scope="col">Contact</th>
           <th scope="col">Profile</th>
+          <th scope="col">Roles</th>
           <th scope="col">Updated</th>
           <th scope="col">Actions</th>
         </tr>
@@ -53,7 +61,7 @@ export function UsersTable({ users, emptyMessage, onEdit }: UsersTableProps) {
       <tbody>
         {users.length === 0 ? (
           <tr>
-            <td colSpan={6} className="users-table__empty">
+            <td colSpan={7} className="users-table__empty">
               {emptyMessage}
             </td>
           </tr>
@@ -74,6 +82,7 @@ export function UsersTable({ users, emptyMessage, onEdit }: UsersTableProps) {
                   {user.avatarURL ? <span>{user.avatarURL}</span> : null}
                 </div>
               </td>
+              <td>{summarizeRoles(user.roles)}</td>
               <td>{formatTimestamp(user.createdAt, user.updatedAt)}</td>
               <td className="users-table__actions">
                 <button type="button" onClick={() => onEdit(user.id)}>
