@@ -11,6 +11,10 @@ oidc:
 graphql:
   # 4. The HTTP path your API will be served on.
   path: "/graphql"
+  subscriptions:
+    enabled: false
+    websocket: false
+    graphql_ws: false
 extensions:
   postgis: false
   pgvector: false

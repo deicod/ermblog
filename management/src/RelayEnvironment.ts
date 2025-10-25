@@ -1,5 +1,15 @@
 import { Environment, Network, RecordSource, Store } from "relay-runtime";
-import type { FetchFunction } from "relay-runtime";
+import type {
+  CacheConfig,
+  Disposable,
+  FetchFunction,
+  GraphQLResponse,
+  LegacyObserver,
+  RequestParameters,
+  SubscribeFunction,
+  Variables,
+} from "relay-runtime";
+import { createClient, type Client, type ClientOptions, type Sink } from "graphql-ws";
 
 import {
   resolveRelayEnvironmentConfig,
@@ -24,8 +34,19 @@ export interface RelayFetchOptions {
 
 export interface CreateRelayEnvironmentOptions {
   fetchConfig?: RelayFetchOptions;
-  subscribe?: Parameters<typeof Network.create>[1];
+  subscribe?: SubscribeFunction;
+  subscribeConfig?: RelaySubscribeOptions;
   store?: Store;
+}
+
+export interface RelaySubscribeOptions {
+  endpoint?: string;
+  connectionParams?: ClientOptions["connectionParams"];
+  webSocketImpl?: ClientOptions["webSocketImpl"];
+  lazy?: ClientOptions["lazy"];
+  maxRetries?: number;
+  retryDelayMs?: number;
+  clientFactory?: (options: ClientOptions) => Client;
 }
 
 export class RelayNetworkError extends Error {
@@ -113,6 +134,32 @@ function resolveFetchOptions(
     authorizationHeaderFormatter:
       options.authorizationHeaderFormatter ?? defaultAuthorizationFormatter,
     onUnauthorized: options.onUnauthorized,
+  };
+}
+
+interface RelaySubscribeResolvedOptions {
+  endpoint: string;
+  connectionParams?: ClientOptions["connectionParams"];
+  webSocketImpl?: ClientOptions["webSocketImpl"];
+  lazy: ClientOptions["lazy"];
+  maxRetries: number;
+  retryDelayMs: number;
+  clientFactory: (options: ClientOptions) => Client;
+}
+
+function resolveSubscribeOptions(
+  options: RelaySubscribeOptions,
+  runtimeConfig: RelayEnvironmentConfig,
+): RelaySubscribeResolvedOptions {
+  return {
+    endpoint: options.endpoint ?? runtimeConfig.wsEndpoint,
+    connectionParams: options.connectionParams,
+    webSocketImpl:
+      options.webSocketImpl ?? (typeof WebSocket !== "undefined" ? WebSocket : undefined),
+    lazy: options.lazy ?? true,
+    maxRetries: options.maxRetries ?? runtimeConfig.wsMaxRetries,
+    retryDelayMs: options.retryDelayMs ?? runtimeConfig.wsRetryDelayMs,
+    clientFactory: options.clientFactory ?? createClient,
   };
 }
 
@@ -232,6 +279,91 @@ export const createFetchFn = (
   };
 };
 
+function toDisposable(cleanup: () => void): Disposable {
+  return {
+    dispose: cleanup,
+  };
+}
+
+function ensureGraphQLText(request: RequestParameters): string {
+  if (!request.text) {
+    throw new RelayNetworkError("The Relay request is missing a GraphQL query.");
+  }
+
+  return request.text;
+}
+
+function forwardToObserver(
+  observer: LegacyObserver<GraphQLResponse> | undefined,
+): Sink<GraphQLResponse> {
+  return {
+    next: (response) => observer?.next?.(response),
+    error: (error) => observer?.error?.(error),
+    complete: () => observer?.complete?.(),
+  };
+}
+
+export const createSubscribeFn = (
+  options: RelaySubscribeOptions = {},
+): SubscribeFunction => {
+  const runtimeConfig = resolveRelayEnvironmentConfig();
+  const resolved = resolveSubscribeOptions(options, runtimeConfig);
+
+  let client: Client | null = null;
+
+  const getClient = (): Client => {
+    if (client) {
+      return client;
+    }
+
+    if (typeof resolved.endpoint !== "string" || resolved.endpoint.length === 0) {
+      throw new RelayNetworkError("A GraphQL WebSocket endpoint must be provided.");
+    }
+
+    if (!resolved.webSocketImpl) {
+      throw new RelayNetworkError(
+        "A WebSocket implementation must be provided for GraphQL subscriptions.",
+      );
+    }
+
+    client = resolved.clientFactory({
+      url: resolved.endpoint,
+      connectionParams: resolved.connectionParams,
+      lazy: resolved.lazy,
+      retryAttempts: Math.max(0, resolved.maxRetries),
+      retryWait: async () => {
+        if (resolved.retryDelayMs > 0) {
+          await delay(resolved.retryDelayMs);
+        }
+      },
+      webSocketImpl: resolved.webSocketImpl,
+    });
+
+    return client;
+  };
+
+  return (
+    request: RequestParameters,
+    variables: Variables,
+    _cacheConfig: CacheConfig,
+    observer?: LegacyObserver<GraphQLResponse>,
+  ) => {
+    const queryText = ensureGraphQLText(request);
+    const activeClient = getClient();
+
+    const cleanup = activeClient.subscribe(
+      {
+        query: queryText,
+        operationName: request.name,
+        variables,
+      },
+      forwardToObserver(observer),
+    );
+
+    return toDisposable(cleanup);
+  };
+};
+
 export function createRelayEnvironment(
   options: CreateRelayEnvironmentOptions = {},
 ) {
@@ -244,10 +376,26 @@ export function createRelayEnvironment(
       options.fetchConfig?.retryDelayMs ?? runtimeConfig.retryDelayMs,
   });
 
+  const subscribeFn =
+    options.subscribe ??
+    (options.subscribeConfig
+      ? createSubscribeFn({
+          ...options.subscribeConfig,
+          endpoint:
+            options.subscribeConfig.endpoint ?? runtimeConfig.wsEndpoint,
+          maxRetries:
+            options.subscribeConfig.maxRetries ?? runtimeConfig.wsMaxRetries,
+          retryDelayMs:
+            options.subscribeConfig.retryDelayMs ?? runtimeConfig.wsRetryDelayMs,
+        })
+      : createSubscribeFn({
+          endpoint: runtimeConfig.wsEndpoint,
+          maxRetries: runtimeConfig.wsMaxRetries,
+          retryDelayMs: runtimeConfig.wsRetryDelayMs,
+        }));
+
   return new Environment({
-    network: Network.create(fetchFn, options.subscribe),
+    network: Network.create(fetchFn, subscribeFn),
     store: options.store ?? new Store(new RecordSource()),
   });
 }
-
-export const RelayEnvironment = createRelayEnvironment();
