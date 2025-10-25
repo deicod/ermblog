@@ -18,6 +18,7 @@ const NAVIGATION_BLUEPRINT = [
   { id: "dashboard", icon: "📊" },
   { id: "posts", icon: "📝" },
   { id: "users", icon: "👥" },
+  { id: "roles", icon: "🛡️" },
   { id: "comments", icon: "💬" },
   { id: "taxonomies", icon: "🗂️" },
   { id: "media", icon: "🖼️" },

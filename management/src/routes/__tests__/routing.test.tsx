@@ -34,6 +34,10 @@ vi.mock("../comments", () => ({
   CommentsRoute: () => <div>Comments content</div>,
 }));
 
+vi.mock("../roles", () => ({
+  RolesRoute: () => <div>Roles content</div>,
+}));
+
 vi.mock("../login", () => ({
   LoginRoute: () => <div>Login screen</div>,
 }));
