@@ -3,7 +3,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { graphql, useMutation } from "react-relay";
 
 import type { UserFormDialogCreateUserMutation } from "./__generated__/UserFormDialogCreateUserMutation.graphql";
-import type { UserFormDialogUpdateUserMutation } from "./__generated__/UserFormDialogUpdateUserMutation.graphql";
+import type {
+  UserFormDialogUpdateUserMutation,
+  UserFormDialogUpdateUserMutation$variables,
+} from "./__generated__/UserFormDialogUpdateUserMutation.graphql";
 import type { UserRecord } from "./UsersManager";
 
 type UserFormState = {
@@ -13,6 +16,8 @@ type UserFormState = {
   bio: string;
   avatarURL: string;
   websiteURL: string;
+  password: string;
+  passwordConfirmation: string;
 };
 
 type UserDialogCallbacks = {
@@ -65,6 +70,8 @@ function buildInitialState(user?: UserRecord | null): UserFormState {
     bio: user?.bio ?? "",
     avatarURL: user?.avatarURL ?? "",
     websiteURL: user?.websiteURL ?? "",
+    password: "",
+    passwordConfirmation: "",
   };
 }
 
@@ -80,6 +87,9 @@ type UserFormDialogBaseProps = {
   submitLabel: string;
   state: UserFormState;
   busy: boolean;
+  passwordRequired: boolean;
+  confirmationRequired: boolean;
+  errorMessage: string | null;
   onFieldChange: (field: keyof UserFormState, value: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onClose: () => void;
@@ -92,6 +102,9 @@ function UserFormDialogBase({
   submitLabel,
   state,
   busy,
+  passwordRequired,
+  confirmationRequired,
+  errorMessage,
   onFieldChange,
   onSubmit,
   onClose,
@@ -105,6 +118,8 @@ function UserFormDialogBase({
       avatarURL: `${idPrefix}-avatar-url`,
       websiteURL: `${idPrefix}-website-url`,
       bio: `${idPrefix}-bio`,
+      password: `${idPrefix}-password`,
+      confirmPassword: `${idPrefix}-confirm-password`,
     }),
     [idPrefix],
   );
@@ -139,6 +154,32 @@ function UserFormDialogBase({
               required
               disabled={busy}
               placeholder="name@example.com"
+            />
+          </div>
+          <div className="user-dialog__field">
+            <label htmlFor={ids.password}>Password</label>
+            <input
+              id={ids.password}
+              type="password"
+              value={state.password}
+              onChange={(event) => onFieldChange("password", event.target.value)}
+              required={passwordRequired}
+              disabled={busy}
+              autoComplete="new-password"
+              placeholder={passwordRequired ? "Set an initial password" : "Provide a new password"}
+            />
+          </div>
+          <div className="user-dialog__field">
+            <label htmlFor={ids.confirmPassword}>Confirm password</label>
+            <input
+              id={ids.confirmPassword}
+              type="password"
+              value={state.passwordConfirmation}
+              onChange={(event) => onFieldChange("passwordConfirmation", event.target.value)}
+              required={passwordRequired || confirmationRequired}
+              disabled={busy}
+              autoComplete="new-password"
+              placeholder="Re-enter the password"
             />
           </div>
           <div className="user-dialog__field">
@@ -185,6 +226,11 @@ function UserFormDialogBase({
               rows={5}
             />
           </div>
+          {errorMessage ? (
+            <div className="user-dialog__error" role="alert">
+              {errorMessage}
+            </div>
+          ) : null}
           <div className="user-dialog__actions">
             <button type="button" onClick={onClose} disabled={busy}>
               Cancel
@@ -202,9 +248,11 @@ function UserFormDialogBase({
 export function UserCreateDialog({ onClose, onSuccess, onError }: UserDialogCallbacks) {
   const [state, setState] = useState<UserFormState>(() => buildInitialState());
   const [commit, isInFlight] = useMutation<UserFormDialogCreateUserMutation>(createUserMutation);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleChange = useCallback((field: keyof UserFormState, value: string) => {
     setState((current) => ({ ...current, [field]: value }));
+    setFormError(null);
   }, []);
 
   const handleSubmit = useCallback(
@@ -212,31 +260,55 @@ export function UserCreateDialog({ onClose, onSuccess, onError }: UserDialogCall
       event.preventDefault();
       const username = state.username.trim();
       const email = state.email.trim();
+      const password = state.password.trim();
+      const passwordConfirmation = state.passwordConfirmation.trim();
 
       if (!username || !email) {
         onError("Username and email are required fields.");
         return;
       }
 
+      if (!password) {
+        setFormError("Password is required.");
+        return;
+      }
+
+      if (password !== passwordConfirmation) {
+        setFormError("Password confirmation must match.");
+        return;
+      }
+
+      setFormError(null);
+
       commit({
         variables: {
           input: {
             username,
             email,
+            password,
             displayName: normalizeOptional(state.displayName),
             bio: normalizeOptional(state.bio),
             avatarURL: normalizeOptional(state.avatarURL),
             websiteURL: normalizeOptional(state.websiteURL),
           },
         },
-        onCompleted: (response) => {
+        onCompleted: (response, errors) => {
+          if (errors && errors.length > 0) {
+            const message = errors.map((error) => error.message).join(" ") || "Unable to create the user. Try again.";
+            setFormError(message);
+            onError(message);
+            return;
+          }
           const newUserId = response.createUser?.user?.id ?? undefined;
           onSuccess("User created successfully.", { userId: newUserId });
           onClose();
           setState(buildInitialState());
+          setFormError(null);
         },
-        onError: () => {
-          onError("Unable to create the user. Try again.");
+        onError: (error) => {
+          const message = error.message || "Unable to create the user. Try again.";
+          setFormError(message);
+          onError(message);
         },
       });
     },
@@ -251,6 +323,9 @@ export function UserCreateDialog({ onClose, onSuccess, onError }: UserDialogCall
       submitLabel="Create user"
       state={state}
       busy={isInFlight}
+      passwordRequired
+      confirmationRequired
+      errorMessage={formError}
       onFieldChange={handleChange}
       onSubmit={handleSubmit}
       onClose={onClose}
@@ -265,13 +340,16 @@ type UserEditDialogProps = UserDialogCallbacks & {
 export function UserEditDialog({ user, onClose, onSuccess, onError }: UserEditDialogProps) {
   const [state, setState] = useState<UserFormState>(() => buildInitialState(user));
   const [commit, isInFlight] = useMutation<UserFormDialogUpdateUserMutation>(updateUserMutation);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     setState(buildInitialState(user));
+    setFormError(null);
   }, [user]);
 
   const handleChange = useCallback((field: keyof UserFormState, value: string) => {
     setState((current) => ({ ...current, [field]: value }));
+    setFormError(null);
   }, []);
 
   const handleSubmit = useCallback(
@@ -279,30 +357,55 @@ export function UserEditDialog({ user, onClose, onSuccess, onError }: UserEditDi
       event.preventDefault();
       const username = state.username.trim();
       const email = state.email.trim();
+      const password = state.password.trim();
+      const passwordConfirmation = state.passwordConfirmation.trim();
 
       if (!username || !email) {
         onError("Username and email are required fields.");
         return;
       }
 
+      const input: UserFormDialogUpdateUserMutation$variables["input"] = {
+        id: user.id,
+        username,
+        email,
+        displayName: normalizeOptional(state.displayName),
+        bio: normalizeOptional(state.bio),
+        avatarURL: normalizeOptional(state.avatarURL),
+        websiteURL: normalizeOptional(state.websiteURL),
+      };
+
+      if (password || passwordConfirmation) {
+        if (!password) {
+          setFormError("Password is required when resetting an account.");
+          return;
+        }
+        if (password !== passwordConfirmation) {
+          setFormError("Password confirmation must match.");
+          return;
+        }
+        input.password = password;
+      }
+
+      setFormError(null);
+
       commit({
-        variables: {
-          input: {
-            id: user.id,
-            username,
-            email,
-            displayName: normalizeOptional(state.displayName),
-            bio: normalizeOptional(state.bio),
-            avatarURL: normalizeOptional(state.avatarURL),
-            websiteURL: normalizeOptional(state.websiteURL),
-          },
-        },
-        onCompleted: () => {
+        variables: { input },
+        onCompleted: (response, errors) => {
+          if (errors && errors.length > 0) {
+            const message = errors.map((error) => error.message).join(" ") || "Unable to update the user. Try again.";
+            setFormError(message);
+            onError(message);
+            return;
+          }
           onSuccess("User profile updated successfully.");
           onClose();
+          setFormError(null);
         },
-        onError: () => {
-          onError("Unable to update the user. Try again.");
+        onError: (error) => {
+          const message = error.message || "Unable to update the user. Try again.";
+          setFormError(message);
+          onError(message);
         },
       });
     },
@@ -317,6 +420,9 @@ export function UserEditDialog({ user, onClose, onSuccess, onError }: UserEditDi
       submitLabel="Save changes"
       state={state}
       busy={isInFlight}
+      passwordRequired={false}
+      confirmationRequired={Boolean(state.password)}
+      errorMessage={formError}
       onFieldChange={handleChange}
       onSubmit={handleSubmit}
       onClose={onClose}

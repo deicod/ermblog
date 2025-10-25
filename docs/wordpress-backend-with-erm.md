@@ -6,7 +6,7 @@ This document captures the journey of modelling a WordPress-inspired content bac
 
 The backend mirrors familiar WordPress concepts:
 
-- **Users & Roles** — account profiles with optional bios, avatars, and capability bundles. Roles own a JSON capability map and a join table is generated to support multi-role assignments.
+- **Users & Roles** — account profiles with optional bios, avatars, and capability bundles. Roles own a JSON capability map and a join table is generated to support multi-role assignments. The management UI now captures passwords as plaintext in the user dialog and relies on server-side bcrypt hashing before persisting the credential, so administrators never handle hashed values directly.
 - **Posts** — a single entity handles posts, pages, and custom post types via enum fields. Each post tracks author, featured media, SEO JSON, status/type enums, and relationships to taxonomies, media, and comments.
 - **Taxonomies** — hierarchical categories (self-referencing parent edge) and flat tags. Both expose many-to-many edges via generated join tables.
 - **Comments** — threaded comments support guest metadata, workflow status enum, and standard moderation timestamps.

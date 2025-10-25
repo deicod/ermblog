@@ -152,6 +152,8 @@ describe("UsersRoute", () => {
     await userEvent.type(screen.getByLabelText("Username"), "analyst");
     await userEvent.type(screen.getByLabelText("Email"), "analyst@example.com");
     await userEvent.type(screen.getByLabelText("Display name"), "Data Analyst");
+    await userEvent.type(screen.getByLabelText("Password"), "Sup3rSecret!");
+    await userEvent.type(screen.getByLabelText("Confirm password"), "Sup3rSecret!");
     await userEvent.type(screen.getByLabelText("Website"), "https://data.example.com");
     await userEvent.type(screen.getByLabelText("Avatar URL"), "https://cdn.example/analyst.png");
     await userEvent.type(screen.getByLabelText("Bio"), "Transforms data into actionable insight.");
@@ -165,6 +167,7 @@ describe("UsersRoute", () => {
       email: "analyst@example.com",
       displayName: "Data Analyst",
       websiteURL: "https://data.example.com",
+      password: "Sup3rSecret!",
     });
 
     await act(async () => {
@@ -293,5 +296,83 @@ describe("UsersRoute", () => {
     });
 
     await screen.findByText("User profile updated successfully.");
+  });
+
+  it("resets a user password when provided in the edit dialog", async () => {
+    const environment = renderUsers();
+    const initialOperation = environment.mock.getMostRecentOperation();
+
+    await act(async () => {
+      environment.mock.resolve(initialOperation, {
+        data: buildUsersPayload([
+          {
+            id: "user-5",
+            username: "author",
+            email: "author@example.com",
+            displayName: "Feature Author",
+            bio: "Produces weekly features.",
+            updatedAt: "2024-10-10T08:30:00.000Z",
+            createdAt: "2024-10-01T12:00:00.000Z",
+          },
+        ]),
+      });
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: "Edit user" }));
+
+    await userEvent.type(screen.getByLabelText("Password"), "N3wPassphrase!");
+    await userEvent.type(screen.getByLabelText("Confirm password"), "N3wPassphrase!");
+
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    const mutationOperation = environment.mock.getMostRecentOperation();
+    expect(mutationOperation.fragment.node.name).toBe("UserFormDialogUpdateUserMutation");
+    expect(mutationOperation.request.variables.input).toMatchObject({
+      id: "user-5",
+      password: "N3wPassphrase!",
+    });
+  });
+
+  it("shows hashing errors when the password cannot be processed", async () => {
+    const environment = renderUsers();
+    const initialOperation = environment.mock.getMostRecentOperation();
+
+    await act(async () => {
+      environment.mock.resolve(initialOperation, { data: buildUsersPayload([]) });
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: "New user" }));
+
+    await userEvent.type(screen.getByLabelText("Username"), "ops");
+    await userEvent.type(screen.getByLabelText("Email"), "ops@example.com");
+    await userEvent.type(screen.getByLabelText("Password"), "   ");
+    await userEvent.type(screen.getByLabelText("Confirm password"), "   ");
+
+    await userEvent.click(screen.getByRole("button", { name: "Create user" }));
+
+    const validationAlerts = await screen.findAllByRole("alert");
+    expect(validationAlerts.some((element) => element.textContent?.includes("Password is required."))).toBe(true);
+
+    await userEvent.clear(screen.getByLabelText("Password"));
+    await userEvent.clear(screen.getByLabelText("Confirm password"));
+    await userEvent.type(screen.getByLabelText("Password"), "Reset123!");
+    await userEvent.type(screen.getByLabelText("Confirm password"), "Reset123!");
+
+    await userEvent.click(screen.getByRole("button", { name: "Create user" }));
+
+    const mutationOperation = environment.mock.getMostRecentOperation();
+    expect(mutationOperation.fragment.node.name).toBe("UserFormDialogCreateUserMutation");
+
+    await act(async () => {
+      environment.mock.resolve(mutationOperation, {
+        data: {
+          createUser: null,
+        },
+        errors: [{ message: "hash password: bcrypt internal error" }],
+      });
+    });
+
+    const hashingAlerts = await screen.findAllByRole("alert");
+    expect(hashingAlerts.some((element) => element.textContent?.includes("hash password: bcrypt internal error"))).toBe(true);
   });
 });
