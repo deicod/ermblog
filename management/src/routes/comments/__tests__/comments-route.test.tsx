@@ -5,11 +5,14 @@ import { createMockEnvironment } from "relay-test-utils";
 import { describe, expect, it } from "vitest";
 
 import { COMMENTS_PAGE_SIZE, CommentsRoute } from "../../comments";
+import { ToastProvider } from "../../../providers/ToastProvider";
 
 function renderComments(environment = createMockEnvironment()) {
   render(
     <RelayEnvironmentProvider environment={environment}>
-      <CommentsRoute />
+      <ToastProvider>
+        <CommentsRoute />
+      </ToastProvider>
     </RelayEnvironmentProvider>,
   );
   return environment;
@@ -50,6 +53,12 @@ function buildCommentsPayload(
       },
     },
   };
+}
+
+function findOperationByName(environment: ReturnType<typeof createMockEnvironment>, name: string) {
+  return environment.mock.findOperation(
+    (operation) => operation.request.node.params.name === name,
+  );
 }
 
 describe("CommentsRoute", () => {
@@ -321,4 +330,121 @@ describe("CommentsRoute", () => {
       ),
     ).toBeEnabled();
   });
+
+  it("merges new comments from subscriptions and surfaces a toast", async () => {
+    const environment = renderComments();
+    const initialOperation = environment.mock.getMostRecentOperation();
+
+    await act(async () => {
+      environment.mock.resolve(initialOperation, {
+        data: buildCommentsPayload([
+          {
+            id: "comment-1",
+            content: "Existing feedback",
+            status: "approved",
+            authorName: "Morgan",
+            submittedAt: "2024-10-12T10:00:00.000Z",
+          },
+        ]),
+      });
+    });
+
+    const commentCreatedOperation = findOperationByName(
+      environment,
+      "CommentsSubscriptionsCommentCreatedSubscription",
+    );
+
+    await act(async () => {
+      environment.mock.nextValue(commentCreatedOperation, {
+        data: {
+          commentCreated: {
+            __typename: "Comment",
+            id: "comment-2",
+            content: "New feedback inbound",
+            status: "pending",
+            authorName: "Taylor",
+            submittedAt: "2024-10-12T13:00:00.000Z",
+          },
+        },
+      });
+    });
+
+    expect(await screen.findByText("New feedback inbound")).toBeInTheDocument();
+    const notifications = screen.getByRole("region", { name: "Notifications" });
+    expect(within(notifications).getByText("Taylor says: New feedback inbound")).toBeInTheDocument();
+  });
+
+  it("removes comments from the filtered view when a subscription updates the status", async () => {
+    const environment = renderComments();
+    const initialOperation = environment.mock.getMostRecentOperation();
+
+    await act(async () => {
+      environment.mock.resolve(initialOperation, {
+        data: buildCommentsPayload([
+          {
+            id: "comment-1",
+            content: "Needs review",
+            status: "pending",
+            authorName: "Alex",
+            submittedAt: "2024-10-12T11:00:00.000Z",
+          },
+        ]),
+      });
+    });
+
+    const statusSelect = screen.getByLabelText(/Status/i);
+    await userEvent.selectOptions(statusSelect, "pending");
+
+    const refetchOperation = environment.mock.getMostRecentOperation();
+    await act(async () => {
+      environment.mock.resolve(refetchOperation, {
+        data: buildCommentsPayload([
+          {
+            id: "comment-1",
+            content: "Needs review",
+            status: "pending",
+            authorName: "Alex",
+            submittedAt: "2024-10-12T11:00:00.000Z",
+          },
+        ]),
+      });
+    });
+
+    expect(await screen.findByText("Needs review")).toBeInTheDocument();
+
+    const commentUpdatedOperation = findOperationByName(
+      environment,
+      "CommentsSubscriptionsCommentUpdatedSubscription",
+    );
+
+    await act(async () => {
+      environment.mock.nextValue(commentUpdatedOperation, {
+        data: {
+          commentUpdated: {
+            __typename: "Comment",
+            id: "comment-1",
+            content: "Needs review",
+            status: "approved",
+            authorName: "Alex",
+            submittedAt: "2024-10-12T11:15:00.000Z",
+          },
+        },
+      });
+      environment.mock.complete(commentUpdatedOperation);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Needs review")).not.toBeInTheDocument();
+    });
+
+    expect(await screen.findByText("No comments match the “pending” status.")).toBeInTheDocument();
+    expect(screen.getByText("Total comments: 0")).toBeInTheDocument();
+
+    const notifications = screen.getByRole("region", { name: "Notifications" });
+    expect(
+      within(notifications).getByText("Alex's comment is now Approved."),
+    ).toBeInTheDocument();
+    expect(within(notifications).getByText("Comment updated")).toBeInTheDocument();
+  });
+
 });

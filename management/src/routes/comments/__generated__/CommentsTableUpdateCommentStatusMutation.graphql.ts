@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f0c1edc6a9dfe6c22b6420d322dbaec4>>
+ * @generated SignedSource<<5b363fe0d3a9904364bf29c3fed96e90>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -111,7 +111,7 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "ac7e0f73327814c0af1c1794db2d5c18",
+    "cacheID": "543b0f45ba97f5c82724aab024047e5a",
     "id": null,
     "metadata": {},
     "name": "CommentsTableUpdateCommentStatusMutation",
@@ -121,6 +121,6 @@ return {
 };
 })();
 
-(node as any).hash = "f7aa07c2aa8e7048356fdc43c8b64f7d";
+(node as any).hash = "dc44f6276635774d83ff74bf47568801";
 
 export default node;
