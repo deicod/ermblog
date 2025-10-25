@@ -1,0 +1,18 @@
+directive @goField(forceResolver: Boolean, name: String) on FIELD_DEFINITION
+
+extend type Post {
+  author: User @goField(forceResolver: true)
+  featuredMedia: Media @goField(forceResolver: true)
+  categories: [Category!]! @goField(forceResolver: true)
+  tags: [Tag!]! @goField(forceResolver: true)
+}
+
+extend input CreatePostInput {
+  categoryIDs: [ID!]
+  tagIDs: [ID!]
+}
+
+extend input UpdatePostInput {
+  categoryIDs: [ID!]
+  tagIDs: [ID!]
+}

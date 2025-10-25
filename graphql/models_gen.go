@@ -170,6 +170,8 @@ type CreatePostInput struct {
 	PublishedAt      *time.Time      `json:"publishedAt,omitempty"`
 	CreatedAt        *time.Time      `json:"createdAt,omitempty"`
 	UpdatedAt        *time.Time      `json:"updatedAt,omitempty"`
+	CategoryIDs      []string        `json:"categoryIDs,omitempty"`
+	TagIDs           []string        `json:"tagIDs,omitempty"`
 }
 
 type CreatePostPayload struct {
@@ -394,6 +396,10 @@ type Post struct {
 	PublishedAt     *time.Time      `json:"publishedAt,omitempty"`
 	CreatedAt       time.Time       `json:"createdAt"`
 	UpdatedAt       time.Time       `json:"updatedAt"`
+	Author          *User           `json:"author,omitempty"`
+	FeaturedMedia   *Media          `json:"featuredMedia,omitempty"`
+	Categories      []*Category     `json:"categories"`
+	Tags            []*Tag          `json:"tags"`
 }
 
 func (Post) IsNode()            {}
@@ -565,6 +571,8 @@ type UpdatePostInput struct {
 	PublishedAt      *time.Time      `json:"publishedAt,omitempty"`
 	CreatedAt        *time.Time      `json:"createdAt,omitempty"`
 	UpdatedAt        *time.Time      `json:"updatedAt,omitempty"`
+	CategoryIDs      []string        `json:"categoryIDs,omitempty"`
+	TagIDs           []string        `json:"tagIDs,omitempty"`
 }
 
 type UpdatePostPayload struct {

@@ -884,21 +884,13 @@ func (r *queryResolver) Comment(ctx context.Context, id string) (*graphql.Commen
 }
 
 func (r *queryResolver) Comments(ctx context.Context, first *int, after *string, last *int, before *string) (*graphql.CommentConnection, error) {
+	repo := r.commentRepository()
+	if repo == nil {
+		return nil, fmt.Errorf("orm client is not configured")
+	}
 	if last != nil || before != nil {
 		return nil, fmt.Errorf("backward pagination is not supported")
 	}
-	repo := r.commentRepository()
-	if repo == nil {
-		return nil, fmt.Errorf("comment repository is not configured")
-	}
-	query := repo.Query()
-	if query == nil {
-		return &graphql.CommentConnection{
-			Edges:    []*graphql.CommentEdge{},
-			PageInfo: &graphql.PageInfo{HasNextPage: false, HasPreviousPage: false},
-		}, nil
-	}
-	query = query.OrderBySubmittedAtDesc()
 	limit := defaultPageSize
 	if first != nil && *first > 0 {
 		limit = *first
@@ -909,16 +901,19 @@ func (r *queryResolver) Comments(ctx context.Context, first *int, after *string,
 			offset = decoded + 1
 		}
 	}
-	total, err := query.Count(ctx)
+	countQuery := repo.Query()
+	if countQuery == nil {
+		return nil, fmt.Errorf("orm client is not configured")
+	}
+	total, err := countQuery.Count(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if offset > 0 {
-		query = query.Offset(offset)
+	query := repo.Query()
+	if query == nil {
+		return nil, fmt.Errorf("orm client is not configured")
 	}
-	if limit > 0 {
-		query = query.Limit(limit)
-	}
+	query = query.OrderBySubmittedAtDesc().Offset(offset).Limit(limit)
 	records, err := query.All(ctx)
 	if err != nil {
 		return nil, err
@@ -1916,6 +1911,25 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input graphql.CreateP
 	if input.UpdatedAt != nil {
 		model.UpdatedAt = *input.UpdatedAt
 	}
+	var (
+		categoryIDs []string
+		tagIDs      []string
+		err         error
+	)
+	hasCategoryIDs := input.CategoryIDs != nil
+	if hasCategoryIDs {
+		categoryIDs, err = r.normalizeCategoryIDs(ctx, input.CategoryIDs)
+		if err != nil {
+			return nil, err
+		}
+	}
+	hasTagIDs := input.TagIDs != nil
+	if hasTagIDs {
+		tagIDs, err = r.normalizeTagIDs(ctx, input.TagIDs)
+		if err != nil {
+			return nil, err
+		}
+	}
 	if err := r.applyBeforeCreatePost(ctx, input, model); err != nil {
 		return nil, err
 	}
@@ -1924,6 +1938,9 @@ func (r *mutationResolver) CreatePost(ctx context.Context, input graphql.CreateP
 		return nil, err
 	}
 	if err := r.applyAfterCreatePost(ctx, record); err != nil {
+		return nil, err
+	}
+	if err := r.assignPostTaxonomies(ctx, record.ID, categoryIDs, hasCategoryIDs, tagIDs, hasTagIDs); err != nil {
 		return nil, err
 	}
 	if err := r.applyBeforeReturnPost(ctx, record); err != nil {
@@ -1983,6 +2000,24 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input graphql.UpdateP
 	if input.UpdatedAt != nil {
 		model.UpdatedAt = *input.UpdatedAt
 	}
+	var (
+		categoryIDs []string
+		tagIDs      []string
+	)
+	hasCategoryIDs := input.CategoryIDs != nil
+	if hasCategoryIDs {
+		categoryIDs, err = r.normalizeCategoryIDs(ctx, input.CategoryIDs)
+		if err != nil {
+			return nil, err
+		}
+	}
+	hasTagIDs := input.TagIDs != nil
+	if hasTagIDs {
+		tagIDs, err = r.normalizeTagIDs(ctx, input.TagIDs)
+		if err != nil {
+			return nil, err
+		}
+	}
 	if err := r.applyBeforeUpdatePost(ctx, input, model); err != nil {
 		return nil, err
 	}
@@ -1991,6 +2026,9 @@ func (r *mutationResolver) UpdatePost(ctx context.Context, input graphql.UpdateP
 		return nil, err
 	}
 	if err := r.applyAfterUpdatePost(ctx, record); err != nil {
+		return nil, err
+	}
+	if err := r.assignPostTaxonomies(ctx, nativeID, categoryIDs, hasCategoryIDs, tagIDs, hasTagIDs); err != nil {
 		return nil, err
 	}
 	if err := r.applyBeforeReturnPost(ctx, record); err != nil {

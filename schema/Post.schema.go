@@ -3,6 +3,7 @@ package schema
 import "github.com/deicod/erm/orm/dsl"
 
 // Post represents WordPress posts and pages.
+// It exposes author, featured media, category, and tag relationships via GraphQL.
 type Post struct{ dsl.Schema }
 
 func (Post) Fields() []dsl.Field {

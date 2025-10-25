@@ -29,6 +29,9 @@ type Resolver struct {
 	users             userProvider
 	roles             roleProvider
 	userRoles         userRoleManager
+	categories        categoryProvider
+	tags              tagProvider
+	postTaxonomy      postTaxonomyManager
 	postsCounter      counter
 	commentsCounter   counter
 	mediaItemsCounter counter
@@ -53,6 +56,19 @@ type userRoleManager interface {
 	ListUsersForRole(ctx context.Context, roleID string) ([]*gen.User, error)
 }
 
+type categoryProvider interface {
+	ByID(ctx context.Context, id string) (*gen.Category, error)
+}
+
+type tagProvider interface {
+	ByID(ctx context.Context, id string) (*gen.Tag, error)
+}
+
+type postTaxonomyManager interface {
+	ReplacePostCategories(ctx context.Context, postID string, categoryIDs []string) error
+	ReplacePostTags(ctx context.Context, postID string, tagIDs []string) error
+}
+
 type counter interface {
 	Count(ctx context.Context) (int, error)
 }
@@ -74,6 +90,9 @@ func NewWithOptions(opts Options) *Resolver {
 		resolver.users = resolver.ORM.Users()
 		resolver.roles = resolver.ORM.Roles()
 		resolver.userRoles = resolver.ORM
+		resolver.categories = resolver.ORM.Categories()
+		resolver.tags = resolver.ORM.Tags()
+		resolver.postTaxonomy = resolver.ORM
 		resolver.postsCounter = resolver.ORM.Posts()
 		resolver.commentsCounter = resolver.ORM.Comments()
 		resolver.mediaItemsCounter = resolver.ORM.Medias()
@@ -125,6 +144,45 @@ func (r *Resolver) userRoleService() userRoleManager {
 	}
 	if r.userRoles != nil {
 		return r.userRoles
+	}
+	if r.ORM != nil {
+		return r.ORM
+	}
+	return nil
+}
+
+func (r *Resolver) categoryClient() categoryProvider {
+	if r == nil {
+		return nil
+	}
+	if r.categories != nil {
+		return r.categories
+	}
+	if r.ORM != nil {
+		return r.ORM.Categories()
+	}
+	return nil
+}
+
+func (r *Resolver) tagClient() tagProvider {
+	if r == nil {
+		return nil
+	}
+	if r.tags != nil {
+		return r.tags
+	}
+	if r.ORM != nil {
+		return r.ORM.Tags()
+	}
+	return nil
+}
+
+func (r *Resolver) postTaxonomyService() postTaxonomyManager {
+	if r == nil {
+		return nil
+	}
+	if r.postTaxonomy != nil {
+		return r.postTaxonomy
 	}
 	if r.ORM != nil {
 		return r.ORM

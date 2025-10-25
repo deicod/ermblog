@@ -194,12 +194,10 @@ func (r *Resolver) Role_users(ctx context.Context, obj *graphql1.Role, first *in
 	sort.SliceStable(cleaned, func(i, j int) bool {
 		left := cleaned[i]
 		right := cleaned[j]
-		switch {
-		case left.Username == right.Username:
+		if left.Username == right.Username {
 			return left.ID < right.ID
-		default:
-			return left.Username < right.Username
 		}
+		return left.Username < right.Username
 	})
 
 	total := len(cleaned)
@@ -289,12 +287,10 @@ func (r *Resolver) User_roles(ctx context.Context, obj *graphql1.User, first *in
 	sort.SliceStable(cleaned, func(i, j int) bool {
 		left := cleaned[i]
 		right := cleaned[j]
-		switch {
-		case left.Name == right.Name:
+		if left.Name == right.Name {
 			return left.ID < right.ID
-		default:
-			return left.Name < right.Name
 		}
+		return left.Name < right.Name
 	})
 
 	total := len(cleaned)
