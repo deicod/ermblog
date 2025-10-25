@@ -41,6 +41,7 @@ type Config struct {
 
 type ResolverRoot interface {
 	Mutation() MutationResolver
+	Post() PostResolver
 	Query() QueryResolver
 	Subscription() SubscriptionResolver
 }
@@ -276,16 +277,20 @@ type ComplexityRoot struct {
 	}
 
 	Post struct {
+		Author          func(childComplexity int) int
 		AuthorID        func(childComplexity int) int
+		Categories      func(childComplexity int) int
 		Content         func(childComplexity int) int
 		CreatedAt       func(childComplexity int) int
 		Excerpt         func(childComplexity int) int
+		FeaturedMedia   func(childComplexity int) int
 		FeaturedMediaID func(childComplexity int) int
 		ID              func(childComplexity int) int
 		PublishedAt     func(childComplexity int) int
 		Seo             func(childComplexity int) int
 		Slug            func(childComplexity int) int
 		Status          func(childComplexity int) int
+		Tags            func(childComplexity int) int
 		Title           func(childComplexity int) int
 		Type            func(childComplexity int) int
 		UpdatedAt       func(childComplexity int) int
@@ -490,6 +495,12 @@ type MutationResolver interface {
 	DeleteUser(ctx context.Context, input DeleteUserInput) (*DeleteUserPayload, error)
 	AssignUserRoles(ctx context.Context, input AssignUserRolesInput) (*AssignUserRolesPayload, error)
 	RemoveUserRoles(ctx context.Context, input RemoveUserRolesInput) (*RemoveUserRolesPayload, error)
+}
+type PostResolver interface {
+	Author(ctx context.Context, obj *Post) (*User, error)
+	FeaturedMedia(ctx context.Context, obj *Post) (*Media, error)
+	Categories(ctx context.Context, obj *Post) ([]*Category, error)
+	Tags(ctx context.Context, obj *Post) ([]*Tag, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id string) (Node, error)
@@ -1484,12 +1495,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.PageInfo.StartCursor(childComplexity), true
 
+	case "Post.author":
+		if e.complexity.Post.Author == nil {
+			break
+		}
+
+		return e.complexity.Post.Author(childComplexity), true
 	case "Post.authorID":
 		if e.complexity.Post.AuthorID == nil {
 			break
 		}
 
 		return e.complexity.Post.AuthorID(childComplexity), true
+	case "Post.categories":
+		if e.complexity.Post.Categories == nil {
+			break
+		}
+
+		return e.complexity.Post.Categories(childComplexity), true
 	case "Post.content":
 		if e.complexity.Post.Content == nil {
 			break
@@ -1508,6 +1531,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Post.Excerpt(childComplexity), true
+	case "Post.featuredMedia":
+		if e.complexity.Post.FeaturedMedia == nil {
+			break
+		}
+
+		return e.complexity.Post.FeaturedMedia(childComplexity), true
 	case "Post.featuredMediaID":
 		if e.complexity.Post.FeaturedMediaID == nil {
 			break
@@ -1544,6 +1573,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Post.Status(childComplexity), true
+	case "Post.tags":
+		if e.complexity.Post.Tags == nil {
+			break
+		}
+
+		return e.complexity.Post.Tags(childComplexity), true
 	case "Post.title":
 		if e.complexity.Post.Title == nil {
 			break
@@ -2434,7 +2469,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
-//go:embed "schema.graphqls" "viewer.graphqls" "dashboard.graphqls" "user_roles.graphqls"
+//go:embed "schema.graphqls" "viewer.graphqls" "dashboard.graphqls" "user_roles.graphqls" "post_relationships.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -2450,6 +2485,7 @@ var sources = []*ast.Source{
 	{Name: "viewer.graphqls", Input: sourceData("viewer.graphqls"), BuiltIn: false},
 	{Name: "dashboard.graphqls", Input: sourceData("dashboard.graphqls"), BuiltIn: false},
 	{Name: "user_roles.graphqls", Input: sourceData("user_roles.graphqls"), BuiltIn: false},
+	{Name: "post_relationships.graphqls", Input: sourceData("post_relationships.graphqls"), BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -4572,6 +4608,14 @@ func (ec *executionContext) fieldContext_CreatePostPayload_post(_ context.Contex
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Post_updatedAt(ctx, field)
+			case "author":
+				return ec.fieldContext_Post_author(ctx, field)
+			case "featuredMedia":
+				return ec.fieldContext_Post_featuredMedia(ctx, field)
+			case "categories":
+				return ec.fieldContext_Post_categories(ctx, field)
+			case "tags":
+				return ec.fieldContext_Post_tags(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
 		},
@@ -8578,6 +8622,208 @@ func (ec *executionContext) fieldContext_Post_updatedAt(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Post_author(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Post_author,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Post().Author(ctx, obj)
+		},
+		nil,
+		ec.marshalOUser2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐUser,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Post_author(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "password":
+				return ec.fieldContext_User_password(ctx, field)
+			case "displayName":
+				return ec.fieldContext_User_displayName(ctx, field)
+			case "bio":
+				return ec.fieldContext_User_bio(ctx, field)
+			case "avatarURL":
+				return ec.fieldContext_User_avatarURL(ctx, field)
+			case "websiteURL":
+				return ec.fieldContext_User_websiteURL(ctx, field)
+			case "lastLoginAt":
+				return ec.fieldContext_User_lastLoginAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_User_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_User_updatedAt(ctx, field)
+			case "roles":
+				return ec.fieldContext_User_roles(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Post_featuredMedia(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Post_featuredMedia,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Post().FeaturedMedia(ctx, obj)
+		},
+		nil,
+		ec.marshalOMedia2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐMedia,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_Post_featuredMedia(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Media_id(ctx, field)
+			case "uploadedByID":
+				return ec.fieldContext_Media_uploadedByID(ctx, field)
+			case "fileName":
+				return ec.fieldContext_Media_fileName(ctx, field)
+			case "mimeType":
+				return ec.fieldContext_Media_mimeType(ctx, field)
+			case "storageKey":
+				return ec.fieldContext_Media_storageKey(ctx, field)
+			case "url":
+				return ec.fieldContext_Media_url(ctx, field)
+			case "title":
+				return ec.fieldContext_Media_title(ctx, field)
+			case "altText":
+				return ec.fieldContext_Media_altText(ctx, field)
+			case "caption":
+				return ec.fieldContext_Media_caption(ctx, field)
+			case "description":
+				return ec.fieldContext_Media_description(ctx, field)
+			case "fileSizeBytes":
+				return ec.fieldContext_Media_fileSizeBytes(ctx, field)
+			case "metadata":
+				return ec.fieldContext_Media_metadata(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Media_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Media_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Media", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Post_categories(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Post_categories,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Post().Categories(ctx, obj)
+		},
+		nil,
+		ec.marshalNCategory2ᚕᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐCategoryᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Post_categories(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Category_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Category_name(ctx, field)
+			case "slug":
+				return ec.fieldContext_Category_slug(ctx, field)
+			case "description":
+				return ec.fieldContext_Category_description(ctx, field)
+			case "parentID":
+				return ec.fieldContext_Category_parentID(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Category_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Category_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Category", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Post_tags(ctx context.Context, field graphql.CollectedField, obj *Post) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Post_tags,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Post().Tags(ctx, obj)
+		},
+		nil,
+		ec.marshalNTag2ᚕᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐTagᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Post_tags(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Tag_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Tag_name(ctx, field)
+			case "slug":
+				return ec.fieldContext_Tag_slug(ctx, field)
+			case "description":
+				return ec.fieldContext_Tag_description(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Tag_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Tag_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Tag", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PostConnection_edges(ctx context.Context, field graphql.CollectedField, obj *PostConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -8760,6 +9006,14 @@ func (ec *executionContext) fieldContext_PostEdge_node(_ context.Context, field 
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Post_updatedAt(ctx, field)
+			case "author":
+				return ec.fieldContext_Post_author(ctx, field)
+			case "featuredMedia":
+				return ec.fieldContext_Post_featuredMedia(ctx, field)
+			case "categories":
+				return ec.fieldContext_Post_categories(ctx, field)
+			case "tags":
+				return ec.fieldContext_Post_tags(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
 		},
@@ -9334,6 +9588,14 @@ func (ec *executionContext) fieldContext_Query_post(ctx context.Context, field g
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Post_updatedAt(ctx, field)
+			case "author":
+				return ec.fieldContext_Post_author(ctx, field)
+			case "featuredMedia":
+				return ec.fieldContext_Post_featuredMedia(ctx, field)
+			case "categories":
+				return ec.fieldContext_Post_categories(ctx, field)
+			case "tags":
+				return ec.fieldContext_Post_tags(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
 		},
@@ -10734,6 +10996,14 @@ func (ec *executionContext) fieldContext_Subscription_postCreated(_ context.Cont
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Post_updatedAt(ctx, field)
+			case "author":
+				return ec.fieldContext_Post_author(ctx, field)
+			case "featuredMedia":
+				return ec.fieldContext_Post_featuredMedia(ctx, field)
+			case "categories":
+				return ec.fieldContext_Post_categories(ctx, field)
+			case "tags":
+				return ec.fieldContext_Post_tags(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
 		},
@@ -10809,6 +11079,14 @@ func (ec *executionContext) fieldContext_Subscription_postUpdated(_ context.Cont
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Post_updatedAt(ctx, field)
+			case "author":
+				return ec.fieldContext_Post_author(ctx, field)
+			case "featuredMedia":
+				return ec.fieldContext_Post_featuredMedia(ctx, field)
+			case "categories":
+				return ec.fieldContext_Post_categories(ctx, field)
+			case "tags":
+				return ec.fieldContext_Post_tags(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
 		},
@@ -11979,6 +12257,14 @@ func (ec *executionContext) fieldContext_UpdatePostPayload_post(_ context.Contex
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Post_updatedAt(ctx, field)
+			case "author":
+				return ec.fieldContext_Post_author(ctx, field)
+			case "featuredMedia":
+				return ec.fieldContext_Post_featuredMedia(ctx, field)
+			case "categories":
+				return ec.fieldContext_Post_categories(ctx, field)
+			case "tags":
+				return ec.fieldContext_Post_tags(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
 		},
@@ -14763,7 +15049,7 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"clientMutationId", "id", "authorID", "featuredMediaID", "title", "slug", "status", "type", "excerpt", "content", "seo", "publishedAt", "createdAt", "updatedAt"}
+	fieldsInOrder := [...]string{"clientMutationId", "id", "authorID", "featuredMediaID", "title", "slug", "status", "type", "excerpt", "content", "seo", "publishedAt", "createdAt", "updatedAt", "categoryIDs", "tagIDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -14868,6 +15154,20 @@ func (ec *executionContext) unmarshalInputCreatePostInput(ctx context.Context, o
 				return it, err
 			}
 			it.UpdatedAt = data
+		case "categoryIDs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("categoryIDs"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CategoryIDs = data
+		case "tagIDs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tagIDs"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TagIDs = data
 		}
 	}
 
@@ -15824,7 +16124,7 @@ func (ec *executionContext) unmarshalInputUpdatePostInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"clientMutationId", "id", "authorID", "featuredMediaID", "title", "slug", "status", "type", "excerpt", "content", "seo", "publishedAt", "createdAt", "updatedAt"}
+	fieldsInOrder := [...]string{"clientMutationId", "id", "authorID", "featuredMediaID", "title", "slug", "status", "type", "excerpt", "content", "seo", "publishedAt", "createdAt", "updatedAt", "categoryIDs", "tagIDs"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -15929,6 +16229,20 @@ func (ec *executionContext) unmarshalInputUpdatePostInput(ctx context.Context, o
 				return it, err
 			}
 			it.UpdatedAt = data
+		case "categoryIDs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("categoryIDs"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CategoryIDs = data
+		case "tagIDs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tagIDs"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TagIDs = data
 		}
 	}
 
@@ -17922,34 +18236,34 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 		case "id":
 			out.Values[i] = ec._Post_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "authorID":
 			out.Values[i] = ec._Post_authorID(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "featuredMediaID":
 			out.Values[i] = ec._Post_featuredMediaID(ctx, field, obj)
 		case "title":
 			out.Values[i] = ec._Post_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "slug":
 			out.Values[i] = ec._Post_slug(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "status":
 			out.Values[i] = ec._Post_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "type":
 			out.Values[i] = ec._Post_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "excerpt":
 			out.Values[i] = ec._Post_excerpt(ctx, field, obj)
@@ -17962,13 +18276,151 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 		case "createdAt":
 			out.Values[i] = ec._Post_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
 			out.Values[i] = ec._Post_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "author":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_author(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "featuredMedia":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_featuredMedia(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "categories":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_categories(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "tags":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_tags(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -19814,6 +20266,60 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return ec._Boolean(ctx, sel, &v)
 }
 
+func (ec *executionContext) marshalNCategory2ᚕᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐCategoryᚄ(ctx context.Context, sel ast.SelectionSet, v []*Category) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCategory2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐCategory(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNCategory2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐCategory(ctx context.Context, sel ast.SelectionSet, v *Category) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Category(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNCategoryConnection2githubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐCategoryConnection(ctx context.Context, sel ast.SelectionSet, v CategoryConnection) graphql.Marshaler {
 	return ec._CategoryConnection(ctx, sel, &v)
 }
@@ -20713,6 +21219,60 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return ec._String(ctx, sel, &v)
 }
 
+func (ec *executionContext) marshalNTag2ᚕᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐTagᚄ(ctx context.Context, sel ast.SelectionSet, v []*Tag) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNTag2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐTag(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNTag2ᚖgithubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐTag(ctx context.Context, sel ast.SelectionSet, v *Tag) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Tag(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNTagConnection2githubᚗcomᚋdeicodᚋermblogᚋgraphqlᚐTagConnection(ctx context.Context, sel ast.SelectionSet, v TagConnection) graphql.Marshaler {
 	return ec._TagConnection(ctx, sel, &v)
 }
@@ -21315,6 +21875,42 @@ func (ec *executionContext) marshalOCommentStatus2ᚖgithubᚗcomᚋdeicodᚋerm
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) unmarshalOID2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNID2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOID2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNID2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v any) (*string, error) {
