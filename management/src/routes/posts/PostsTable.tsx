@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { Link } from "react-router-dom";
 import { graphql, usePaginationFragment } from "react-relay";
 
 import { StatusBadge } from "./StatusBadge";
@@ -161,7 +162,11 @@ export function PostsTable({ queryRef, pageSize }: PostsTableProps) {
                 const authorLabel = formatAuthorLabel(node.author, node.authorID);
                 return (
                   <tr key={node.id}>
-                    <th scope="row">{node.title ?? "Untitled draft"}</th>
+                    <th scope="row">
+                      <Link to={`/posts/${node.id}`} className="posts-table__title-link">
+                        {node.title ?? "Untitled draft"}
+                      </Link>
+                    </th>
                     <td>
                       <StatusBadge status={node.status} />
                     </td>
