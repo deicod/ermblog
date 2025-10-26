@@ -137,7 +137,7 @@ func (r *mutationResolver) UpdateNotificationPreferences(ctx context.Context, in
 		return nil, err
 	}
 	optionName := preferenceOptionName(userID)
-	existing, err := repo.FindByName(ctx, optionName)
+	existing, err := r.findOptionByName(ctx, repo, optionName)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +147,7 @@ func (r *mutationResolver) UpdateNotificationPreferences(ctx context.Context, in
 			Value:    encoded,
 			Autoload: false,
 		}
-		if _, err := repo.Create(ctx, option); err != nil {
+		if _, err := r.createOption(ctx, repo, option); err != nil {
 			return nil, err
 		}
 	} else {
@@ -157,7 +157,7 @@ func (r *mutationResolver) UpdateNotificationPreferences(ctx context.Context, in
 			Value:    encoded,
 			Autoload: existing.Autoload,
 		}
-		if _, err := repo.Update(ctx, model); err != nil {
+		if _, err := r.updateOption(ctx, repo, model); err != nil {
 			return nil, err
 		}
 	}
@@ -182,7 +182,7 @@ func (r *queryResolver) NotificationPreferences(ctx context.Context) (*graphql1.
 	repo := r.optionRepository()
 	var stored map[graphql1.NotificationCategory]bool
 	if repo != nil {
-		record, err := repo.FindByName(ctx, preferenceOptionName(userID))
+		record, err := r.findOptionByName(ctx, repo, preferenceOptionName(userID))
 		if err != nil {
 			return nil, err
 		}

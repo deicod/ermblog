@@ -16,17 +16,13 @@ import (
 )
 
 type instrumentedCounter struct {
-	collector   *prommetrics.Collector
-	value       int
-	recordQuery bool
+	collector *prommetrics.Collector
+	value     int
 }
 
 func (c *instrumentedCounter) Count(ctx context.Context) (int, error) {
 	duration := 25 * time.Millisecond
 	c.collector.RecordDataloaderBatch("management_stats", 1, duration)
-	if c.recordQuery {
-		c.collector.RecordQuery("posts", "count", duration, nil)
-	}
 	return c.value, nil
 }
 
@@ -37,7 +33,7 @@ func TestGraphQLRequestUpdatesMetrics(t *testing.T) {
 	}
 
 	resolver := NewWithOptions(Options{Collector: promCollector})
-	resolver.postsCounter = &instrumentedCounter{collector: promCollector, value: 7, recordQuery: true}
+	resolver.postsCounter = &instrumentedCounter{collector: promCollector, value: 7}
 	resolver.commentsCounter = &instrumentedCounter{collector: promCollector, value: 3}
 	resolver.mediaItemsCounter = &instrumentedCounter{collector: promCollector, value: 5}
 	resolver.categoriesCounter = &instrumentedCounter{collector: promCollector, value: 2}
@@ -83,6 +79,7 @@ func TestGraphQLRequestUpdatesMetrics(t *testing.T) {
 
 	var queryCounter float64
 	var queryDurationSamples uint64
+	var queryMetricCount int
 	var loaderCounter float64
 	var loaderDurationSamples uint64
 	for _, mf := range metricFamilies {
@@ -98,23 +95,25 @@ func TestGraphQLRequestUpdatesMetrics(t *testing.T) {
 			}
 			loaderDurationSamples = mf.Metric[0].GetHistogram().GetSampleCount()
 		case "ermblog_orm_queries_total":
-			if len(mf.Metric) != 1 {
-				t.Fatalf("expected single metric entry, got %d", len(mf.Metric))
+			queryMetricCount += len(mf.Metric)
+			for _, metric := range mf.Metric {
+				queryCounter += metric.GetCounter().GetValue()
 			}
-			queryCounter = mf.Metric[0].GetCounter().GetValue()
 		case "ermblog_orm_query_duration_seconds":
-			if len(mf.Metric) != 1 {
-				t.Fatalf("expected single duration entry, got %d", len(mf.Metric))
+			for _, metric := range mf.Metric {
+				queryDurationSamples += metric.GetHistogram().GetSampleCount()
 			}
-			queryDurationSamples = mf.Metric[0].GetHistogram().GetSampleCount()
 		}
 	}
 
-	if queryCounter != 1 {
-		t.Fatalf("expected query counter 1, got %v", queryCounter)
+	if queryMetricCount != 6 {
+		t.Fatalf("expected query metric entries 6, got %d", queryMetricCount)
 	}
-	if queryDurationSamples != 1 {
-		t.Fatalf("expected duration samples 1, got %d", queryDurationSamples)
+	if queryCounter != 6 {
+		t.Fatalf("expected query counter 6, got %v", queryCounter)
+	}
+	if queryDurationSamples != 6 {
+		t.Fatalf("expected duration samples 6, got %d", queryDurationSamples)
 	}
 	if loaderCounter != 6 { // one call for each counter above
 		t.Fatalf("expected loader counter 6, got %v", loaderCounter)
