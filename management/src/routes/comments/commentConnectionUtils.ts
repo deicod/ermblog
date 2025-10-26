@@ -159,3 +159,32 @@ export function applyCommentStatusChangeToConnections({
     }
   });
 }
+
+export function removeCommentFromConnections({
+  store,
+  commentId,
+}: {
+  store: RecordSourceSelectorProxy;
+  commentId: string;
+}) {
+  let removedFromAnyConnection = false;
+
+  COMMENT_STATUS_FILTERS.forEach((filterStatus) => {
+    const connection = getCommentConnection(store, filterStatus);
+    if (!connection) {
+      return;
+    }
+
+    if (!commentConnectionHasNode(connection, commentId)) {
+      return;
+    }
+
+    ConnectionHandler.deleteNode(connection, commentId);
+    adjustCommentTotalCount(connection, -1);
+    removedFromAnyConnection = true;
+  });
+
+  if (removedFromAnyConnection) {
+    store.delete(commentId);
+  }
+}

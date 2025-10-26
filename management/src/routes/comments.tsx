@@ -1,7 +1,7 @@
 import "./comments/comments.css";
 
 import { useMemo } from "react";
-import { graphql, useLazyLoadQuery, useSubscription } from "react-relay";
+import { graphql, useLazyLoadQuery, useRelayEnvironment, useSubscription } from "react-relay";
 
 import type { commentsRouteQuery } from "./__generated__/commentsRouteQuery.graphql";
 import { CommentsTable } from "./comments/CommentsTable";
@@ -9,10 +9,16 @@ import {
   applyCommentStatusChangeToConnections,
   insertCommentIntoConnections,
   isKnownCommentStatus,
+  removeCommentFromConnections,
 } from "./comments/commentConnectionUtils";
 import { useToast } from "../providers/ToastProvider";
-import { commentCreatedSubscription, commentUpdatedSubscription } from "./comments/CommentsSubscriptions";
+import {
+  commentCreatedSubscription,
+  commentDeletedSubscription,
+  commentUpdatedSubscription,
+} from "./comments/CommentsSubscriptions";
 import type { CommentsSubscriptionsCommentCreatedSubscription } from "./comments/__generated__/CommentsSubscriptionsCommentCreatedSubscription.graphql";
+import type { CommentsSubscriptionsCommentDeletedSubscription } from "./comments/__generated__/CommentsSubscriptionsCommentDeletedSubscription.graphql";
 import type { CommentsSubscriptionsCommentUpdatedSubscription } from "./comments/__generated__/CommentsSubscriptionsCommentUpdatedSubscription.graphql";
 import type { CommentStatus } from "./comments/__generated__/CommentsTableFragment.graphql";
 
@@ -31,6 +37,7 @@ export function CommentsRoute() {
     { fetchPolicy: "store-or-network" },
   );
   const { showToast } = useToast();
+  const environment = useRelayEnvironment();
 
   useSubscription<CommentsSubscriptionsCommentCreatedSubscription>(
     useMemo(() => ({
@@ -122,6 +129,56 @@ export function CommentsRoute() {
         });
       },
     }), [showToast]),
+  );
+
+  useSubscription<CommentsSubscriptionsCommentDeletedSubscription>(
+    useMemo(
+      () => ({
+        subscription: commentDeletedSubscription,
+        variables: {},
+        onNext: (response) => {
+          const commentId = response?.commentDeleted;
+          if (!commentId) {
+            return;
+          }
+
+          let deletedCommentDetails: { authorName: string | null; content: string | null } | null = null;
+
+          environment.commitUpdate((store) => {
+            const commentRecord = store.get(commentId);
+            if (commentRecord) {
+              const authorNameValue = commentRecord.getValue("authorName");
+              const contentValue = commentRecord.getValue("content");
+              deletedCommentDetails = {
+                authorName: typeof authorNameValue === "string" ? authorNameValue : null,
+                content: typeof contentValue === "string" ? contentValue : null,
+              };
+            }
+
+            removeCommentFromConnections({ store, commentId });
+          });
+
+          const authorLabel = deletedCommentDetails?.authorName?.trim();
+          const resolvedAuthor = authorLabel && authorLabel.length > 0 ? authorLabel : "Anonymous";
+          const snippet = deletedCommentDetails?.content?.trim();
+          const truncatedSnippet =
+            snippet && snippet.length > 80 ? `${snippet.slice(0, 77)}…` : snippet;
+
+          const message = truncatedSnippet
+            ? `Removed ${resolvedAuthor}'s comment: ${truncatedSnippet}`
+            : deletedCommentDetails
+                ? `Removed ${resolvedAuthor}'s comment.`
+                : "A comment was removed.";
+
+          showToast({
+            title: "Comment removed",
+            message,
+            intent: "warning",
+          });
+        },
+      }),
+      [environment, showToast],
+    ),
   );
 
   return (

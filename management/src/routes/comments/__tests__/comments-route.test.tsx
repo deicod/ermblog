@@ -447,4 +447,59 @@ describe("CommentsRoute", () => {
     expect(within(notifications).getByText("Comment updated")).toBeInTheDocument();
   });
 
+  it("prunes deleted comments from all connections and surfaces a removal toast", async () => {
+    const environment = renderComments();
+    const initialOperation = environment.mock.getMostRecentOperation();
+
+    await act(async () => {
+      environment.mock.resolve(initialOperation, {
+        data: buildCommentsPayload([
+          {
+            id: "comment-1",
+            content: "Marked for deletion",
+            status: "pending",
+            authorName: "Alex",
+            submittedAt: "2024-10-12T11:00:00.000Z",
+          },
+          {
+            id: "comment-2",
+            content: "Keep this comment",
+            status: "approved",
+            authorName: "Jamie",
+            submittedAt: "2024-10-12T12:00:00.000Z",
+          },
+        ]),
+      });
+    });
+
+    expect(await screen.findByText("Marked for deletion")).toBeInTheDocument();
+    expect(screen.getByText("Keep this comment")).toBeInTheDocument();
+    expect(screen.getByText("Total comments: 2")).toBeInTheDocument();
+
+    const commentDeletedOperation = findOperationByName(
+      environment,
+      "CommentsSubscriptionsCommentDeletedSubscription",
+    );
+
+    await act(async () => {
+      environment.mock.nextValue(commentDeletedOperation, {
+        data: { commentDeleted: "comment-1" },
+      });
+      environment.mock.complete(commentDeletedOperation);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Marked for deletion")).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText("Keep this comment")).toBeInTheDocument();
+    expect(screen.getByText("Total comments: 1")).toBeInTheDocument();
+
+    const notifications = screen.getByRole("region", { name: "Notifications" });
+    expect(within(notifications).getByText("Comment removed")).toBeInTheDocument();
+    expect(
+      within(notifications).getByText("Removed Alex's comment: Marked for deletion"),
+    ).toBeInTheDocument();
+  });
+
 });
