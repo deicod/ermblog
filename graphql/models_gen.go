@@ -662,7 +662,6 @@ type User struct {
 	ID          string          `json:"id"`
 	Username    string          `json:"username"`
 	Email       string          `json:"email"`
-	Password    string          `json:"password"`
 	DisplayName *string         `json:"displayName,omitempty"`
 	Bio         *string         `json:"bio,omitempty"`
 	AvatarURL   *string         `json:"avatarURL,omitempty"`
