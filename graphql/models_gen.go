@@ -352,6 +352,23 @@ type MediaEdge struct {
 type Mutation struct {
 }
 
+// Represents an individual notification preference toggle.
+type NotificationPreference struct {
+	Category NotificationCategory `json:"category"`
+	Enabled  bool                 `json:"enabled"`
+}
+
+// Defines the desired notification preference state for a single category.
+type NotificationPreferenceInput struct {
+	Category NotificationCategory `json:"category"`
+	Enabled  bool                 `json:"enabled"`
+}
+
+// Aggregated notification preferences for the current user.
+type NotificationPreferences struct {
+	Entries []*NotificationPreference `json:"entries"`
+}
+
 type Option struct {
 	ID        string          `json:"id"`
 	Name      string          `json:"name"`
@@ -541,6 +558,16 @@ type UpdateMediaPayload struct {
 	Media            *Media  `json:"media,omitempty"`
 }
 
+type UpdateNotificationPreferencesInput struct {
+	ClientMutationID *string                        `json:"clientMutationId,omitempty"`
+	Preferences      []*NotificationPreferenceInput `json:"preferences"`
+}
+
+type UpdateNotificationPreferencesPayload struct {
+	ClientMutationID *string                  `json:"clientMutationId,omitempty"`
+	Preferences      *NotificationPreferences `json:"preferences"`
+}
+
 type UpdateOptionInput struct {
 	ClientMutationID *string         `json:"clientMutationId,omitempty"`
 	ID               string          `json:"id"`
@@ -721,6 +748,70 @@ func (e *CommentStatus) UnmarshalJSON(b []byte) error {
 }
 
 func (e CommentStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Notification categories supported by the management console.
+type NotificationCategory string
+
+const (
+	NotificationCategoryCommentCreated NotificationCategory = "COMMENT_CREATED"
+	NotificationCategoryCommentUpdated NotificationCategory = "COMMENT_UPDATED"
+	NotificationCategoryCommentDeleted NotificationCategory = "COMMENT_DELETED"
+	NotificationCategoryPostCreated    NotificationCategory = "POST_CREATED"
+	NotificationCategoryPostUpdated    NotificationCategory = "POST_UPDATED"
+	NotificationCategoryPostDeleted    NotificationCategory = "POST_DELETED"
+)
+
+var AllNotificationCategory = []NotificationCategory{
+	NotificationCategoryCommentCreated,
+	NotificationCategoryCommentUpdated,
+	NotificationCategoryCommentDeleted,
+	NotificationCategoryPostCreated,
+	NotificationCategoryPostUpdated,
+	NotificationCategoryPostDeleted,
+}
+
+func (e NotificationCategory) IsValid() bool {
+	switch e {
+	case NotificationCategoryCommentCreated, NotificationCategoryCommentUpdated, NotificationCategoryCommentDeleted, NotificationCategoryPostCreated, NotificationCategoryPostUpdated, NotificationCategoryPostDeleted:
+		return true
+	}
+	return false
+}
+
+func (e NotificationCategory) String() string {
+	return string(e)
+}
+
+func (e *NotificationCategory) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = NotificationCategory(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid NotificationCategory", str)
+	}
+	return nil
+}
+
+func (e NotificationCategory) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *NotificationCategory) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e NotificationCategory) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

@@ -5,14 +5,17 @@ import { createMockEnvironment } from "relay-test-utils";
 import { describe, expect, it } from "vitest";
 
 import { COMMENTS_PAGE_SIZE, CommentsRoute } from "../../comments";
+import { NotificationPreferencesProvider } from "../../../providers/NotificationPreferencesProvider";
 import { ToastProvider } from "../../../providers/ToastProvider";
 
 function renderComments(environment = createMockEnvironment()) {
   render(
     <RelayEnvironmentProvider environment={environment}>
-      <ToastProvider>
-        <CommentsRoute />
-      </ToastProvider>
+      <NotificationPreferencesProvider>
+        <ToastProvider>
+          <CommentsRoute />
+        </ToastProvider>
+      </NotificationPreferencesProvider>
     </RelayEnvironmentProvider>,
   );
   return environment;

@@ -57,6 +57,7 @@ describe("route configuration", () => {
     const users = routes.get("users");
     const roles = routes.get("roles");
     const comments = routes.get("comments");
+    const notifications = routes.get("notifications");
     expect(dashboard).toBeDefined();
     expect(dashboard?.href).toBe("/");
     expect(dashboard?.title).toBe("Dashboard");
@@ -77,6 +78,10 @@ describe("route configuration", () => {
     expect(comments?.href).toBe("/comments");
     expect(comments?.title).toBe("Comments");
     expect(comments?.description).toMatch(/Moderate community feedback/i);
+    expect(notifications).toBeDefined();
+    expect(notifications?.href).toBe("/notifications");
+    expect(notifications?.title).toBe("Notifications");
+    expect(notifications?.description).toMatch(/real-time categories/i);
 
     expect(routeSource).toMatch(/index:\s*true/);
     expect(routeSource).toMatch(/path:\s*"posts"/);
@@ -103,6 +108,7 @@ describe("navigation metadata", () => {
       "comments",
       "taxonomies",
       "media",
+      "notifications",
       "options",
       "login",
     ]);

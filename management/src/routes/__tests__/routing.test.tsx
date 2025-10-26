@@ -1,12 +1,16 @@
-import { Suspense } from "react";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RouterProvider, createMemoryRouter } from "react-router-dom";
+
+import { RelayEnvironmentProvider } from "react-relay";
+import { createMockEnvironment } from "relay-test-utils";
 
 import { SessionProvider } from "../../session/SessionProvider";
 import { SESSION_STORAGE_KEY } from "../../session/tokenStorage";
 import { AppHeader } from "../../components/layout/AppHeader";
 import { AppShell } from "../../components/layout/AppShell";
+import { NotificationPreferencesProvider } from "../../providers/NotificationPreferencesProvider";
+import { ToastProvider } from "../../providers/ToastProvider";
 import {
   ROUTE_IDS,
   buildChildRoutes,
@@ -61,6 +65,8 @@ function renderWithSession(
     useHref: true,
   });
 
+  const environment = createMockEnvironment();
+
   const router = createMemoryRouter(
     [
       loginRoute,
@@ -74,14 +80,18 @@ function renderWithSession(
   );
 
   const renderResult = render(
-    <SessionProvider>
-      <Suspense fallback={<div>Loading…</div>}>
-        <RouterProvider router={router} />
-      </Suspense>
-    </SessionProvider>,
+    <RelayEnvironmentProvider environment={environment}>
+      <SessionProvider>
+        <NotificationPreferencesProvider>
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
+        </NotificationPreferencesProvider>
+      </SessionProvider>
+    </RelayEnvironmentProvider>,
   );
 
-  return { router, ...renderResult };
+  return { router, environment, ...renderResult };
 }
 
 describe("application routing", () => {

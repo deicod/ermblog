@@ -13,6 +13,43 @@ type PageInfo {
 
 directive @auth(roles: [String!]) on FIELD_DEFINITION
 
+"Notification categories supported by the management console"
+enum NotificationCategory {
+    COMMENT_CREATED
+    COMMENT_UPDATED
+    COMMENT_DELETED
+    POST_CREATED
+    POST_UPDATED
+    POST_DELETED
+}
+
+"Represents an individual notification preference toggle"
+type NotificationPreference {
+    category: NotificationCategory!
+    enabled: Boolean!
+}
+
+"Aggregated notification preferences for the current user"
+type NotificationPreferences {
+    entries: [NotificationPreference!]!
+}
+
+"Defines the desired notification preference state for a single category"
+input NotificationPreferenceInput {
+    category: NotificationCategory!
+    enabled: Boolean!
+}
+
+input UpdateNotificationPreferencesInput {
+    clientMutationId: String
+    preferences: [NotificationPreferenceInput!]!
+}
+
+type UpdateNotificationPreferencesPayload {
+    clientMutationId: String
+    preferences: NotificationPreferences!
+}
+
 input AssignUserRolesInput {
     clientMutationId: String
     userID: ID!
@@ -69,6 +106,7 @@ type Query {
         last: Int
         before: String
     ): OptionConnection!
+    notificationPreferences: NotificationPreferences!
     post(id: ID!): Post
     posts(
         first: Int
@@ -118,6 +156,10 @@ type Mutation {
     updateMedia(input: UpdateMediaInput!): UpdateMediaPayload!
         @auth(roles: ["user"])
     deleteMedia(input: DeleteMediaInput!): DeleteMediaPayload!
+        @auth(roles: ["user"])
+    updateNotificationPreferences(
+        input: UpdateNotificationPreferencesInput!
+    ): UpdateNotificationPreferencesPayload!
         @auth(roles: ["user"])
     createOption(input: CreateOptionInput!): CreateOptionPayload!
         @auth(roles: ["user"])
