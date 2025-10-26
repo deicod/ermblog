@@ -37,7 +37,12 @@ type PostNodeInput = {
     | null;
 };
 
-function buildPostsPayload(posts: PostNodeInput[], pageInfo?: { hasNextPage?: boolean; endCursor?: string }) {
+type BuildPostsPayloadOptions = {
+  pageInfo?: { hasNextPage?: boolean; endCursor?: string };
+  totalCount?: number;
+};
+
+function buildPostsPayload(posts: PostNodeInput[], options?: BuildPostsPayloadOptions) {
   const edges = posts.map((post, index) => ({
     cursor: `cursor-${index + 1}`,
     node: {
@@ -59,14 +64,15 @@ function buildPostsPayload(posts: PostNodeInput[], pageInfo?: { hasNextPage?: bo
   return {
     posts: {
       __typename: "PostConnection",
-      totalCount: posts.length,
+      totalCount: options?.totalCount ?? posts.length,
       edges,
       pageInfo: {
         __typename: "PageInfo",
-        hasNextPage: pageInfo?.hasNextPage ?? false,
+        hasNextPage: options?.pageInfo?.hasNextPage ?? false,
         hasPreviousPage: false,
         startCursor: edges[0]?.cursor ?? null,
-        endCursor: pageInfo?.endCursor ?? edges[edges.length - 1]?.cursor ?? null,
+        endCursor:
+          options?.pageInfo?.endCursor ?? edges[edges.length - 1]?.cursor ?? null,
       },
     },
   };
@@ -275,6 +281,184 @@ describe("PostsRoute", () => {
     expect(await screen.findByRole("link", { name: "Third story" })).toBeInTheDocument();
     expect(screen.getByText("Unknown author")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Load more" })).toBeDisabled();
+  });
+
+  it("inserts posts via the postCreated subscription and updates totals", async () => {
+    const environment = renderPosts();
+    const initialOperation = environment.mock.getMostRecentOperation();
+
+    await act(async () => {
+      environment.mock.resolve(initialOperation, {
+        data: buildPostsPayload([
+          {
+            id: "post-1",
+            title: "Existing draft",
+            status: "draft",
+            updatedAt: "2024-10-10T10:00:00.000Z",
+            authorID: "author-1",
+            author: {
+              id: "author-1",
+              displayName: "Editor",
+              email: "editor@example.com",
+              username: "editor",
+            },
+          },
+        ]),
+      });
+    });
+
+    expect(await screen.findByText("Total posts: 1")).toBeInTheDocument();
+
+    const postCreatedOperation = findOperationByName(
+      environment,
+      "PostsSubscriptionsPostCreatedSubscription",
+    );
+
+    await act(async () => {
+      environment.mock.nextValue(postCreatedOperation, {
+        data: {
+          postCreated: {
+            __typename: "Post",
+            id: "post-2",
+            title: "Fresh headline",
+            status: "published",
+            updatedAt: "2024-10-11T08:30:00.000Z",
+            authorID: "author-2",
+            author: {
+              __typename: "User",
+              id: "author-2",
+              displayName: "Reporter",
+              email: "reporter@example.com",
+              username: "reporter",
+            },
+          },
+        },
+      });
+      environment.mock.complete(postCreatedOperation);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("link", { name: "Fresh headline" })).toBeInTheDocument();
+      expect(screen.getByText("Reporter")).toBeInTheDocument();
+      expect(screen.getByText("Total posts: 2")).toBeInTheDocument();
+    });
+
+    const notifications = screen.getByRole("region", { name: "Notifications" });
+    expect(
+      within(notifications).getByText("“Fresh headline” was created as Published."),
+    ).toBeInTheDocument();
+    expect(within(notifications).getByText("Post created")).toBeInTheDocument();
+  });
+
+  it("removes posts via the postDeleted subscription and updates totals", async () => {
+    const environment = renderPosts();
+    const initialOperation = environment.mock.getMostRecentOperation();
+
+    await act(async () => {
+      environment.mock.resolve(initialOperation, {
+        data: buildPostsPayload([
+          {
+            id: "post-1",
+            title: "Stay or go",
+            status: "draft",
+            updatedAt: "2024-10-10T10:00:00.000Z",
+            authorID: "author-1",
+            author: {
+              id: "author-1",
+              displayName: "Editor",
+              email: "editor@example.com",
+              username: "editor",
+            },
+          },
+          {
+            id: "post-2",
+            title: "To be removed",
+            status: "pending",
+            updatedAt: "2024-10-11T08:30:00.000Z",
+            authorID: "author-2",
+            author: {
+              id: "author-2",
+              displayName: "Reporter",
+              email: "reporter@example.com",
+              username: "reporter",
+            },
+          },
+        ]),
+      });
+    });
+
+    expect(await screen.findByText("Total posts: 2")).toBeInTheDocument();
+
+    const postDeletedOperation = findOperationByName(
+      environment,
+      "PostsSubscriptionsPostDeletedSubscription",
+    );
+
+    await act(async () => {
+      environment.mock.nextValue(postDeletedOperation, {
+        data: {
+          postDeleted: "post-2",
+        },
+      });
+      environment.mock.complete(postDeletedOperation);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("link", { name: "To be removed" })).not.toBeInTheDocument();
+      expect(screen.getByText("Total posts: 1")).toBeInTheDocument();
+    });
+
+    const notifications = screen.getByRole("region", { name: "Notifications" });
+    expect(within(notifications).getByText("“To be removed” was deleted.")).toBeInTheDocument();
+    expect(within(notifications).getByText("Post deleted")).toBeInTheDocument();
+  });
+
+  it("decrements the total when removing a post that is not in the loaded edges", async () => {
+    const environment = renderPosts();
+    const initialOperation = environment.mock.getMostRecentOperation();
+
+    await act(async () => {
+      environment.mock.resolve(initialOperation, {
+        data: buildPostsPayload(
+          [
+            {
+              id: "post-1",
+              title: "Visible post",
+              status: "draft",
+              updatedAt: "2024-10-11T09:00:00.000Z",
+              authorID: "author-1",
+              author: {
+                id: "author-1",
+                displayName: "Reporter",
+                email: "reporter@example.com",
+                username: "reporter",
+              },
+            },
+          ],
+          { pageInfo: { hasNextPage: true, endCursor: "cursor-1" }, totalCount: 5 },
+        ),
+      });
+    });
+
+    expect(await screen.findByText("Total posts: 5")).toBeInTheDocument();
+
+    const postDeletedOperation = findOperationByName(
+      environment,
+      "PostsSubscriptionsPostDeletedSubscription",
+    );
+
+    await act(async () => {
+      environment.mock.nextValue(postDeletedOperation, {
+        data: {
+          postDeleted: "post-5",
+        },
+      });
+      environment.mock.complete(postDeletedOperation);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Total posts: 4")).toBeInTheDocument();
+    });
   });
 
   it("updates posts in response to the postUpdated subscription and renders a toast", async () => {
