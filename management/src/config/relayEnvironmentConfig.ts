@@ -13,6 +13,7 @@ const GRAPHQL_RETRY_DELAY_KEY = "VITE_GRAPHQL_HTTP_RETRY_DELAY_MS";
 const GRAPHQL_WS_ENDPOINT_KEY = "VITE_GRAPHQL_WS_ENDPOINT";
 const GRAPHQL_WS_MAX_RETRIES_KEY = "VITE_GRAPHQL_WS_MAX_RETRIES";
 const GRAPHQL_WS_RETRY_DELAY_KEY = "VITE_GRAPHQL_WS_RETRY_DELAY_MS";
+const GRAPHQL_SUBSCRIPTIONS_ENABLED_KEY = "VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED";
 
 export interface RelayEnvironmentConfig {
   httpEndpoint: string;
@@ -21,6 +22,7 @@ export interface RelayEnvironmentConfig {
   wsEndpoint: string;
   wsMaxRetries: number;
   wsRetryDelayMs: number;
+  subscriptionsEnabled: boolean;
 }
 
 function readRuntimeEnv(): EnvSource {
@@ -49,6 +51,28 @@ function parseInteger(value: string | undefined, fallback: number): number {
   return parsed;
 }
 
+function parseBoolean(value: string | undefined, fallback: boolean): boolean {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  const normalized = value.trim().toLowerCase();
+
+  if (normalized.length === 0) {
+    return fallback;
+  }
+
+  if (["true", "1", "yes", "on"].includes(normalized)) {
+    return true;
+  }
+
+  if (["false", "0", "no", "off"].includes(normalized)) {
+    return false;
+  }
+
+  return fallback;
+}
+
 export function resolveRelayEnvironmentConfig(
   env: EnvSource = readRuntimeEnv(),
 ): RelayEnvironmentConfig {
@@ -64,6 +88,10 @@ export function resolveRelayEnvironmentConfig(
     env[GRAPHQL_WS_RETRY_DELAY_KEY],
     DEFAULT_GRAPHQL_WS_RETRY_DELAY_MS,
   );
+  const subscriptionsEnabled = parseBoolean(
+    env[GRAPHQL_SUBSCRIPTIONS_ENABLED_KEY],
+    true,
+  );
 
   return {
     httpEndpoint,
@@ -72,6 +100,7 @@ export function resolveRelayEnvironmentConfig(
     wsEndpoint,
     wsMaxRetries,
     wsRetryDelayMs,
+    subscriptionsEnabled,
   };
 }
 

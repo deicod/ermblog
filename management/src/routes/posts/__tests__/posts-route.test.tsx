@@ -8,17 +8,20 @@ import { describe, expect, it } from "vitest";
 import { POSTS_PAGE_SIZE, PostsRoute } from "../../posts";
 import { NotificationPreferencesProvider } from "../../../providers/NotificationPreferencesProvider";
 import { ToastProvider } from "../../../providers/ToastProvider";
+import { SessionProvider } from "../../../session/SessionProvider";
 
 function renderPosts(environment = createMockEnvironment()) {
   render(
     <RelayEnvironmentProvider environment={environment}>
-      <NotificationPreferencesProvider>
-        <ToastProvider>
-          <MemoryRouter>
-            <PostsRoute />
-          </MemoryRouter>
-        </ToastProvider>
-      </NotificationPreferencesProvider>
+      <SessionProvider>
+        <NotificationPreferencesProvider>
+          <ToastProvider>
+            <MemoryRouter>
+              <PostsRoute />
+            </MemoryRouter>
+          </ToastProvider>
+        </NotificationPreferencesProvider>
+      </SessionProvider>
     </RelayEnvironmentProvider>,
   );
   return environment;

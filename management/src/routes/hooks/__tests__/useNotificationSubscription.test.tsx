@@ -45,6 +45,21 @@ afterEach(() => {
 });
 
 describe("useNotificationSubscription", () => {
+  let previousSubscriptionsSetting: string | undefined;
+
+  beforeEach(() => {
+    previousSubscriptionsSetting = process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED;
+    delete process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED;
+  });
+
+  afterEach(() => {
+    if (previousSubscriptionsSetting === undefined) {
+      delete process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED;
+    } else {
+      process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED = previousSubscriptionsSetting;
+    }
+  });
+
   it("skips subscription when category is disabled", () => {
     const environment = createMockEnvironment();
     const preferences: NotificationPreferencesContextValue = {
@@ -92,6 +107,32 @@ describe("useNotificationSubscription", () => {
 
     expect(mockedRequestSubscription).toHaveBeenCalledTimes(1);
     expect(mockedRequestSubscription).toHaveBeenCalledWith(environment, subscriptionConfig);
+  });
+
+  it("skips subscription when runtime configuration disables subscriptions", () => {
+    process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED = "false";
+
+    const environment = createMockEnvironment();
+    const preferences: NotificationPreferencesContextValue = {
+      entries: [],
+      isCategoryEnabled: () => true,
+      setEntries: () => {},
+      refresh: async () => {},
+    };
+    const subscriptionConfig: GraphQLSubscriptionConfig<Record<string, unknown>> = {
+      subscription: {} as any,
+      variables: {},
+    };
+
+    render(
+      <RelayEnvironmentProvider environment={environment}>
+        <NotificationPreferencesContext.Provider value={preferences}>
+          <TestComponent category="POST_CREATED" config={subscriptionConfig} />
+        </NotificationPreferencesContext.Provider>
+      </RelayEnvironmentProvider>,
+    );
+
+    expect(mockedRequestSubscription).not.toHaveBeenCalled();
   });
 
   it("disposes the subscription on unmount", () => {

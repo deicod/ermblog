@@ -416,26 +416,33 @@ export function createRelayEnvironment(
       options.fetchConfig?.retryDelayMs ?? runtimeConfig.retryDelayMs,
   });
 
-  const subscribeFn =
-    options.subscribe ??
-    (options.subscribeConfig
-      ? createSubscribeFn({
-          ...options.subscribeConfig,
-          endpoint:
-            options.subscribeConfig.endpoint ?? runtimeConfig.wsEndpoint,
-          maxRetries:
-            options.subscribeConfig.maxRetries ?? runtimeConfig.wsMaxRetries,
-          retryDelayMs:
-            options.subscribeConfig.retryDelayMs ?? runtimeConfig.wsRetryDelayMs,
-        })
-      : createSubscribeFn({
-          endpoint: runtimeConfig.wsEndpoint,
-          maxRetries: runtimeConfig.wsMaxRetries,
-          retryDelayMs: runtimeConfig.wsRetryDelayMs,
-        }));
+  const shouldEnableSubscriptions = runtimeConfig.subscriptionsEnabled;
+
+  const subscribeFn = shouldEnableSubscriptions
+    ? options.subscribe ??
+      (options.subscribeConfig
+        ? createSubscribeFn({
+            ...options.subscribeConfig,
+            endpoint:
+              options.subscribeConfig.endpoint ?? runtimeConfig.wsEndpoint,
+            maxRetries:
+              options.subscribeConfig.maxRetries ?? runtimeConfig.wsMaxRetries,
+            retryDelayMs:
+              options.subscribeConfig.retryDelayMs ?? runtimeConfig.wsRetryDelayMs,
+          })
+        : createSubscribeFn({
+            endpoint: runtimeConfig.wsEndpoint,
+            maxRetries: runtimeConfig.wsMaxRetries,
+            retryDelayMs: runtimeConfig.wsRetryDelayMs,
+          }))
+    : undefined;
+
+  const network = subscribeFn
+    ? Network.create(fetchFn, subscribeFn)
+    : Network.create(fetchFn);
 
   return new Environment({
-    network: Network.create(fetchFn, subscribeFn),
+    network,
     store: options.store ?? new Store(new RecordSource()),
   });
 }
