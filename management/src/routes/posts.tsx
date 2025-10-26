@@ -10,9 +10,18 @@ import {
   applyPostStatusChangeToConnections,
   insertPostIntoConnections,
   isKnownPostStatus,
+  removePostFromConnections,
 } from "./posts/postConnectionUtils";
-import { postUpdatedSubscription } from "./posts/PostsSubscriptions";
+import {
+  getPostCreatedRecord,
+  getPostDeletedId,
+  postCreatedSubscription,
+  postDeletedSubscription,
+  postUpdatedSubscription,
+} from "./posts/PostsSubscriptions";
 import type { PostsSubscriptionsPostUpdatedSubscription } from "./posts/__generated__/PostsSubscriptionsPostUpdatedSubscription.graphql";
+import type { PostsSubscriptionsPostCreatedSubscription } from "./posts/__generated__/PostsSubscriptionsPostCreatedSubscription.graphql";
+import type { PostsSubscriptionsPostDeletedSubscription } from "./posts/__generated__/PostsSubscriptionsPostDeletedSubscription.graphql";
 import type { PostStatus } from "./posts/__generated__/PostsTableFragment.graphql";
 
 export const POSTS_PAGE_SIZE = 10;
@@ -33,6 +42,99 @@ export function PostsRoute() {
   );
   const { showToast } = useToast();
   const latestPostStatusRef = useRef<PostStatus | null>(null);
+  const latestDeletedPostTitleRef = useRef<string | null>(null);
+
+  useSubscription<PostsSubscriptionsPostCreatedSubscription>(
+    useMemo(
+      () => ({
+        subscription: postCreatedSubscription,
+        variables: {},
+        updater: (store) => {
+          const post = getPostCreatedRecord(store);
+          if (!post) {
+            return;
+          }
+          const postIdValue = post.getValue("id");
+          if (typeof postIdValue !== "string") {
+            return;
+          }
+          const postId = postIdValue;
+          const statusValue = post.getValue("status") as PostStatus | null;
+          const status = isKnownPostStatus(statusValue) ? statusValue : null;
+          const record = store.get(postId) ?? store.create(postId, post.getType());
+          record.copyFieldsFrom(post);
+          record.setValue(status, "status");
+
+          insertPostIntoConnections({
+            store,
+            postRecord: record,
+            status,
+          });
+        },
+        onNext: (response) => {
+          const post = response?.postCreated;
+          if (!post) {
+            return;
+          }
+          const title = post.title?.trim() || "Untitled draft";
+          const statusFromResponse = (post.status as PostStatus | null | undefined) ?? null;
+          const statusLabel =
+            statusFromResponse != null
+              ? statusFromResponse.charAt(0).toUpperCase() + statusFromResponse.slice(1)
+              : null;
+          showToast({
+            title: "Post created",
+            message:
+              statusLabel != null
+                ? `“${title}” was created as ${statusLabel}.`
+                : `“${title}” was created.`,
+            intent: statusFromResponse === "published" ? "success" : "info",
+          });
+        },
+      }),
+      [showToast],
+    ),
+  );
+
+  useSubscription<PostsSubscriptionsPostDeletedSubscription>(
+    useMemo(
+      () => ({
+        subscription: postDeletedSubscription,
+        variables: {},
+        updater: (store, data) => {
+          const responseId = data?.postDeleted;
+          const postId =
+            typeof responseId === "string" && responseId.trim().length > 0
+              ? responseId
+              : getPostDeletedId(store);
+          if (!postId) {
+            latestDeletedPostTitleRef.current = null;
+            return;
+          }
+          const existing = store.get(postId);
+          const titleValue = existing?.getValue("title");
+          latestDeletedPostTitleRef.current =
+            typeof titleValue === "string" && titleValue.trim().length > 0 ? titleValue : null;
+
+          removePostFromConnections({
+            store,
+            postId,
+          });
+          store.delete(postId);
+        },
+        onNext: () => {
+          const title = latestDeletedPostTitleRef.current?.trim();
+          showToast({
+            title: "Post deleted",
+            message: title ? `“${title}” was deleted.` : "A post was deleted.",
+            intent: "warning",
+          });
+          latestDeletedPostTitleRef.current = null;
+        },
+      }),
+      [showToast],
+    ),
+  );
 
   useSubscription<PostsSubscriptionsPostUpdatedSubscription>(
     useMemo(() => ({

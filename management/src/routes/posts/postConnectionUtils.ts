@@ -105,6 +105,38 @@ export function insertPostIntoConnections({
   });
 }
 
+export function removePostFromConnections({
+  store,
+  postId,
+}: {
+  store: RecordSourceSelectorProxy;
+  postId: string;
+}) {
+  POST_STATUS_FILTERS.forEach((filterStatus) => {
+    const connection = getPostConnection(store, filterStatus);
+    if (!connection) {
+      return;
+    }
+
+    const edges = connection.getLinkedRecords("edges");
+    if (!edges || edges.length === 0) {
+      return;
+    }
+
+    const filteredEdges = edges.filter((edge) => {
+      const node = edge?.getLinkedRecord("node");
+      return !node || node.getDataID() !== postId;
+    });
+
+    if (filteredEdges.length === edges.length) {
+      return;
+    }
+
+    connection.setLinkedRecords(filteredEdges, "edges");
+    adjustPostTotalCount(connection, filteredEdges.length - edges.length);
+  });
+}
+
 export function applyPostStatusChangeToConnections({
   store,
   postId,

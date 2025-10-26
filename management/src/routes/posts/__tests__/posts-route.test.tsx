@@ -277,6 +277,136 @@ describe("PostsRoute", () => {
     expect(screen.getByRole("button", { name: "Load more" })).toBeDisabled();
   });
 
+  it("inserts posts via the postCreated subscription and updates totals", async () => {
+    const environment = renderPosts();
+    const initialOperation = environment.mock.getMostRecentOperation();
+
+    await act(async () => {
+      environment.mock.resolve(initialOperation, {
+        data: buildPostsPayload([
+          {
+            id: "post-1",
+            title: "Existing draft",
+            status: "draft",
+            updatedAt: "2024-10-10T10:00:00.000Z",
+            authorID: "author-1",
+            author: {
+              id: "author-1",
+              displayName: "Editor",
+              email: "editor@example.com",
+              username: "editor",
+            },
+          },
+        ]),
+      });
+    });
+
+    expect(await screen.findByText("Total posts: 1")).toBeInTheDocument();
+
+    const postCreatedOperation = findOperationByName(
+      environment,
+      "PostsSubscriptionsPostCreatedSubscription",
+    );
+
+    await act(async () => {
+      environment.mock.nextValue(postCreatedOperation, {
+        data: {
+          postCreated: {
+            __typename: "Post",
+            id: "post-2",
+            title: "Fresh headline",
+            status: "published",
+            updatedAt: "2024-10-11T08:30:00.000Z",
+            authorID: "author-2",
+            author: {
+              __typename: "User",
+              id: "author-2",
+              displayName: "Reporter",
+              email: "reporter@example.com",
+              username: "reporter",
+            },
+          },
+        },
+      });
+      environment.mock.complete(postCreatedOperation);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("link", { name: "Fresh headline" })).toBeInTheDocument();
+      expect(screen.getByText("Reporter")).toBeInTheDocument();
+      expect(screen.getByText("Total posts: 2")).toBeInTheDocument();
+    });
+
+    const notifications = screen.getByRole("region", { name: "Notifications" });
+    expect(
+      within(notifications).getByText("“Fresh headline” was created as Published."),
+    ).toBeInTheDocument();
+    expect(within(notifications).getByText("Post created")).toBeInTheDocument();
+  });
+
+  it("removes posts via the postDeleted subscription and updates totals", async () => {
+    const environment = renderPosts();
+    const initialOperation = environment.mock.getMostRecentOperation();
+
+    await act(async () => {
+      environment.mock.resolve(initialOperation, {
+        data: buildPostsPayload([
+          {
+            id: "post-1",
+            title: "Stay or go",
+            status: "draft",
+            updatedAt: "2024-10-10T10:00:00.000Z",
+            authorID: "author-1",
+            author: {
+              id: "author-1",
+              displayName: "Editor",
+              email: "editor@example.com",
+              username: "editor",
+            },
+          },
+          {
+            id: "post-2",
+            title: "To be removed",
+            status: "pending",
+            updatedAt: "2024-10-11T08:30:00.000Z",
+            authorID: "author-2",
+            author: {
+              id: "author-2",
+              displayName: "Reporter",
+              email: "reporter@example.com",
+              username: "reporter",
+            },
+          },
+        ]),
+      });
+    });
+
+    expect(await screen.findByText("Total posts: 2")).toBeInTheDocument();
+
+    const postDeletedOperation = findOperationByName(
+      environment,
+      "PostsSubscriptionsPostDeletedSubscription",
+    );
+
+    await act(async () => {
+      environment.mock.nextValue(postDeletedOperation, {
+        data: {
+          postDeleted: "post-2",
+        },
+      });
+      environment.mock.complete(postDeletedOperation);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("link", { name: "To be removed" })).not.toBeInTheDocument();
+      expect(screen.getByText("Total posts: 1")).toBeInTheDocument();
+    });
+
+    const notifications = screen.getByRole("region", { name: "Notifications" });
+    expect(within(notifications).getByText("“To be removed” was deleted.")).toBeInTheDocument();
+    expect(within(notifications).getByText("Post deleted")).toBeInTheDocument();
+  });
+
   it("updates posts in response to the postUpdated subscription and renders a toast", async () => {
     const environment = renderPosts();
     const initialOperation = environment.mock.getMostRecentOperation();
