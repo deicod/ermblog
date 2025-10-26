@@ -2791,7 +2791,6 @@ func toGraphQLUser(record *gen.User) *graphql.User {
 		ID:          relay.ToGlobalID("User", record.ID),
 		Username:    record.Username,
 		Email:       record.Email,
-		Password:    record.Password,
 		DisplayName: record.DisplayName,
 		Bio:         record.Bio,
 		AvatarURL:   record.AvatarURL,

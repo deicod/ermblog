@@ -457,7 +457,6 @@ type ComplexityRoot struct {
 		Email       func(childComplexity int) int
 		ID          func(childComplexity int) int
 		LastLoginAt func(childComplexity int) int
-		Password    func(childComplexity int) int
 		Roles       func(childComplexity int, first *int, after *string, last *int, before *string) int
 		UpdatedAt   func(childComplexity int) int
 		Username    func(childComplexity int) int
@@ -2297,12 +2296,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.User.LastLoginAt(childComplexity), true
-	case "User.password":
-		if e.complexity.User.Password == nil {
-			break
-		}
-
-		return e.complexity.User.Password(childComplexity), true
 	case "User.roles":
 		if e.complexity.User.Roles == nil {
 			break
@@ -3353,8 +3346,6 @@ func (ec *executionContext) fieldContext_AssignUserRolesPayload_user(_ context.C
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "password":
-				return ec.fieldContext_User_password(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -4912,8 +4903,6 @@ func (ec *executionContext) fieldContext_CreateUserPayload_user(_ context.Contex
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "password":
-				return ec.fieldContext_User_password(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -8892,8 +8881,6 @@ func (ec *executionContext) fieldContext_Post_author(_ context.Context, field gr
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "password":
-				return ec.fieldContext_User_password(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -10146,8 +10133,6 @@ func (ec *executionContext) fieldContext_Query_user(ctx context.Context, field g
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "password":
-				return ec.fieldContext_User_password(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -10542,8 +10527,6 @@ func (ec *executionContext) fieldContext_RemoveUserRolesPayload_user(_ context.C
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "password":
-				return ec.fieldContext_User_password(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -11657,8 +11640,6 @@ func (ec *executionContext) fieldContext_Subscription_userCreated(_ context.Cont
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "password":
-				return ec.fieldContext_User_password(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -11730,8 +11711,6 @@ func (ec *executionContext) fieldContext_Subscription_userUpdated(_ context.Cont
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "password":
-				return ec.fieldContext_User_password(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -12832,8 +12811,6 @@ func (ec *executionContext) fieldContext_UpdateUserPayload_user(_ context.Contex
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "password":
-				return ec.fieldContext_User_password(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -12932,35 +12909,6 @@ func (ec *executionContext) _User_email(ctx context.Context, field graphql.Colle
 }
 
 func (ec *executionContext) fieldContext_User_email(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _User_password(ctx context.Context, field graphql.CollectedField, obj *User) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_User_password,
-		func(ctx context.Context) (any, error) {
-			return obj.Password, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_User_password(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -13386,8 +13334,6 @@ func (ec *executionContext) fieldContext_UserEdge_node(_ context.Context, field 
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "password":
-				return ec.fieldContext_User_password(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "bio":
@@ -20286,11 +20232,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "email":
 			out.Values[i] = ec._User_email(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "password":
-			out.Values[i] = ec._User_password(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
