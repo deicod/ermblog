@@ -23,3 +23,9 @@ export const commentUpdatedSubscription = graphql`
     }
   }
 `;
+
+export const commentDeletedSubscription = graphql`
+  subscription CommentsSubscriptionsCommentDeletedSubscription {
+    commentDeleted
+  }
+`;
