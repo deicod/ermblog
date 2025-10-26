@@ -14,6 +14,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/deicod/ermblog/graphql/server"
 	"github.com/deicod/ermblog/observability/metrics"
+	prommetrics "github.com/deicod/ermblog/observability/metrics/prometheus"
 	"github.com/deicod/ermblog/oidc"
 	"github.com/deicod/ermblog/orm/gen"
 
@@ -41,7 +42,11 @@ func main() {
 	}
 	defer db.Close()
 
-	collector := metrics.NoopCollector{} // TODO: Replace with metrics.WithCollector(...) once observability plumbing is in place.
+	promCollector, err := prommetrics.New()
+	if err != nil {
+		log.Fatalf("configure metrics collector: %v", err)
+	}
+	collector := metrics.WithCollector(promCollector)
 
 	ormClient := gen.NewClient(db)
 
@@ -81,6 +86,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", healthHandler)
+	mux.Handle("/metrics", promCollector.Handler())
 	mux.Handle("/", playground.Handler("graphql", graphqlPath))
 	mux.Handle(graphqlPath, graphqlHandler)
 
