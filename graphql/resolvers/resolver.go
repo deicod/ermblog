@@ -15,9 +15,10 @@ import (
 
 // Options allows configuring resolver behaviour.
 type Options struct {
-	ORM           *gen.Client
-	Collector     metrics.Collector
-	Subscriptions subscriptions.Broker
+	ORM              *gen.Client
+	Collector        metrics.Collector
+	Subscriptions    subscriptions.Broker
+	OptionRepository optionRepository
 }
 
 // Resolver wires GraphQL resolvers into the executable schema.
@@ -39,6 +40,7 @@ type Resolver struct {
 	tagsCounter       counter
 	usersCounter      counter
 	commentRepo       commentRepository
+	options           optionRepository
 }
 
 type userProvider interface {
@@ -73,6 +75,37 @@ type counter interface {
 	Count(ctx context.Context) (int, error)
 }
 
+type optionRepository interface {
+	FindByName(ctx context.Context, name string) (*gen.Option, error)
+	Create(ctx context.Context, input *gen.Option) (*gen.Option, error)
+	Update(ctx context.Context, input *gen.Option) (*gen.Option, error)
+}
+
+type ormOptionRepository struct {
+	client *gen.OptionClient
+}
+
+func (r *ormOptionRepository) FindByName(ctx context.Context, name string) (*gen.Option, error) {
+	if r == nil || r.client == nil {
+		return nil, nil
+	}
+	return r.client.Query().WhereNameEq(name).First(ctx)
+}
+
+func (r *ormOptionRepository) Create(ctx context.Context, input *gen.Option) (*gen.Option, error) {
+	if r == nil || r.client == nil {
+		return nil, errors.New("option repository is not configured")
+	}
+	return r.client.Create(ctx, input)
+}
+
+func (r *ormOptionRepository) Update(ctx context.Context, input *gen.Option) (*gen.Option, error) {
+	if r == nil || r.client == nil {
+		return nil, errors.New("option repository is not configured")
+	}
+	return r.client.Update(ctx, input)
+}
+
 // New creates a resolver root bound to the provided ORM client.
 func New(orm *gen.Client) *Resolver {
 	return NewWithOptions(Options{ORM: orm})
@@ -86,6 +119,7 @@ func NewWithOptions(opts Options) *Resolver {
 	}
 	resolver := &Resolver{ORM: opts.ORM, collector: collector, subscriptions: opts.Subscriptions}
 	resolver.hooks = newEntityHooks()
+	resolver.options = opts.OptionRepository
 	if resolver.ORM != nil {
 		resolver.users = resolver.ORM.Users()
 		resolver.roles = resolver.ORM.Roles()
@@ -99,6 +133,9 @@ func NewWithOptions(opts Options) *Resolver {
 		resolver.categoriesCounter = resolver.ORM.Categories()
 		resolver.tagsCounter = resolver.ORM.Tags()
 		resolver.usersCounter = resolver.ORM.Users()
+		if resolver.options == nil {
+			resolver.options = &ormOptionRepository{client: resolver.ORM.Options()}
+		}
 	}
 	return resolver
 }
@@ -186,6 +223,19 @@ func (r *Resolver) postTaxonomyService() postTaxonomyManager {
 	}
 	if r.ORM != nil {
 		return r.ORM
+	}
+	return nil
+}
+
+func (r *Resolver) optionRepository() optionRepository {
+	if r == nil {
+		return nil
+	}
+	if r.options != nil {
+		return r.options
+	}
+	if r.ORM != nil {
+		return &ormOptionRepository{client: r.ORM.Options()}
 	}
 	return nil
 }

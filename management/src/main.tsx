@@ -6,6 +6,7 @@ import "./index.css";
 import App from "./App";
 import { SessionProvider } from "./session/SessionProvider";
 import { ErrorBoundaryProvider } from "./providers/ErrorBoundaryProvider";
+import { NotificationPreferencesProvider } from "./providers/NotificationPreferencesProvider";
 import { ToastProvider } from "./providers/ToastProvider";
 
 const relayEnvironment = createRelayEnvironment({
@@ -17,9 +18,11 @@ createRoot(document.getElementById("root")!).render(
     <SessionProvider>
       <StrictMode>
         <ErrorBoundaryProvider>
-          <ToastProvider>
-            <App />
-          </ToastProvider>
+          <NotificationPreferencesProvider>
+            <ToastProvider>
+              <App />
+            </ToastProvider>
+          </NotificationPreferencesProvider>
         </ErrorBoundaryProvider>
       </StrictMode>
     </SessionProvider>

@@ -1,7 +1,7 @@
 import "./posts/posts.css";
 
 import { useMemo, useRef } from "react";
-import { graphql, useLazyLoadQuery, useSubscription } from "react-relay";
+import { graphql, useLazyLoadQuery } from "react-relay";
 
 import type { postsRouteQuery } from "./__generated__/postsRouteQuery.graphql";
 import { PostsTable } from "./posts/PostsTable";
@@ -19,10 +19,16 @@ import {
   postDeletedSubscription,
   postUpdatedSubscription,
 } from "./posts/PostsSubscriptions";
+import { useNotificationSubscription } from "./hooks/useNotificationSubscription";
+import type { NotificationCategory } from "../providers/NotificationPreferencesProvider";
 import type { PostsSubscriptionsPostUpdatedSubscription } from "./posts/__generated__/PostsSubscriptionsPostUpdatedSubscription.graphql";
 import type { PostsSubscriptionsPostCreatedSubscription } from "./posts/__generated__/PostsSubscriptionsPostCreatedSubscription.graphql";
 import type { PostsSubscriptionsPostDeletedSubscription } from "./posts/__generated__/PostsSubscriptionsPostDeletedSubscription.graphql";
 import type { PostStatus } from "./posts/__generated__/PostsTableFragment.graphql";
+
+const POST_CREATED_CATEGORY: NotificationCategory = "POST_CREATED";
+const POST_UPDATED_CATEGORY: NotificationCategory = "POST_UPDATED";
+const POST_DELETED_CATEGORY: NotificationCategory = "POST_DELETED";
 
 export const POSTS_PAGE_SIZE = 10;
 
@@ -44,7 +50,8 @@ export function PostsRoute() {
   const latestPostStatusRef = useRef<PostStatus | null>(null);
   const latestDeletedPostTitleRef = useRef<string | null>(null);
 
-  useSubscription<PostsSubscriptionsPostCreatedSubscription>(
+  useNotificationSubscription<PostsSubscriptionsPostCreatedSubscription>(
+    POST_CREATED_CATEGORY,
     useMemo(
       () => ({
         subscription: postCreatedSubscription,
@@ -89,6 +96,7 @@ export function PostsRoute() {
                 ? `“${title}” was created as ${statusLabel}.`
                 : `“${title}” was created.`,
             intent: statusFromResponse === "published" ? "success" : "info",
+            category: POST_CREATED_CATEGORY,
           });
         },
       }),
@@ -96,7 +104,8 @@ export function PostsRoute() {
     ),
   );
 
-  useSubscription<PostsSubscriptionsPostDeletedSubscription>(
+  useNotificationSubscription<PostsSubscriptionsPostDeletedSubscription>(
+    POST_DELETED_CATEGORY,
     useMemo(
       () => ({
         subscription: postDeletedSubscription,
@@ -128,6 +137,7 @@ export function PostsRoute() {
             title: "Post deleted",
             message: title ? `“${title}” was deleted.` : "A post was deleted.",
             intent: "warning",
+            category: POST_DELETED_CATEGORY,
           });
           latestDeletedPostTitleRef.current = null;
         },
@@ -136,7 +146,8 @@ export function PostsRoute() {
     ),
   );
 
-  useSubscription<PostsSubscriptionsPostUpdatedSubscription>(
+  useNotificationSubscription<PostsSubscriptionsPostUpdatedSubscription>(
+    POST_UPDATED_CATEGORY,
     useMemo(() => ({
       subscription: postUpdatedSubscription,
       variables: {},
@@ -182,6 +193,7 @@ export function PostsRoute() {
               ? `“${title}” is now ${statusLabel}.`
               : `“${title}” was updated.`,
           intent: statusForToast === "published" ? "success" : "info",
+          category: POST_UPDATED_CATEGORY,
         });
       },
     }), [showToast]),

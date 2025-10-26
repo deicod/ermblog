@@ -6,16 +6,19 @@ import { createMockEnvironment } from "relay-test-utils";
 import { describe, expect, it } from "vitest";
 
 import { POSTS_PAGE_SIZE, PostsRoute } from "../../posts";
+import { NotificationPreferencesProvider } from "../../../providers/NotificationPreferencesProvider";
 import { ToastProvider } from "../../../providers/ToastProvider";
 
 function renderPosts(environment = createMockEnvironment()) {
   render(
     <RelayEnvironmentProvider environment={environment}>
-      <ToastProvider>
-        <MemoryRouter>
-          <PostsRoute />
-        </MemoryRouter>
-      </ToastProvider>
+      <NotificationPreferencesProvider>
+        <ToastProvider>
+          <MemoryRouter>
+            <PostsRoute />
+          </MemoryRouter>
+        </ToastProvider>
+      </NotificationPreferencesProvider>
     </RelayEnvironmentProvider>,
   );
   return environment;

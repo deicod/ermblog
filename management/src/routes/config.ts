@@ -12,6 +12,7 @@ export const ROUTE_IDS = {
   users: "users",
   taxonomies: "taxonomies",
   media: "media",
+  notifications: "notifications",
   options: "options",
 } as const;
 
@@ -126,6 +127,17 @@ export const ROUTE_CONFIG: RouteDefinition[] = [
     requiresAuth: true,
     lazy: async () => ({
       Component: (await import("./media")).MediaRoute,
+    }),
+  },
+  {
+    id: ROUTE_IDS.notifications,
+    path: "notifications",
+    href: "/notifications",
+    title: "Notifications",
+    description: "Control which real-time categories trigger updates",
+    requiresAuth: true,
+    lazy: async () => ({
+      Component: (await import("./notifications")).NotificationsRoute,
     }),
   },
   {

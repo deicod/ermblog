@@ -1,7 +1,7 @@
 import "./comments/comments.css";
 
 import { useMemo } from "react";
-import { graphql, useLazyLoadQuery, useRelayEnvironment, useSubscription } from "react-relay";
+import { graphql, useLazyLoadQuery, useRelayEnvironment } from "react-relay";
 
 import type { commentsRouteQuery } from "./__generated__/commentsRouteQuery.graphql";
 import { CommentsTable } from "./comments/CommentsTable";
@@ -21,6 +21,12 @@ import type { CommentsSubscriptionsCommentCreatedSubscription } from "./comments
 import type { CommentsSubscriptionsCommentDeletedSubscription } from "./comments/__generated__/CommentsSubscriptionsCommentDeletedSubscription.graphql";
 import type { CommentsSubscriptionsCommentUpdatedSubscription } from "./comments/__generated__/CommentsSubscriptionsCommentUpdatedSubscription.graphql";
 import type { CommentStatus } from "./comments/__generated__/CommentsTableFragment.graphql";
+import { useNotificationSubscription } from "./hooks/useNotificationSubscription";
+import type { NotificationCategory } from "../providers/NotificationPreferencesProvider";
+
+const COMMENT_CREATED_CATEGORY: NotificationCategory = "COMMENT_CREATED";
+const COMMENT_UPDATED_CATEGORY: NotificationCategory = "COMMENT_UPDATED";
+const COMMENT_DELETED_CATEGORY: NotificationCategory = "COMMENT_DELETED";
 
 export const COMMENTS_PAGE_SIZE = 20;
 
@@ -39,7 +45,8 @@ export function CommentsRoute() {
   const { showToast } = useToast();
   const environment = useRelayEnvironment();
 
-  useSubscription<CommentsSubscriptionsCommentCreatedSubscription>(
+  useNotificationSubscription<CommentsSubscriptionsCommentCreatedSubscription>(
+    COMMENT_CREATED_CATEGORY,
     useMemo(() => ({
       subscription: commentCreatedSubscription,
       variables: {},
@@ -78,12 +85,13 @@ export function CommentsRoute() {
         const message = truncated
           ? `${authorLabel} says: ${truncated}`
           : `New comment from ${authorLabel}.`;
-        showToast({ title: "New comment", message });
+        showToast({ title: "New comment", message, category: COMMENT_CREATED_CATEGORY });
       },
     }), [showToast]),
   );
 
-  useSubscription<CommentsSubscriptionsCommentUpdatedSubscription>(
+  useNotificationSubscription<CommentsSubscriptionsCommentUpdatedSubscription>(
+    COMMENT_UPDATED_CATEGORY,
     useMemo(() => ({
       subscription: commentUpdatedSubscription,
       variables: {},
@@ -126,12 +134,14 @@ export function CommentsRoute() {
               ? `${authorLabel}'s comment is now ${statusLabel}.`
               : `${authorLabel}'s comment was updated.`,
           intent: comment.status === "approved" ? "success" : "info",
+          category: COMMENT_UPDATED_CATEGORY,
         });
       },
     }), [showToast]),
   );
 
-  useSubscription<CommentsSubscriptionsCommentDeletedSubscription>(
+  useNotificationSubscription<CommentsSubscriptionsCommentDeletedSubscription>(
+    COMMENT_DELETED_CATEGORY,
     useMemo(
       () => ({
         subscription: commentDeletedSubscription,
@@ -174,6 +184,7 @@ export function CommentsRoute() {
             title: "Comment removed",
             message,
             intent: "warning",
+            category: COMMENT_DELETED_CATEGORY,
           });
         },
       }),

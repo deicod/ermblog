@@ -2,6 +2,7 @@ schema:
   - graphql/schema.graphqls
   - graphql/viewer.graphqls
   - graphql/dashboard.graphqls
+  - graphql/notifications.graphqls
   - graphql/user_roles.graphqls
   - graphql/post_relationships.graphqls
 exec:

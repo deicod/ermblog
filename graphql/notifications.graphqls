@@ -1,0 +1,46 @@
+"""Notification categories supported by the management console."""
+enum NotificationCategory {
+  COMMENT_CREATED
+  COMMENT_UPDATED
+  COMMENT_DELETED
+  POST_CREATED
+  POST_UPDATED
+  POST_DELETED
+}
+
+"""Represents an individual notification preference toggle."""
+type NotificationPreference {
+  category: NotificationCategory!
+  enabled: Boolean!
+}
+
+"""Aggregated notification preferences for the current user."""
+type NotificationPreferences {
+  entries: [NotificationPreference!]!
+}
+
+"""Defines the desired notification preference state for a single category."""
+input NotificationPreferenceInput {
+  category: NotificationCategory!
+  enabled: Boolean!
+}
+
+input UpdateNotificationPreferencesInput {
+  clientMutationId: String
+  preferences: [NotificationPreferenceInput!]!
+}
+
+type UpdateNotificationPreferencesPayload {
+  clientMutationId: String
+  preferences: NotificationPreferences!
+}
+
+extend type Query {
+  notificationPreferences: NotificationPreferences! @auth(roles: ["user"])
+}
+
+extend type Mutation {
+  updateNotificationPreferences(
+    input: UpdateNotificationPreferencesInput!
+  ): UpdateNotificationPreferencesPayload! @auth(roles: ["user"])
+}
