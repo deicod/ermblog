@@ -27,6 +27,7 @@ vi.mock("graphql-ws", () => ({
 }));
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { Network } from "relay-runtime";
 
 import {
   RelayNetworkError,
@@ -403,5 +404,42 @@ describe("createRelayEnvironment", () => {
 
     expect(environment.getNetwork()).toBeDefined();
     expect(subscribe).not.toHaveBeenCalled();
+  });
+
+  it("omits subscription support when disabled via runtime configuration", () => {
+    const previousValue = process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED;
+    const networkCreateSpy = vi.spyOn(Network, "create");
+
+    process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED = "false";
+
+    try {
+      createRelayEnvironment({
+        fetchConfig: {
+          endpoint: "https://example.test/graphql",
+          fetchImplementation: vi
+            .fn()
+            .mockResolvedValue({
+              ok: true,
+              status: 200,
+              text: () =>
+                Promise.resolve(
+                  JSON.stringify({ data: { node: { id: "example" } } }),
+                ),
+            }) as unknown as typeof fetch,
+          maxRetries: 0,
+        },
+      });
+
+      expect(networkCreateSpy).toHaveBeenCalledTimes(1);
+      expect(networkCreateSpy.mock.calls[0][1]).toBeUndefined();
+    } finally {
+      networkCreateSpy.mockRestore();
+
+      if (previousValue === undefined) {
+        delete process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED;
+      } else {
+        process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED = previousValue;
+      }
+    }
   });
 });

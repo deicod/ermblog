@@ -1,5 +1,5 @@
 import { RelayEnvironmentProvider } from "react-relay";
-import { createRelayEnvironment, createSubscribeFn } from "./RelayEnvironment";
+import { createRelayEnvironment } from "./RelayEnvironment";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
@@ -9,9 +9,7 @@ import { ErrorBoundaryProvider } from "./providers/ErrorBoundaryProvider";
 import { NotificationPreferencesProvider } from "./providers/NotificationPreferencesProvider";
 import { ToastProvider } from "./providers/ToastProvider";
 
-const relayEnvironment = createRelayEnvironment({
-  subscribe: createSubscribeFn(),
-});
+const relayEnvironment = createRelayEnvironment();
 
 createRoot(document.getElementById("root")!).render(
   <RelayEnvironmentProvider environment={relayEnvironment}>

@@ -3,6 +3,7 @@ import { requestSubscription, useRelayEnvironment, type GraphQLSubscriptionConfi
 
 import type { NotificationCategory } from "../../providers/NotificationPreferencesProvider";
 import { useNotificationPreferences } from "../../providers/NotificationPreferencesProvider";
+import { resolveRelayEnvironmentConfig } from "../../config/relayEnvironmentConfig";
 
 export function useNotificationSubscription<T>(
   category: NotificationCategory,
@@ -10,8 +11,13 @@ export function useNotificationSubscription<T>(
 ): void {
   const environment = useRelayEnvironment();
   const { isCategoryEnabled } = useNotificationPreferences();
+  const { subscriptionsEnabled } = resolveRelayEnvironmentConfig();
 
   useEffect(() => {
+    if (!subscriptionsEnabled) {
+      return undefined;
+    }
+
     if (!isCategoryEnabled(category)) {
       return undefined;
     }
@@ -19,5 +25,5 @@ export function useNotificationSubscription<T>(
     return () => {
       disposable.dispose();
     };
-  }, [category, config, environment, isCategoryEnabled]);
+  }, [category, config, environment, isCategoryEnabled, subscriptionsEnabled]);
 }

@@ -7,15 +7,18 @@ import { describe, expect, it } from "vitest";
 import { COMMENTS_PAGE_SIZE, CommentsRoute } from "../../comments";
 import { NotificationPreferencesProvider } from "../../../providers/NotificationPreferencesProvider";
 import { ToastProvider } from "../../../providers/ToastProvider";
+import { SessionProvider } from "../../../session/SessionProvider";
 
 function renderComments(environment = createMockEnvironment()) {
   render(
     <RelayEnvironmentProvider environment={environment}>
-      <NotificationPreferencesProvider>
-        <ToastProvider>
-          <CommentsRoute />
-        </ToastProvider>
-      </NotificationPreferencesProvider>
+      <SessionProvider>
+        <NotificationPreferencesProvider>
+          <ToastProvider>
+            <CommentsRoute />
+          </ToastProvider>
+        </NotificationPreferencesProvider>
+      </SessionProvider>
     </RelayEnvironmentProvider>,
   );
   return environment;

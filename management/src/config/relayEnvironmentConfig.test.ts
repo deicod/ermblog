@@ -20,6 +20,7 @@ describe("resolveRelayEnvironmentConfig", () => {
     expect(config.wsEndpoint).toBe(DEFAULT_GRAPHQL_WS_ENDPOINT);
     expect(config.wsMaxRetries).toBe(DEFAULT_GRAPHQL_WS_MAX_RETRIES);
     expect(config.wsRetryDelayMs).toBe(DEFAULT_GRAPHQL_WS_RETRY_DELAY_MS);
+    expect(config.subscriptionsEnabled).toBe(true);
   });
 
   it("uses provided environment variables when present", () => {
@@ -30,6 +31,7 @@ describe("resolveRelayEnvironmentConfig", () => {
       VITE_GRAPHQL_WS_ENDPOINT: "wss://example.test/graphql",
       VITE_GRAPHQL_WS_MAX_RETRIES: "7",
       VITE_GRAPHQL_WS_RETRY_DELAY_MS: "1200",
+      VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED: "false",
     });
 
     expect(config.httpEndpoint).toBe("https://example.test/graphql");
@@ -38,6 +40,7 @@ describe("resolveRelayEnvironmentConfig", () => {
     expect(config.wsEndpoint).toBe("wss://example.test/graphql");
     expect(config.wsMaxRetries).toBe(7);
     expect(config.wsRetryDelayMs).toBe(1200);
+    expect(config.subscriptionsEnabled).toBe(false);
   });
 
   it("ignores invalid numeric overrides", () => {
@@ -47,6 +50,7 @@ describe("resolveRelayEnvironmentConfig", () => {
       VITE_GRAPHQL_HTTP_RETRY_DELAY_MS: "invalid",
       VITE_GRAPHQL_WS_MAX_RETRIES: "-2",
       VITE_GRAPHQL_WS_RETRY_DELAY_MS: "",
+      VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED: "not-a-boolean",
     });
 
     expect(config.httpEndpoint).toBe("https://example.test/graphql");
@@ -55,5 +59,6 @@ describe("resolveRelayEnvironmentConfig", () => {
     expect(config.wsEndpoint).toBe(DEFAULT_GRAPHQL_WS_ENDPOINT);
     expect(config.wsMaxRetries).toBe(DEFAULT_GRAPHQL_WS_MAX_RETRIES);
     expect(config.wsRetryDelayMs).toBe(DEFAULT_GRAPHQL_WS_RETRY_DELAY_MS);
+    expect(config.subscriptionsEnabled).toBe(true);
   });
 });

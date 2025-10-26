@@ -140,7 +140,7 @@ describe("application routing", () => {
       expect(router.state.location.pathname).toBe("/");
     });
 
-    expect(screen.getByText("Dashboard content")).toBeInTheDocument();
+    expect(await screen.findByText("Dashboard content")).toBeInTheDocument();
     expect(mockedAppHeader).toHaveBeenCalled();
   });
 });
