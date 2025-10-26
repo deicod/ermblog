@@ -29,6 +29,43 @@ func (s *stubCounter) Count(ctx context.Context) (int, error) {
 	return s.value, nil
 }
 
+func TestCountThroughRecordsMetrics(t *testing.T) {
+	posts := &stubCounter{value: 13}
+	collector := newRecordingCollector()
+	resolver := &Resolver{collector: collector}
+
+	value, err := resolver.countThrough(context.Background(), "posts", posts)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if value != 13 {
+		t.Fatalf("expected count 13, got %d", value)
+	}
+
+	if posts.calls != 1 {
+		t.Fatalf("expected counter to be invoked once, got %d", posts.calls)
+	}
+
+	if len(collector.queries) != 1 {
+		t.Fatalf("expected 1 query metric, got %d", len(collector.queries))
+	}
+
+	entry := collector.queries[0]
+	if entry.table != "posts" {
+		t.Fatalf("expected table label posts, got %s", entry.table)
+	}
+	if entry.operation != "count" {
+		t.Fatalf("expected operation label count, got %s", entry.operation)
+	}
+	if entry.err != nil {
+		t.Fatalf("expected no error recorded, got %v", entry.err)
+	}
+	if entry.duration < 0 {
+		t.Fatalf("expected non-negative duration, got %v", entry.duration)
+	}
+}
+
 func withContext(ctx context.Context) client.Option {
 	return func(request *client.Request) {
 		request.HTTP = request.HTTP.WithContext(ctx)

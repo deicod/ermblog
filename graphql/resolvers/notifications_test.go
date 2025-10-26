@@ -222,3 +222,62 @@ func TestUpdateNotificationPreferencesUpdatesExistingRecord(t *testing.T) {
 		t.Errorf("expected post deleted preference to be false")
 	}
 }
+
+func TestUpdateNotificationPreferencesRecordsMetrics(t *testing.T) {
+	repo := newStubOptionRepository()
+	collector := newRecordingCollector()
+	resolver := &Resolver{options: repo, collector: collector}
+	ctx := oidc.ToContext(context.Background(), oidc.Claims{Subject: "user-metrics"})
+
+	input := graphql.UpdateNotificationPreferencesInput{
+		Preferences: []*graphql.NotificationPreferenceInput{
+			{Category: graphql.NotificationCategoryCommentUpdated, Enabled: false},
+		},
+	}
+
+	if _, err := resolver.Mutation().UpdateNotificationPreferences(ctx, input); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(collector.queries) != 2 {
+		t.Fatalf("expected 2 query metrics, got %d", len(collector.queries))
+	}
+
+	if collector.queries[0].table != "options" || collector.queries[0].operation != "find_by_name" {
+		t.Fatalf("unexpected first metric: %+v", collector.queries[0])
+	}
+	if collector.queries[1].table != "options" || collector.queries[1].operation != "create" {
+		t.Fatalf("unexpected second metric: %+v", collector.queries[1])
+	}
+}
+
+func TestUpdateNotificationPreferencesRecordsMetricsOnUpdate(t *testing.T) {
+	repo := newStubOptionRepository()
+	name := preferenceOptionName("user-metrics-update")
+	repo.records[name] = &gen.Option{ID: "opt-existing", Name: name, Value: json.RawMessage(`{"preferences":{"COMMENT_CREATED":true}}`)}
+
+	collector := newRecordingCollector()
+	resolver := &Resolver{options: repo, collector: collector}
+	ctx := oidc.ToContext(context.Background(), oidc.Claims{Subject: "user-metrics-update"})
+
+	input := graphql.UpdateNotificationPreferencesInput{
+		Preferences: []*graphql.NotificationPreferenceInput{
+			{Category: graphql.NotificationCategoryPostUpdated, Enabled: false},
+		},
+	}
+
+	if _, err := resolver.Mutation().UpdateNotificationPreferences(ctx, input); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(collector.queries) != 2 {
+		t.Fatalf("expected 2 query metrics, got %d", len(collector.queries))
+	}
+
+	if collector.queries[0].operation != "find_by_name" {
+		t.Fatalf("expected find_by_name metric first, got %+v", collector.queries[0])
+	}
+	if collector.queries[1].operation != "update" {
+		t.Fatalf("expected update metric second, got %+v", collector.queries[1])
+	}
+}

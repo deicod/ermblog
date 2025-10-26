@@ -12,32 +12,32 @@ import (
 
 // ManagementStats is the resolver for the managementStats field.
 func (r *queryResolver) ManagementStats(ctx context.Context) (*graphql1.ManagementStats, error) {
-	posts, err := countThrough(ctx, r.postCounter())
+	posts, err := r.countThrough(ctx, "posts", r.postCounter())
 	if err != nil {
 		return nil, err
 	}
 
-	comments, err := countThrough(ctx, r.commentCounter())
+	comments, err := r.countThrough(ctx, "comments", r.commentCounter())
 	if err != nil {
 		return nil, err
 	}
 
-	mediaItems, err := countThrough(ctx, r.mediaCounter())
+	mediaItems, err := r.countThrough(ctx, "medias", r.mediaCounter())
 	if err != nil {
 		return nil, err
 	}
 
-	categories, err := countThrough(ctx, r.categoryCounter())
+	categories, err := r.countThrough(ctx, "categories", r.categoryCounter())
 	if err != nil {
 		return nil, err
 	}
 
-	tags, err := countThrough(ctx, r.tagCounter())
+	tags, err := r.countThrough(ctx, "tags", r.tagCounter())
 	if err != nil {
 		return nil, err
 	}
 
-	users, err := countThrough(ctx, r.userCounter())
+	users, err := r.countThrough(ctx, "users", r.userCounter())
 	if err != nil {
 		return nil, err
 	}
