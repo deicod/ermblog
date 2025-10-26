@@ -1,7 +1,18 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { fetchQuery, graphql, useRelayEnvironment } from "react-relay";
 
 import type { NotificationPreferencesProviderQuery } from "./__generated__/NotificationPreferencesProviderQuery.graphql";
+import { useSession } from "../session/SessionProvider";
+import type { SessionToken } from "../session/tokenStorage";
 
 const NOTIFICATION_CATEGORY_VALUES = [
   "COMMENT_CREATED",
@@ -96,7 +107,9 @@ const notificationPreferencesQuery = graphql`
 
 export function NotificationPreferencesProvider({ children }: { children: ReactNode }) {
   const environment = useRelayEnvironment();
+  const { sessionToken } = useSession();
   const mountedRef = useRef(true);
+  const sessionTokenRef = useRef<SessionToken | null>(sessionToken);
   const [entries, setEntriesState] = useState<NotificationPreferenceEntry[]>(() => buildDefaultEntries());
 
   useEffect(() => {
@@ -105,18 +118,27 @@ export function NotificationPreferencesProvider({ children }: { children: ReactN
     };
   }, []);
 
+  useEffect(() => {
+    sessionTokenRef.current = sessionToken;
+  }, [sessionToken]);
+
   const setEntries = useCallback((nextEntries: NotificationPreferenceEntry[]) => {
     setEntriesState(normalizeNotificationPreferenceEntries(nextEntries));
   }, []);
 
   const loadPreferences = useCallback(async () => {
+    const activeSessionToken = sessionTokenRef.current;
+    if (!activeSessionToken) {
+      return;
+    }
+
     try {
       const data = await fetchQuery<NotificationPreferencesProviderQuery>(
         environment,
         notificationPreferencesQuery,
         {},
       ).toPromise();
-      if (!mountedRef.current) {
+      if (!mountedRef.current || sessionTokenRef.current !== activeSessionToken) {
         return;
       }
       setEntriesState(
@@ -131,8 +153,28 @@ export function NotificationPreferencesProvider({ children }: { children: ReactN
   }, [environment]);
 
   useEffect(() => {
+    if (!sessionToken) {
+      setEntriesState((currentEntries) => {
+        const defaults = buildDefaultEntries();
+        if (
+          currentEntries.length === defaults.length &&
+          currentEntries.every((entry, index) => {
+            const defaultEntry = defaults[index];
+            return (
+              entry.category === defaultEntry.category && entry.enabled === defaultEntry.enabled
+            );
+          })
+        ) {
+          return currentEntries;
+        }
+
+        return defaults;
+      });
+      return;
+    }
+
     void loadPreferences();
-  }, [loadPreferences]);
+  }, [loadPreferences, sessionToken]);
 
   const enabledMap = useMemo(() => {
     return entries.reduce<Record<NotificationCategory, boolean>>((acc, entry) => {
