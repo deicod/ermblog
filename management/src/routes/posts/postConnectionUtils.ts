@@ -112,6 +112,10 @@ export function removePostFromConnections({
   store: RecordSourceSelectorProxy;
   postId: string;
 }) {
+  const postRecord = store.get(postId);
+  const statusValue = postRecord?.getValue("status") as PostStatus | null | undefined;
+  const postStatus = statusValue && isKnownPostStatus(statusValue) ? statusValue : null;
+
   POST_STATUS_FILTERS.forEach((filterStatus) => {
     const connection = getPostConnection(store, filterStatus);
     if (!connection) {
@@ -119,21 +123,24 @@ export function removePostFromConnections({
     }
 
     const edges = connection.getLinkedRecords("edges");
-    if (!edges || edges.length === 0) {
-      return;
-    }
-
-    const filteredEdges = edges.filter((edge) => {
+    const filteredEdges = edges?.filter((edge) => {
       const node = edge?.getLinkedRecord("node");
       return !node || node.getDataID() !== postId;
     });
 
-    if (filteredEdges.length === edges.length) {
+    if (edges && filteredEdges && filteredEdges.length !== edges.length) {
+      connection.setLinkedRecords(filteredEdges, "edges");
+      adjustPostTotalCount(connection, filteredEdges.length - edges.length);
       return;
     }
 
-    connection.setLinkedRecords(filteredEdges, "edges");
-    adjustPostTotalCount(connection, filteredEdges.length - edges.length);
+    const shouldDecrementTotal =
+      filterStatus == null ||
+      (postStatus != null && postStatusMatches(filterStatus, postStatus));
+
+    if (shouldDecrementTotal) {
+      adjustPostTotalCount(connection, -1);
+    }
   });
 }
 
