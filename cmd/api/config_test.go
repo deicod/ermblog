@@ -9,13 +9,12 @@ import (
 func TestLoadConfigGraphQLSubscriptionsTransports(t *testing.T) {
 	t.Parallel()
 
-	yaml := `graphql:
-  subscriptions:
-    enabled: true
-    transports:
-      websocket: true
-      graphql_ws: true
-`
+	yaml := "graphql:\n" +
+		"  subscriptions:\n" +
+		"    enabled: true\n" +
+		"    transports:\n" +
+		"      websocket: true\n" +
+		"      graphql_ws: true\n"
 
 	dir := t.TempDir()
 	path := filepath.Join(dir, "erm.yaml")
