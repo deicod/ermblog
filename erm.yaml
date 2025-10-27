@@ -13,8 +13,9 @@ graphql:
   path: "/graphql"
   subscriptions:
     enabled: false
-    websocket: false
-    graphql_ws: false
+    transports:
+      websocket: false
+      graphql_ws: false
 extensions:
   postgis: false
   pgvector: false

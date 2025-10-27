@@ -84,5 +84,6 @@ The Relay environment reads its transport settings from environment variables so
 | `VITE_GRAPHQL_WS_ENDPOINT` | WebSocket endpoint for subscriptions. | `ws://localhost:8080/graphql` |
 | `VITE_GRAPHQL_WS_MAX_RETRIES` | Reconnect attempts for the WebSocket client. | `5` |
 | `VITE_GRAPHQL_WS_RETRY_DELAY_MS` | Delay between WebSocket reconnect attempts in milliseconds. | `500` |
+| `VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED` | Toggle to enable/disable SPA subscription transports independent of the API config. | `true` |
 
-When the API enables subscriptions (`graphql.subscriptions` in `erm.yaml`), set the corresponding `VITE_…` variables in your shell or `.env` file before running `pnpm dev` so Relay can negotiate the WebSocket connection.
+When the API enables subscriptions (`graphql.subscriptions` in `erm.yaml`, including the transport-specific flags), set the corresponding `VITE_…` variables in your shell or `.env` file before running `pnpm dev` so Relay can negotiate the WebSocket connection, or set `VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED=false` to keep the SPA operating over HTTP only.
