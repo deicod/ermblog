@@ -406,6 +406,44 @@ describe("createRelayEnvironment", () => {
     expect(subscribe).not.toHaveBeenCalled();
   });
 
+  const createRelayEnvironmentForTest = () =>
+    createRelayEnvironment({
+      fetchConfig: {
+        endpoint: "https://example.test/graphql",
+        fetchImplementation: vi
+          .fn()
+          .mockResolvedValue({
+            ok: true,
+            status: 200,
+            text: () =>
+              Promise.resolve(JSON.stringify({ data: { node: { id: "example" } } })),
+          }) as unknown as typeof fetch,
+        maxRetries: 0,
+      },
+    });
+
+  it("omits subscription support when runtime configuration keeps subscriptions disabled by default", () => {
+    const previousValue = process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED;
+    const networkCreateSpy = vi.spyOn(Network, "create");
+
+    delete process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED;
+
+    try {
+      createRelayEnvironmentForTest();
+
+      expect(networkCreateSpy).toHaveBeenCalledTimes(1);
+      expect(networkCreateSpy.mock.calls[0][1]).toBeUndefined();
+    } finally {
+      networkCreateSpy.mockRestore();
+
+      if (previousValue === undefined) {
+        delete process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED;
+      } else {
+        process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED = previousValue;
+      }
+    }
+  });
+
   it("omits subscription support when disabled via runtime configuration", () => {
     const previousValue = process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED;
     const networkCreateSpy = vi.spyOn(Network, "create");
@@ -413,25 +451,32 @@ describe("createRelayEnvironment", () => {
     process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED = "false";
 
     try {
-      createRelayEnvironment({
-        fetchConfig: {
-          endpoint: "https://example.test/graphql",
-          fetchImplementation: vi
-            .fn()
-            .mockResolvedValue({
-              ok: true,
-              status: 200,
-              text: () =>
-                Promise.resolve(
-                  JSON.stringify({ data: { node: { id: "example" } } }),
-                ),
-            }) as unknown as typeof fetch,
-          maxRetries: 0,
-        },
-      });
+      createRelayEnvironmentForTest();
 
       expect(networkCreateSpy).toHaveBeenCalledTimes(1);
       expect(networkCreateSpy.mock.calls[0][1]).toBeUndefined();
+    } finally {
+      networkCreateSpy.mockRestore();
+
+      if (previousValue === undefined) {
+        delete process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED;
+      } else {
+        process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED = previousValue;
+      }
+    }
+  });
+
+  it("enables subscription support when runtime configuration opts in", () => {
+    const previousValue = process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED;
+    const networkCreateSpy = vi.spyOn(Network, "create");
+
+    process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED = "true";
+
+    try {
+      createRelayEnvironmentForTest();
+
+      expect(networkCreateSpy).toHaveBeenCalledTimes(1);
+      expect(networkCreateSpy.mock.calls[0][1]).toEqual(expect.any(Function));
     } finally {
       networkCreateSpy.mockRestore();
 
