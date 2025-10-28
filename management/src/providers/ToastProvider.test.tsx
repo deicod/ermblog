@@ -28,6 +28,7 @@ const basePreferences: NotificationPreferencesContextValue = {
   isCategoryEnabled: () => true,
   setEntries: () => {},
   refresh: async () => {},
+  isLoaded: true,
 };
 
 afterEach(() => {
@@ -82,5 +83,24 @@ describe("ToastProvider", () => {
 
     expect(await screen.findByText("Hello world")).toBeInTheDocument();
     expect(preferences.isCategoryEnabled).not.toHaveBeenCalled();
+  });
+
+  it("suppresses categorised toasts until preferences load", async () => {
+    const preferences: NotificationPreferencesContextValue = {
+      ...basePreferences,
+      isLoaded: false,
+    };
+
+    render(
+      <NotificationPreferencesContext.Provider value={preferences}>
+        <ToastProvider>
+          <TestToast category="POST_CREATED" />
+        </ToastProvider>
+      </NotificationPreferencesContext.Provider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText("Hello world")).not.toBeInTheDocument();
+    });
   });
 });

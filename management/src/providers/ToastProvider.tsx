@@ -82,7 +82,7 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastRecord[]>([]);
-  const { isCategoryEnabled } = useNotificationPreferences();
+  const { isCategoryEnabled, isLoaded } = useNotificationPreferences();
 
   const dismissToast = useCallback((id: string) => {
     setToasts((existing) => existing.filter((toast) => toast.id !== id));
@@ -90,7 +90,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const showToast = useCallback(
     ({ message, title, intent = "info", duration = DEFAULT_DURATION, category }: ShowToastOptions) => {
-      if (category && !isCategoryEnabled(category)) {
+      if (category && (!isLoaded || !isCategoryEnabled(category))) {
         return "";
       }
       const id = createToastId();
@@ -104,7 +104,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       setToasts((existing) => [...existing, toast]);
       return id;
     },
-    [isCategoryEnabled],
+    [isCategoryEnabled, isLoaded],
   );
 
   const contextValue = useMemo<ToastContextValue>(() => {

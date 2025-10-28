@@ -85,6 +85,7 @@ export type NotificationPreferencesContextValue = {
   isCategoryEnabled: (category: NotificationCategory) => boolean;
   setEntries: (entries: NotificationPreferenceEntry[]) => void;
   refresh: () => Promise<void>;
+  isLoaded: boolean;
 };
 
 const NotificationPreferencesContext = createContext<NotificationPreferencesContextValue>({
@@ -92,6 +93,7 @@ const NotificationPreferencesContext = createContext<NotificationPreferencesCont
   isCategoryEnabled: () => true,
   setEntries: () => {},
   refresh: async () => {},
+  isLoaded: false,
 });
 
 const notificationPreferencesQuery = graphql`
@@ -111,6 +113,7 @@ export function NotificationPreferencesProvider({ children }: { children: ReactN
   const mountedRef = useRef(true);
   const sessionTokenRef = useRef<SessionToken | null>(sessionToken);
   const [entries, setEntriesState] = useState<NotificationPreferenceEntry[]>(() => buildDefaultEntries());
+  const [isLoaded, setIsLoaded] = useState<boolean>(() => sessionToken == null);
 
   useEffect(() => {
     return () => {
@@ -132,6 +135,8 @@ export function NotificationPreferencesProvider({ children }: { children: ReactN
       return;
     }
 
+    setIsLoaded(false);
+
     try {
       const data = await fetchQuery<NotificationPreferencesProviderQuery>(
         environment,
@@ -144,6 +149,7 @@ export function NotificationPreferencesProvider({ children }: { children: ReactN
       setEntriesState(
         mapNotificationPreferencesEntries(data?.notificationPreferences ?? null),
       );
+      setIsLoaded(true);
     } catch (error) {
       if (process.env.NODE_ENV !== "production") {
         // eslint-disable-next-line no-console
@@ -170,9 +176,11 @@ export function NotificationPreferencesProvider({ children }: { children: ReactN
 
         return defaults;
       });
+      setIsLoaded(true);
       return;
     }
 
+    setIsLoaded(false);
     void loadPreferences();
   }, [loadPreferences, sessionToken]);
 
@@ -196,8 +204,9 @@ export function NotificationPreferencesProvider({ children }: { children: ReactN
       isCategoryEnabled,
       setEntries,
       refresh: loadPreferences,
+      isLoaded,
     };
-  }, [entries, isCategoryEnabled, loadPreferences, setEntries]);
+  }, [entries, isCategoryEnabled, isLoaded, loadPreferences, setEntries]);
 
   return (
     <NotificationPreferencesContext.Provider value={contextValue}>
