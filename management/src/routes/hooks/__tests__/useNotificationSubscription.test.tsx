@@ -69,6 +69,7 @@ describe("useNotificationSubscription", () => {
       isCategoryEnabled: () => false,
       setEntries: () => {},
       refresh: async () => {},
+      isLoaded: true,
     };
     const subscriptionConfig: GraphQLSubscriptionConfig<Record<string, unknown>> = {
       subscription: {} as any,
@@ -95,6 +96,7 @@ describe("useNotificationSubscription", () => {
       isCategoryEnabled: () => true,
       setEntries: () => {},
       refresh: async () => {},
+      isLoaded: true,
     };
     const subscriptionConfig: GraphQLSubscriptionConfig<Record<string, unknown>> = {
       subscription: {} as any,
@@ -122,6 +124,7 @@ describe("useNotificationSubscription", () => {
       isCategoryEnabled: () => true,
       setEntries: () => {},
       refresh: async () => {},
+      isLoaded: true,
     };
     const subscriptionConfig: GraphQLSubscriptionConfig<Record<string, unknown>> = {
       subscription: {} as any,
@@ -150,6 +153,7 @@ describe("useNotificationSubscription", () => {
       isCategoryEnabled: () => true,
       setEntries: () => {},
       refresh: async () => {},
+      isLoaded: true,
     };
     const subscriptionConfig: GraphQLSubscriptionConfig<Record<string, unknown>> = {
       subscription: {} as any,
@@ -167,5 +171,32 @@ describe("useNotificationSubscription", () => {
     expect(mockedRequestSubscription).toHaveBeenCalledTimes(1);
     unmount();
     expect(dispose).toHaveBeenCalledTimes(1);
+  });
+
+  it("skips subscription until preferences have loaded", () => {
+    process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED = "true";
+
+    const environment = createMockEnvironment();
+    const preferences: NotificationPreferencesContextValue = {
+      entries: [],
+      isCategoryEnabled: () => true,
+      setEntries: () => {},
+      refresh: async () => {},
+      isLoaded: false,
+    };
+    const subscriptionConfig: GraphQLSubscriptionConfig<Record<string, unknown>> = {
+      subscription: {} as any,
+      variables: {},
+    };
+
+    render(
+      <RelayEnvironmentProvider environment={environment}>
+        <NotificationPreferencesContext.Provider value={preferences}>
+          <TestComponent category="POST_CREATED" config={subscriptionConfig} />
+        </NotificationPreferencesContext.Provider>
+      </RelayEnvironmentProvider>,
+    );
+
+    expect(mockedRequestSubscription).not.toHaveBeenCalled();
   });
 });

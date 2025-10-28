@@ -32,15 +32,20 @@ import {
   NotificationPreferencesProvider,
   NOTIFICATION_CATEGORIES,
   type NotificationPreferenceEntry,
+  type NotificationPreferencesContextValue,
   useNotificationPreferences,
 } from "./NotificationPreferencesProvider";
 
-function CaptureEntries({ onEntries }: { onEntries: (entries: NotificationPreferenceEntry[]) => void }) {
-  const { entries } = useNotificationPreferences();
+function CapturePreferences({
+  onValue,
+}: {
+  onValue: (value: NotificationPreferencesContextValue) => void;
+}) {
+  const value = useNotificationPreferences();
 
   useEffect(() => {
-    onEntries(entries);
-  }, [entries, onEntries]);
+    onValue(value);
+  }, [onValue, value]);
 
   return null;
 }
@@ -68,11 +73,11 @@ describe("NotificationPreferencesProvider", () => {
     fetchQueryMock.mockReturnValue({
       toPromise: () => Promise.resolve({ notificationPreferences: { entries: [] } }),
     });
-    const entriesListener = vi.fn();
+    const stateListener = vi.fn();
 
     const { rerender } = render(
       <NotificationPreferencesProvider>
-        <CaptureEntries onEntries={entriesListener} />
+        <CapturePreferences onValue={stateListener} />
       </NotificationPreferencesProvider>,
     );
 
@@ -82,7 +87,7 @@ describe("NotificationPreferencesProvider", () => {
 
     rerender(
       <NotificationPreferencesProvider>
-        <CaptureEntries onEntries={entriesListener} />
+        <CapturePreferences onValue={stateListener} />
       </NotificationPreferencesProvider>,
     );
 
@@ -107,18 +112,18 @@ describe("NotificationPreferencesProvider", () => {
     });
     sessionState.token = { accessToken: "token" };
     useSessionMock.mockImplementation(() => ({ sessionToken: sessionState.token }));
-    const entriesListener = vi.fn();
+    const stateListener = vi.fn();
 
     const { rerender } = render(
       <NotificationPreferencesProvider>
-        <CaptureEntries onEntries={entriesListener} />
+        <CapturePreferences onValue={stateListener} />
       </NotificationPreferencesProvider>,
     );
 
     await waitFor(() => {
       expect(
-        entriesListener.mock.calls.some(([entries]) =>
-          entries.some(
+        stateListener.mock.calls.some(([value]) =>
+          value.entries.some(
             (entry) => entry.category === "POST_CREATED" && entry.enabled === false,
           ),
         ),
@@ -131,15 +136,84 @@ describe("NotificationPreferencesProvider", () => {
 
     rerender(
       <NotificationPreferencesProvider>
-        <CaptureEntries onEntries={entriesListener} />
+        <CapturePreferences onValue={stateListener} />
       </NotificationPreferencesProvider>,
     );
 
     await waitFor(() => {
-      const lastCall = entriesListener.mock.calls.at(-1);
+      const lastCall = stateListener.mock.calls.at(-1);
       expect(lastCall).toBeDefined();
-      expect(lastCall?.[0]).toEqual(defaultEntries);
+      expect(lastCall?.[0].entries).toEqual(defaultEntries);
+      expect(lastCall?.[0].isLoaded).toBe(true);
     });
     expect(fetchQueryMock).not.toHaveBeenCalled();
+  });
+
+  it("marks preferences as loading until fetched", async () => {
+    sessionState.token = { accessToken: "token" };
+    useSessionMock.mockImplementation(() => ({ sessionToken: sessionState.token }));
+    let resolveQuery:
+      | ((value: {
+          notificationPreferences: { entries: NotificationPreferenceEntry[] };
+        }) => void)
+      | undefined;
+    const queryPromise = new Promise<{
+      notificationPreferences: { entries: NotificationPreferenceEntry[] };
+    }>((resolve) => {
+      resolveQuery = resolve;
+    });
+    fetchQueryMock.mockReturnValue({
+      toPromise: () => queryPromise,
+    });
+    const stateListener = vi.fn();
+
+    render(
+      <NotificationPreferencesProvider>
+        <CapturePreferences onValue={stateListener} />
+      </NotificationPreferencesProvider>,
+    );
+
+    await waitFor(() => {
+      expect(fetchQueryMock).toHaveBeenCalledTimes(1);
+      expect(stateListener).toHaveBeenCalled();
+      const lastState = stateListener.mock.calls.at(-1)?.[0];
+      expect(lastState?.isLoaded).toBe(false);
+    });
+
+    expect(resolveQuery).toBeDefined();
+
+    resolveQuery?.({
+      notificationPreferences: {
+        entries: [
+          {
+            category: "POST_CREATED",
+            enabled: false,
+          },
+        ],
+      },
+    });
+
+    await waitFor(() => {
+      const lastState = stateListener.mock.calls.at(-1)?.[0];
+      expect(lastState?.isLoaded).toBe(true);
+      expect(lastState?.isCategoryEnabled("POST_CREATED")).toBe(false);
+    });
+  });
+
+  it("starts in a loaded state when there is no session token", async () => {
+    const stateListener = vi.fn();
+
+    render(
+      <NotificationPreferencesProvider>
+        <CapturePreferences onValue={stateListener} />
+      </NotificationPreferencesProvider>,
+    );
+
+    await waitFor(() => {
+      expect(stateListener).toHaveBeenCalled();
+      const lastState = stateListener.mock.calls.at(-1)?.[0];
+      expect(lastState?.isLoaded).toBe(true);
+      expect(lastState?.entries).toEqual(defaultEntries);
+    });
   });
 });

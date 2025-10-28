@@ -10,11 +10,15 @@ export function useNotificationSubscription<T>(
   config: GraphQLSubscriptionConfig<T>,
 ): void {
   const environment = useRelayEnvironment();
-  const { isCategoryEnabled } = useNotificationPreferences();
+  const { isCategoryEnabled, isLoaded } = useNotificationPreferences();
   const { subscriptionsEnabled } = resolveRelayEnvironmentConfig();
 
   useEffect(() => {
     if (!subscriptionsEnabled) {
+      return undefined;
+    }
+
+    if (!isLoaded) {
       return undefined;
     }
 
@@ -25,5 +29,5 @@ export function useNotificationSubscription<T>(
     return () => {
       disposable.dispose();
     };
-  }, [category, config, environment, isCategoryEnabled, subscriptionsEnabled]);
+  }, [category, config, environment, isCategoryEnabled, isLoaded, subscriptionsEnabled]);
 }
