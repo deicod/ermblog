@@ -155,10 +155,6 @@ export function NotificationPreferencesProvider({ children }: { children: ReactN
         // eslint-disable-next-line no-console
         console.error("Failed to load notification preferences", error);
       }
-      if (!mountedRef.current || sessionTokenRef.current !== activeSessionToken) {
-        return;
-      }
-      setIsLoaded(true);
     }
   }, [environment]);
 

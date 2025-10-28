@@ -200,6 +200,36 @@ describe("NotificationPreferencesProvider", () => {
     });
   });
 
+  it("keeps preferences in a loading state when fetching fails", async () => {
+    sessionState.token = { accessToken: "token" };
+    useSessionMock.mockImplementation(() => ({ sessionToken: sessionState.token }));
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      fetchQueryMock.mockReturnValue({
+        toPromise: () => Promise.reject(new Error("network error")),
+      });
+      const stateListener = vi.fn();
+
+      render(
+        <NotificationPreferencesProvider>
+          <CapturePreferences onValue={stateListener} />
+        </NotificationPreferencesProvider>,
+      );
+
+      await waitFor(() => {
+        expect(fetchQueryMock).toHaveBeenCalledTimes(1);
+        expect(stateListener).toHaveBeenCalled();
+      });
+
+      await waitFor(() => {
+        expect(consoleErrorSpy).toHaveBeenCalled();
+        expect(stateListener.mock.calls.every(([value]) => value.isLoaded === false)).toBe(true);
+      });
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
+  });
+
   it("starts in a loaded state when there is no session token", async () => {
     const stateListener = vi.fn();
 
