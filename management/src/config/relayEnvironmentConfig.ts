@@ -90,7 +90,7 @@ export function resolveRelayEnvironmentConfig(
   );
   const subscriptionsEnabled = parseBoolean(
     env[GRAPHQL_SUBSCRIPTIONS_ENABLED_KEY],
-    true,
+    false,
   );
 
   return {

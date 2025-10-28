@@ -2,7 +2,7 @@ import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RelayEnvironmentProvider } from "react-relay";
 import { createMockEnvironment } from "relay-test-utils";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { COMMENTS_PAGE_SIZE, CommentsRoute } from "../../comments";
 import { NotificationPreferencesProvider } from "../../../providers/NotificationPreferencesProvider";
@@ -68,6 +68,21 @@ function findOperationByName(environment: ReturnType<typeof createMockEnvironmen
 }
 
 describe("CommentsRoute", () => {
+  let previousSubscriptionsSetting: string | undefined;
+
+  beforeEach(() => {
+    previousSubscriptionsSetting = process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED;
+    process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED = "true";
+  });
+
+  afterEach(() => {
+    if (previousSubscriptionsSetting === undefined) {
+      delete process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED;
+    } else {
+      process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED = previousSubscriptionsSetting;
+    }
+  });
+
   it("filters comments by status and refetches with updated variables", async () => {
     const environment = renderComments();
     const initialOperation = environment.mock.getMostRecentOperation();

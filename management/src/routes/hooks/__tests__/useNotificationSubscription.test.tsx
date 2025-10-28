@@ -61,6 +61,8 @@ describe("useNotificationSubscription", () => {
   });
 
   it("skips subscription when category is disabled", () => {
+    process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED = "true";
+
     const environment = createMockEnvironment();
     const preferences: NotificationPreferencesContextValue = {
       entries: [],
@@ -85,6 +87,8 @@ describe("useNotificationSubscription", () => {
   });
 
   it("creates a subscription when the category is enabled", () => {
+    process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED = "true";
+
     const environment = createMockEnvironment();
     const preferences: NotificationPreferencesContextValue = {
       entries: [],
@@ -136,6 +140,8 @@ describe("useNotificationSubscription", () => {
   });
 
   it("disposes the subscription on unmount", () => {
+    process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED = "true";
+
     const environment = createMockEnvironment();
     const dispose = vi.fn();
     mockedRequestSubscription.mockReturnValueOnce({ dispose });

@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { RelayEnvironmentProvider } from "react-relay";
 import { MemoryRouter } from "react-router-dom";
 import { createMockEnvironment } from "relay-test-utils";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { POSTS_PAGE_SIZE, PostsRoute } from "../../posts";
 import { NotificationPreferencesProvider } from "../../../providers/NotificationPreferencesProvider";
@@ -91,6 +91,21 @@ function findOperationByName(environment: ReturnType<typeof createMockEnvironmen
 }
 
 describe("PostsRoute", () => {
+  let previousSubscriptionsSetting: string | undefined;
+
+  beforeEach(() => {
+    previousSubscriptionsSetting = process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED;
+    process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED = "true";
+  });
+
+  afterEach(() => {
+    if (previousSubscriptionsSetting === undefined) {
+      delete process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED;
+    } else {
+      process.env.VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED = previousSubscriptionsSetting;
+    }
+  });
+
   it("filters posts by status and refetches with the selected variables", async () => {
     const environment = renderPosts();
     const initialOperation = environment.mock.getMostRecentOperation();
