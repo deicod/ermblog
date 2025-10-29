@@ -200,7 +200,7 @@ describe("NotificationPreferencesProvider", () => {
     });
   });
 
-  it("keeps preferences in a loading state when fetching fails", async () => {
+  it("falls back to default preferences when fetching fails", async () => {
     sessionState.token = { accessToken: "token" };
     useSessionMock.mockImplementation(() => ({ sessionToken: sessionState.token }));
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -223,7 +223,10 @@ describe("NotificationPreferencesProvider", () => {
 
       await waitFor(() => {
         expect(consoleErrorSpy).toHaveBeenCalled();
-        expect(stateListener.mock.calls.every(([value]) => value.isLoaded === false)).toBe(true);
+        const lastState = stateListener.mock.calls.at(-1)?.[0];
+        expect(lastState?.isLoaded).toBe(true);
+        expect(lastState?.loadErrorCount).toBeGreaterThan(0);
+        expect(lastState?.entries).toEqual(defaultEntries);
       });
     } finally {
       consoleErrorSpy.mockRestore();
