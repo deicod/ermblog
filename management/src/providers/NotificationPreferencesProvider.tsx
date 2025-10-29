@@ -86,6 +86,7 @@ export type NotificationPreferencesContextValue = {
   setEntries: (entries: NotificationPreferenceEntry[]) => void;
   refresh: () => Promise<void>;
   isLoaded: boolean;
+  loadErrorCount: number;
 };
 
 const NotificationPreferencesContext = createContext<NotificationPreferencesContextValue>({
@@ -94,6 +95,7 @@ const NotificationPreferencesContext = createContext<NotificationPreferencesCont
   setEntries: () => {},
   refresh: async () => {},
   isLoaded: false,
+  loadErrorCount: 0,
 });
 
 const notificationPreferencesQuery = graphql`
@@ -114,6 +116,7 @@ export function NotificationPreferencesProvider({ children }: { children: ReactN
   const sessionTokenRef = useRef<SessionToken | null>(sessionToken);
   const [entries, setEntriesState] = useState<NotificationPreferenceEntry[]>(() => buildDefaultEntries());
   const [isLoaded, setIsLoaded] = useState<boolean>(() => sessionToken == null);
+  const [loadErrorCount, setLoadErrorCount] = useState<number>(0);
 
   useEffect(() => {
     return () => {
@@ -151,6 +154,11 @@ export function NotificationPreferencesProvider({ children }: { children: ReactN
       );
       setIsLoaded(true);
     } catch (error) {
+      if (!mountedRef.current || sessionTokenRef.current !== activeSessionToken) {
+        return;
+      }
+      setIsLoaded(true);
+      setLoadErrorCount((count) => count + 1);
       if (process.env.NODE_ENV !== "production") {
         // eslint-disable-next-line no-console
         console.error("Failed to load notification preferences", error);
@@ -177,6 +185,7 @@ export function NotificationPreferencesProvider({ children }: { children: ReactN
         return defaults;
       });
       setIsLoaded(true);
+      setLoadErrorCount(0);
       return;
     }
 
@@ -205,8 +214,9 @@ export function NotificationPreferencesProvider({ children }: { children: ReactN
       setEntries,
       refresh: loadPreferences,
       isLoaded,
+      loadErrorCount,
     };
-  }, [entries, isCategoryEnabled, isLoaded, loadPreferences, setEntries]);
+  }, [entries, isCategoryEnabled, isLoaded, loadPreferences, loadErrorCount, setEntries]);
 
   return (
     <NotificationPreferencesContext.Provider value={contextValue}>

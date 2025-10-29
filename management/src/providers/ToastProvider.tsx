@@ -1,4 +1,13 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 import { type NotificationCategory, useNotificationPreferences } from "./NotificationPreferencesProvider";
 import "./toast.css";
@@ -82,7 +91,8 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastRecord[]>([]);
-  const { isCategoryEnabled, isLoaded } = useNotificationPreferences();
+  const { isCategoryEnabled, isLoaded, loadErrorCount } = useNotificationPreferences();
+  const lastLoadErrorCountRef = useRef(loadErrorCount);
 
   const dismissToast = useCallback((id: string) => {
     setToasts((existing) => existing.filter((toast) => toast.id !== id));
@@ -106,6 +116,32 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     },
     [isCategoryEnabled, isLoaded],
   );
+
+  useEffect(() => {
+    if (!isLoaded) {
+      lastLoadErrorCountRef.current = loadErrorCount;
+      return;
+    }
+
+    if (loadErrorCount <= lastLoadErrorCountRef.current) {
+      lastLoadErrorCountRef.current = loadErrorCount;
+      return;
+    }
+
+    lastLoadErrorCountRef.current = loadErrorCount;
+
+    setToasts((existing) => [
+      ...existing,
+      {
+        id: createToastId(),
+        title: "Using default notification preferences",
+        message:
+          "We couldn't refresh your notification preferences, so we're using the defaults.",
+        intent: "warning",
+        duration: DEFAULT_DURATION,
+      },
+    ]);
+  }, [isLoaded, loadErrorCount]);
 
   const contextValue = useMemo<ToastContextValue>(() => {
     return {

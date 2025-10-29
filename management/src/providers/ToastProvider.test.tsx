@@ -29,6 +29,7 @@ const basePreferences: NotificationPreferencesContextValue = {
   setEntries: () => {},
   refresh: async () => {},
   isLoaded: true,
+  loadErrorCount: 0,
 };
 
 afterEach(() => {
@@ -102,5 +103,31 @@ describe("ToastProvider", () => {
     await waitFor(() => {
       expect(screen.queryByText("Hello world")).not.toBeInTheDocument();
     });
+  });
+
+  it("surfaces a warning toast when preferences fallback to defaults", async () => {
+    const { rerender } = render(
+      <NotificationPreferencesContext.Provider value={basePreferences}>
+        <ToastProvider>
+          <div>Child</div>
+        </ToastProvider>
+      </NotificationPreferencesContext.Provider>,
+    );
+
+    rerender(
+      <NotificationPreferencesContext.Provider
+        value={{ ...basePreferences, loadErrorCount: basePreferences.loadErrorCount + 1 }}
+      >
+        <ToastProvider>
+          <div>Child</div>
+        </ToastProvider>
+      </NotificationPreferencesContext.Provider>,
+    );
+
+    expect(
+      await screen.findByText(
+        "We couldn't refresh your notification preferences, so we're using the defaults.",
+      ),
+    ).toBeInTheDocument();
   });
 });

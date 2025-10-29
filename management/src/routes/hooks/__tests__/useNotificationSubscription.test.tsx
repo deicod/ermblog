@@ -70,6 +70,7 @@ describe("useNotificationSubscription", () => {
       setEntries: () => {},
       refresh: async () => {},
       isLoaded: true,
+      loadErrorCount: 0,
     };
     const subscriptionConfig: GraphQLSubscriptionConfig<Record<string, unknown>> = {
       subscription: {} as any,
@@ -97,6 +98,7 @@ describe("useNotificationSubscription", () => {
       setEntries: () => {},
       refresh: async () => {},
       isLoaded: true,
+      loadErrorCount: 0,
     };
     const subscriptionConfig: GraphQLSubscriptionConfig<Record<string, unknown>> = {
       subscription: {} as any,
@@ -125,6 +127,7 @@ describe("useNotificationSubscription", () => {
       setEntries: () => {},
       refresh: async () => {},
       isLoaded: true,
+      loadErrorCount: 0,
     };
     const subscriptionConfig: GraphQLSubscriptionConfig<Record<string, unknown>> = {
       subscription: {} as any,
@@ -154,6 +157,7 @@ describe("useNotificationSubscription", () => {
       setEntries: () => {},
       refresh: async () => {},
       isLoaded: true,
+      loadErrorCount: 0,
     };
     const subscriptionConfig: GraphQLSubscriptionConfig<Record<string, unknown>> = {
       subscription: {} as any,
@@ -183,6 +187,7 @@ describe("useNotificationSubscription", () => {
       setEntries: () => {},
       refresh: async () => {},
       isLoaded: false,
+      loadErrorCount: 0,
     };
     const subscriptionConfig: GraphQLSubscriptionConfig<Record<string, unknown>> = {
       subscription: {} as any,
