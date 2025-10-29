@@ -56,6 +56,37 @@
   font-weight: 500;
 }
 
+.notifications-route__refresh-error {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-danger-subtle, #fecaca);
+  background: var(--color-surface-danger-subtle, #fef2f2);
+}
+
+.notifications-route__refresh-error-message {
+  flex: 1;
+  color: var(--color-danger, #b91c1c);
+  font-weight: 500;
+}
+
+.notifications-route__retry-button {
+  padding: 0.4rem 0.9rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--color-danger, #b91c1c);
+  background: transparent;
+  color: var(--color-danger, #b91c1c);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.notifications-route__retry-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .notifications-route__checkbox {
   width: 2.5rem;
   height: 1.5rem;
