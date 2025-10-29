@@ -1,13 +1,7 @@
 import "./notifications.css";
 
-import {
-  FormEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { FormEvent } from "react";
 import { graphql, useLazyLoadQuery, useMutation } from "react-relay";
 
 import type { NotificationsRouteMutation } from "./__generated__/NotificationsRouteMutation.graphql";
@@ -74,6 +68,9 @@ const CATEGORY_COPY: Record<NotificationCategory, { label: string; description: 
   },
 };
 
+const REFRESH_ERROR_MESSAGE =
+  "We couldn't refresh your notification preferences. Please try again.";
+
 function cloneEntries(entries: NotificationPreferenceEntry[]): NotificationPreferenceEntry[] {
   return entries.map((entry) => ({ ...entry }));
 }
@@ -98,15 +95,18 @@ export function NotificationsRoute() {
     { fetchPolicy: "store-or-network" },
   );
   const queryEntries = mapNotificationPreferencesEntries(data.notificationPreferences ?? null);
-  const { setEntries } = useNotificationPreferences();
+  const { setEntries, refresh, loadErrorCount } = useNotificationPreferences();
   const { showToast } = useToast();
   const [formEntries, setFormEntries] = useState<NotificationPreferenceEntry[]>(() =>
     cloneEntries(queryEntries),
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const savedEntriesRef = useRef<NotificationPreferenceEntry[]>(cloneEntries(queryEntries));
   const serialisedEntriesRef = useRef<string | null>(JSON.stringify(savedEntriesRef.current));
+  const lastSeenLoadErrorCountRef = useRef(loadErrorCount > 0 ? loadErrorCount - 1 : 0);
   const [commitMutation, isInFlight] = useMutation<NotificationsRouteMutation>(
     updateNotificationPreferencesMutation,
   );
@@ -120,8 +120,23 @@ export function NotificationsRoute() {
     savedEntriesRef.current = cloneEntries(queryEntries);
     setEntries(savedEntriesRef.current);
     setFormEntries(cloneEntries(queryEntries));
+    setRefreshError(null);
     setErrorMessage(null);
   }, [queryEntries, setEntries]);
+
+  useEffect(() => {
+    if (loadErrorCount === 0) {
+      lastSeenLoadErrorCountRef.current = 0;
+      setRefreshError(null);
+      return;
+    }
+
+    if (loadErrorCount > lastSeenLoadErrorCountRef.current) {
+      setRefreshError(REFRESH_ERROR_MESSAGE);
+    }
+
+    lastSeenLoadErrorCountRef.current = loadErrorCount;
+  }, [loadErrorCount]);
 
   const handleToggle = useCallback((category: NotificationCategory) => {
     setFormEntries((current) =>
@@ -129,6 +144,7 @@ export function NotificationsRoute() {
         entry.category === category ? { ...entry, enabled: !entry.enabled } : entry,
       ),
     );
+    setRefreshError(null);
     setErrorMessage(null);
   }, []);
 
@@ -153,6 +169,7 @@ export function NotificationsRoute() {
         return;
       }
 
+      setRefreshError(null);
       setErrorMessage(null);
       const normalized = normalizeNotificationPreferenceEntries(formEntries);
 
@@ -188,6 +205,19 @@ export function NotificationsRoute() {
     [commitMutation, formEntries, isDirty, setEntries, showToast],
   );
 
+  const handleRefreshPreferences = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refresh();
+      setRefreshError(null);
+      setErrorMessage(null);
+    } catch {
+      setRefreshError(REFRESH_ERROR_MESSAGE);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refresh, setErrorMessage, setRefreshError]);
+
   return (
     <section aria-labelledby="notification-preferences-heading" className="notifications-route">
       <header className="notifications-route__header">
@@ -199,6 +229,19 @@ export function NotificationsRoute() {
       </header>
 
       <form className="notifications-route__form" onSubmit={handleSubmit}>
+        {refreshError ? (
+          <div className="notifications-route__refresh-error" role="alert">
+            <span className="notifications-route__refresh-error-message">{refreshError}</span>
+            <button
+              type="button"
+              className="notifications-route__retry-button"
+              onClick={handleRefreshPreferences}
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? "Retrying…" : "Retry refresh"}
+            </button>
+          </div>
+        ) : null}
         <div className="notifications-route__preferences" role="group" aria-label="Notification categories">
           {formEntries.map((entry) => {
             const copy = CATEGORY_COPY[entry.category];

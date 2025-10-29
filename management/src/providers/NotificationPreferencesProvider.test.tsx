@@ -1,6 +1,6 @@
 import { cleanup, render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { SessionToken } from "../session/tokenStorage";
 
 const { fetchQueryMock, useSessionMock, relayEnvironment } = vi.hoisted(() => ({
@@ -54,6 +54,21 @@ const defaultEntries: NotificationPreferenceEntry[] = NOTIFICATION_CATEGORIES.ma
   category,
   enabled: true,
 }));
+
+function RefreshOnMount({ onError }: { onError: (error: unknown) => void }) {
+  const { refresh } = useNotificationPreferences();
+  const hasRefreshedRef = useRef(false);
+
+  useEffect(() => {
+    if (hasRefreshedRef.current) {
+      return;
+    }
+    hasRefreshedRef.current = true;
+    refresh().catch(onError);
+  }, [onError, refresh]);
+
+  return null;
+}
 
 describe("NotificationPreferencesProvider", () => {
   const sessionState = { token: null as SessionToken | null };
@@ -248,5 +263,37 @@ describe("NotificationPreferencesProvider", () => {
       expect(lastState?.isLoaded).toBe(true);
       expect(lastState?.entries).toEqual(defaultEntries);
     });
+  });
+
+  it("rejects refresh promises so consumers can handle failures", async () => {
+    sessionState.token = { accessToken: "token" };
+    useSessionMock.mockImplementation(() => ({ sessionToken: sessionState.token }));
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const refreshErrorListener = vi.fn();
+    try {
+      fetchQueryMock.mockImplementation(() => ({
+        toPromise: () => Promise.reject(new Error("network error")),
+      }));
+
+      render(
+        <NotificationPreferencesProvider>
+          <CapturePreferences onValue={() => {}} />
+          <RefreshOnMount onError={refreshErrorListener} />
+        </NotificationPreferencesProvider>,
+      );
+
+      await waitFor(() => {
+        expect(fetchQueryMock).toHaveBeenCalledTimes(2);
+      });
+
+      await waitFor(() => {
+        expect(refreshErrorListener).toHaveBeenCalledTimes(1);
+        const [error] = refreshErrorListener.mock.calls[0];
+        expect(error).toBeInstanceOf(Error);
+        expect((error as Error).message).toBe("network error");
+      });
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
   });
 });

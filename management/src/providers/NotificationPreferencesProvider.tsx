@@ -154,15 +154,17 @@ export function NotificationPreferencesProvider({ children }: { children: ReactN
       );
       setIsLoaded(true);
     } catch (error) {
-      if (!mountedRef.current || sessionTokenRef.current !== activeSessionToken) {
-        return;
+      const isActive =
+        mountedRef.current && sessionTokenRef.current === activeSessionToken;
+      if (isActive) {
+        setIsLoaded(true);
+        setLoadErrorCount((count) => count + 1);
       }
-      setIsLoaded(true);
-      setLoadErrorCount((count) => count + 1);
       if (process.env.NODE_ENV !== "production") {
         // eslint-disable-next-line no-console
         console.error("Failed to load notification preferences", error);
       }
+      throw error;
     }
   }, [environment]);
 
@@ -190,7 +192,7 @@ export function NotificationPreferencesProvider({ children }: { children: ReactN
     }
 
     setIsLoaded(false);
-    void loadPreferences();
+    void loadPreferences().catch(() => {});
   }, [loadPreferences, sessionToken]);
 
   const enabledMap = useMemo(() => {
