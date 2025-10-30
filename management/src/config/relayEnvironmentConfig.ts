@@ -79,7 +79,31 @@ export function resolveRelayEnvironmentConfig(
   const httpEndpoint = env[GRAPHQL_ENDPOINT_KEY] ?? DEFAULT_GRAPHQL_HTTP_ENDPOINT;
   const maxRetries = parseInteger(env[GRAPHQL_MAX_RETRIES_KEY], DEFAULT_GRAPHQL_MAX_RETRIES);
   const retryDelayMs = parseInteger(env[GRAPHQL_RETRY_DELAY_KEY], DEFAULT_GRAPHQL_RETRY_DELAY_MS);
-  const wsEndpoint = env[GRAPHQL_WS_ENDPOINT_KEY] ?? DEFAULT_GRAPHQL_WS_ENDPOINT;
+  const wsEndpoint = (() => {
+    const explicitWsEndpoint = env[GRAPHQL_WS_ENDPOINT_KEY];
+
+    if (explicitWsEndpoint) {
+      return explicitWsEndpoint;
+    }
+
+    try {
+      const parsedHttpEndpoint = new URL(httpEndpoint);
+
+      if (parsedHttpEndpoint.protocol === "http:") {
+        parsedHttpEndpoint.protocol = "ws:";
+        return parsedHttpEndpoint.toString();
+      }
+
+      if (parsedHttpEndpoint.protocol === "https:") {
+        parsedHttpEndpoint.protocol = "wss:";
+        return parsedHttpEndpoint.toString();
+      }
+    } catch (error) {
+      // noop: fall back to default below if the http endpoint is not a valid URL
+    }
+
+    return DEFAULT_GRAPHQL_WS_ENDPOINT;
+  })();
   const wsMaxRetries = parseInteger(
     env[GRAPHQL_WS_MAX_RETRIES_KEY],
     DEFAULT_GRAPHQL_WS_MAX_RETRIES,
