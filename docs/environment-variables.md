@@ -18,3 +18,5 @@ Operations teams can toggle transport features and override runtime endpoints wi
 | `VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED` | SPA environment | Optional toggle to disable SPA subscriptions without touching server config. |
 
 Set the `VITE_…` variables in your build or container environment so the management SPA can reach the correct backends. Combine them with the `graphql.subscriptions` flags to enable end-to-end subscriptions when the API exposes the WebSocket transport, or set `VITE_GRAPHQL_SUBSCRIPTIONS_ENABLED=false` to keep the SPA on HTTP-only operations.
+
+When `VITE_GRAPHQL_WS_ENDPOINT` is not set, the management SPA reuses the configured HTTP endpoint and swaps its scheme from `http`→`ws` or `https`→`wss`. Provide an explicit WebSocket endpoint when subscriptions are exposed through a different host or network path, or when TLS termination is handled separately from the HTTP API.
